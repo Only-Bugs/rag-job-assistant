@@ -53,7 +53,7 @@ cd job_application_rag
 ```bash
 python -m venv venv
 source venv/bin/activate   # on Mac/Linux
-venv\Scripts\activate      # on Windows
+.\.venv\Scripts\activate   # on Windows
 ```
 
 ### 3️⃣ Install dependencies
