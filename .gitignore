@@ -1,0 +1,33 @@
+# --- Python / Jupyter ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.ipynb_checkpoints/
+.DS_Store
+
+# --- Virtual environment ---
+.venv/
+env/
+venv/
+
+# --- VS Code / IDE ---
+.vscode/
+.idea/
+
+# --- Data / Outputs ---
+data/outputs/
+data/job_rag/chroma_db/
+data/job_rag/profile_docs/
+*.pdf
+*.txt
+*.md
+!README.md        # keep your public README
+
+# --- Environment / Keys ---
+.env
+*.env
+
+# --- Logs / temp ---
+*.log
+tmp/
