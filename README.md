@@ -1,6 +1,6 @@
 # 🧠 Job Application RAG Assistant
 
-A **Retrieval-Augmented Generation (RAG)** system that helps you craft tailored **CVs, cover letters, and interview answers** for AI/ML roles using your personal project documents and resumes as context.  
+A **Retrieval-Augmented Generation (RAG)** system that helps you craft tailored **Key skills, cover letters, and email template** for AI/ML roles using your personal project documents and resumes as context.  
 Built with **LangChain**, **Ollama (Llama 3.2:3B)**, and **Streamlit** — this assistant runs entirely **locally**, no external API needed.
 
 ## 🚀 Features
