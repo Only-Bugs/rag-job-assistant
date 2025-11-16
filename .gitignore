@@ -33,3 +33,5 @@ data/job_rag/profile_docs/
 # --- Logs / temp ---
 *.log
 tmp/
+
+src/profile_config.py
