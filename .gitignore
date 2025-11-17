@@ -24,7 +24,8 @@ data/job_rag/profile_docs/
 *.pdf
 *.txt
 *.md
-!README.md        # keep your public README
+!README.md        # keep public README
+!requirements.txt  # keep requirements file
 
 # --- Environment / Keys ---
 .env
