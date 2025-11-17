@@ -1,0 +1,53 @@
+--extra-index-url https://download.pytorch.org/whl/cu121
+
+# PyTorch CUDA 12.1
+torch==2.4.1
+torchvision==0.19.1
+torchaudio==2.4.1
+
+# Jupyter / dev (optional but you’re using them)
+jupyterlab==4.2.5
+ipykernel==6.29.5
+notebook==7.2.2
+
+# LangChain stack
+langchain==0.3.2
+langchain-community==0.3.1
+langchain-core==0.3.63
+langchain-text-splitters==0.3.0
+langchain-ollama==0.2.0
+
+# Ollama Python client
+ollama==0.6.0
+
+# Vector store
+chromadb==0.4.22        
+chroma-hnswlib==0.7.3
+onnxruntime==1.18.1
+
+# Embeddings + NLP
+transformers==4.46.2
+tokenizers==0.20.3
+sentence-transformers==3.1.1
+nltk==3.9.1
+rapidfuzz==3.9.7
+
+# Data + utils
+numpy==1.26.4
+pandas==2.2.2
+scikit-learn==1.7.2
+tqdm==4.66.5
+requests==2.32.3
+python-dotenv==1.0.1
+pypdf==5.0.1
+
+# Web / UI (Streamlit app)
+streamlit==1.51.0
+
+# Export / docs
+python-docx==1.2.0
+fpdf==1.7.2
+
+# Optional: FastAPI backend (only if you use it)
+fastapi==0.121.0
+uvicorn==0.38.0
