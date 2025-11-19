@@ -137,6 +137,10 @@ if "emails_text" not in st.session_state:
     st.session_state.emails_text = ""
 if "ats_text" not in st.session_state:
     st.session_state.ats_text = ""
+if "top_choice_text" not in st.session_state:
+    st.session_state.top_choice_text = ""
+if "short_recruiter_email_text" not in st.session_state:
+    st.session_state.short_recruiter_email_text = ""
 
 
 # ---------------------------------------------------------------------
@@ -201,6 +205,9 @@ if generate_btn:
         st.session_state.cover_text = result["cover"]
         st.session_state.emails_text = result["emails"]
         st.session_state.ats_text = result["ats"]
+        st.session_state.top_choice_text = result.get("top_choice", "")
+        st.session_state.short_recruiter_email_text = result.get("short_recruiter_email", "")
+
 
         st.success("Done! Scroll down to review, edit, and download your content.")
 
@@ -212,9 +219,17 @@ if generate_btn:
 if st.session_state.result is not None:
     st.subheader("2️⃣ Review, Edit, and Download")
 
-    tab_skills, tab_cover, tab_emails, tab_ats = st.tabs(
-        ["Skills & Keywords", "Cover Letter", "Emails", "ATS Summary"]
+    tab_skills, tab_cover, tab_emails, tab_ats, tab_top_choice, tab_short_email = st.tabs(
+    [
+        "Skills & Keywords",
+        "Cover Letter",
+        "Emails",
+        "ATS Summary",
+        "Top-Choice Message",
+        "Short Recruiter Email",
+    ]
     )
+
 
     # ---- Skills & Keywords ----
     with tab_skills:
@@ -320,381 +335,62 @@ if st.session_state.result is not None:
                 mime="application/pdf",
             )
 
+            # ---- Top-Choice Message (JD text box answer) ----
+    with tab_top_choice:
+        st.markdown("### Top-Choice Message (Application Text Box)")
+        top_choice_text = st.text_area(
+            "Edit the message you’ll paste into the 'Why is this your top choice & why are you a good fit?' box:",
+            value=st.session_state.top_choice_text,
+            height=500,
+        )
+        st.session_state.top_choice_text = top_choice_text
+
+        col1, col2 = st.columns(2)
+        with col1:
+            st.download_button(
+                "💾 Download as DOCX",
+                data=build_docx(top_choice_text),
+                file_name="top_choice_message.docx",
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            )
+        with col2:
+            st.download_button(
+                "📄 Download as PDF",
+                data=build_pdf(top_choice_text),
+                file_name="top_choice_message.pdf",
+                mime="application/pdf",
+            )
+
+    # ---- Short Recruiter Email ----
+    with tab_short_email:
+        st.markdown("### Short Recruiter Email")
+        short_recruiter_email_text = st.text_area(
+            "Edit the short recruiter email:",
+            value=st.session_state.short_recruiter_email_text,
+            height=500,
+        )
+        st.session_state.short_recruiter_email_text = short_recruiter_email_text
+
+        col1, col2 = st.columns(2)
+        with col1:
+            st.download_button(
+                "💾 Download as DOCX",
+                data=build_docx(short_recruiter_email_text),
+                file_name="short_recruiter_email.docx",
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            )
+        with col2:
+            st.download_button(
+                "📄 Download as PDF",
+                data=build_pdf(short_recruiter_email_text),
+                file_name="short_recruiter_email.pdf",
+                mime="application/pdf",
+            )
+
+
 else:
     st.info("Paste a job description above and click **Generate Application Content** to get started.")
 
 
 
 
-# import sys
-# from pathlib import Path
-# from io import BytesIO
-# import traceback
-# import unicodedata
-
-# import streamlit as st
-# from docx import Document
-# from fpdf import FPDF
-
-# # ---------------------------------------------------------------------
-# # Make sure we can import from src/
-# # ---------------------------------------------------------------------
-# ROOT = Path(__file__).resolve().parents[1]
-# SRC_DIR = ROOT / "src"
-# sys.path.append(str(SRC_DIR))
-
-# from config import OUT_DIR  # optional, if you want to inspect saved files
-
-# # Safe import of rag_pipeline so Streamlit doesn't crash on failure
-# try:
-#     from rag_pipeline import generate_all_from_jd
-#     RAG_PIPELINE_ERROR = None
-#     RAG_PIPELINE_TRACE = ""
-# except Exception as e:
-#     generate_all_from_jd = None  # type: ignore
-#     RAG_PIPELINE_ERROR = e
-#     RAG_PIPELINE_TRACE = traceback.format_exc()
-
-# # Safe import of profile_config
-# try:
-#     from profile_config import USER_PROFILE
-# except ImportError:
-#     USER_PROFILE = None
-
-
-# # ---------------------------------------------------------------------
-# # Helpers: build DOCX / PDF from text
-# # ---------------------------------------------------------------------
-# def build_docx(text: str) -> bytes:
-#     """
-#     Build a simple DOCX from plain text.
-#     Raises RuntimeError on failure.
-#     """
-#     try:
-#         doc = Document()
-#         for line in text.split("\n"):
-#             doc.add_paragraph(line)
-#         buf = BytesIO()
-#         doc.save(buf)
-#         buf.seek(0)
-#         return buf.getvalue()
-#     except Exception as e:
-#         raise RuntimeError(f"Failed to build DOCX: {e}") from e
-
-
-# def clean_text_for_pdf(text: str) -> str:
-#     # Normalise unicode
-#     text = unicodedata.normalize("NFKD", text)
-
-#     # Replace common “fancy” characters
-#     replacements = {
-#         "–": "-",   # en dash
-#         "—": "-",   # em dash
-#         "•": "-",   # bullet
-#         "“": '"',
-#         "”": '"',
-#         "’": "'",
-#         "…": "...",
-#     }
-#     for bad, good in replacements.items():
-#         text = text.replace(bad, good)
-
-#     # Optional: drop anything still not representable in latin-1
-#     text = text.encode("latin-1", "ignore").decode("latin-1")
-#     return text
-
-
-# def build_pdf(text: str) -> bytes:
-#     """
-#     Build a simple PDF from plain text using FPDF.
-#     Raises RuntimeError on failure.
-#     """
-#     try:
-#         text = clean_text_for_pdf(text)
-
-#         pdf = FPDF()
-#         pdf.set_auto_page_break(auto=True, margin=15)
-#         pdf.add_page()
-#         pdf.set_font("Arial", size=12)
-
-#         # Safer: write line by line
-#         for line in text.splitlines():
-#             pdf.multi_cell(0, 8, line)
-#             pdf.ln(0.5)
-
-#         out = pdf.output(dest="S")  # can be str / bytes / bytearray depending on version
-
-#         if isinstance(out, bytearray):
-#             pdf_bytes = bytes(out)
-#         elif isinstance(out, bytes):
-#             pdf_bytes = out
-#         else:
-#             pdf_bytes = out.encode("latin-1")
-
-#         return pdf_bytes
-#     except Exception as e:
-#         raise RuntimeError(f"Failed to build PDF: {e}") from e
-
-
-# # ---------------------------------------------------------------------
-# # Streamlit app
-# # ---------------------------------------------------------------------
-# st.set_page_config(
-#     page_title="Job Application RAG Assistant",
-#     page_icon="🧠",
-#     layout="wide",
-# )
-
-# st.title("🧠 Job Application RAG Assistant")
-# st.caption("Paste a job description, generate tailored content, edit it, and download as DOCX/PDF.")
-
-# # Sidebar info
-# with st.sidebar:
-#     st.header("Profile")
-#     if USER_PROFILE:
-#         st.write(f"**Name:** {USER_PROFILE.get('name', '')}")
-#         st.write(f"**Title:** {USER_PROFILE.get('title', '')}")
-#         st.write(f"**Location:** {USER_PROFILE.get('location', '')}")
-#         st.write("**Links:**")
-#         for link in USER_PROFILE.get("links", []):
-#             st.write(f"- {link}")
-#     else:
-#         st.warning("USER_PROFILE not found. Fill in src/profile_config.py locally.")
-
-#     st.markdown("---")
-#     st.markdown(
-#         "💡 *Place your resume / project summaries as .txt/.md/.pdf in* "
-#         "`data/job_rag/profile_docs`."
-#     )
-
-#     # Diagnostics for backend / rag_pipeline import
-#     st.markdown("---")
-#     st.subheader("Backend status")
-#     if RAG_PIPELINE_ERROR:
-#         st.error("RAG pipeline failed to initialise.")
-#         with st.expander("Show backend error details"):
-#             st.code(RAG_PIPELINE_TRACE, language="python")
-#     else:
-#         st.success("RAG pipeline loaded successfully ✅")
-
-
-# # ---------------------------------------------------------------------
-# # Session state init
-# # ---------------------------------------------------------------------
-# if "jd_text" not in st.session_state:
-#     st.session_state.jd_text = ""
-
-# if "result" not in st.session_state:
-#     st.session_state.result = None
-
-# if "skills_text" not in st.session_state:
-#     st.session_state.skills_text = ""
-# if "cover_text" not in st.session_state:
-#     st.session_state.cover_text = ""
-# if "emails_text" not in st.session_state:
-#     st.session_state.emails_text = ""
-# if "ats_text" not in st.session_state:
-#     st.session_state.ats_text = ""
-
-
-# # ---------------------------------------------------------------------
-# # Input: Job description
-# # ---------------------------------------------------------------------
-# st.subheader("1️⃣ Paste Job Description")
-
-# jd_text = st.text_area(
-#     "Paste the full job description here:",
-#     value=st.session_state.jd_text,
-#     height=260,
-#     placeholder="Copy-paste the JD from LinkedIn / Seek / company website...",
-# )
-
-# st.session_state.jd_text = jd_text
-
-# col_generate, col_dummy = st.columns([1, 3])
-# with col_generate:
-#     generate_btn = st.button(
-#         "⚙️ Generate Application Content",
-#         type="primary",
-#         use_container_width=True,
-#         disabled=RAG_PIPELINE_ERROR is not None,  # disable if backend broken
-#     )
-
-
-# # ---------------------------------------------------------------------
-# # Run pipeline on click (with robust error handling)
-# # ---------------------------------------------------------------------
-# if generate_btn:
-#     if not jd_text.strip():
-#         st.error("Please paste a job description first.")
-#     else:
-#         with st.spinner("Running RAG pipeline and generating content..."):
-#             try:
-#                 result = generate_all_from_jd(jd_text, save_to_disk=False)
-#             except Exception as e:
-#                 st.error(f"Pipeline failed: {e}")
-#                 with st.expander("Show pipeline error details"):
-#                     st.code(traceback.format_exc(), language="python")
-#                 st.stop()
-
-#         st.session_state.result = result
-#         st.session_state.skills_text = result["skills"]
-#         st.session_state.cover_text = result["cover"]
-#         st.session_state.emails_text = result["emails"]
-#         st.session_state.ats_text = result["ats"]
-
-#         st.success("Done! Scroll down to review, edit, and download your content.")
-
-
-# # ---------------------------------------------------------------------
-# # Outputs: tabs with editable content + download buttons
-# # ---------------------------------------------------------------------
-# if st.session_state.result is not None:
-#     st.subheader("2️⃣ Review, Edit, and Download")
-
-#     tab_skills, tab_cover, tab_emails, tab_ats = st.tabs(
-#         ["Skills & Keywords", "Cover Letter", "Emails", "ATS Summary"]
-#     )
-
-#     # ---- Skills & Keywords ----
-#     with tab_skills:
-#         st.markdown("### Skills & Keywords")
-#         skills_text = st.text_area(
-#             "Edit skills/keywords output:",
-#             value=st.session_state.skills_text,
-#             height=230,
-#         )
-#         st.session_state.skills_text = skills_text
-
-#         col1, col2 = st.columns(2)
-#         with col1:
-#             try:
-#                 skills_docx = build_docx(skills_text)
-#                 st.download_button(
-#                     "💾 Download as DOCX",
-#                     data=skills_docx,
-#                     file_name="skills_keywords.docx",
-#                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-#                 )
-#             except Exception as e:
-#                 st.error(f"Could not generate DOCX: {e}")
-
-#         with col2:
-#             try:
-#                 skills_pdf = build_pdf(skills_text)
-#                 st.download_button(
-#                     "📄 Download as PDF",
-#                     data=skills_pdf,
-#                     file_name="skills_keywords.pdf",
-#                     mime="application/pdf",
-#                 )
-#             except Exception as e:
-#                 st.error(f"Could not generate PDF: {e}")
-
-#     # ---- Cover Letter ----
-#     with tab_cover:
-#         st.markdown("### Cover Letter")
-#         cover_text = st.text_area(
-#             "Edit cover letter:",
-#             value=st.session_state.cover_text,
-#             height=500,
-#         )
-#         st.session_state.cover_text = cover_text
-
-#         col1, col2 = st.columns(2)
-#         with col1:
-#             try:
-#                 cover_docx = build_docx(cover_text)
-#                 st.download_button(
-#                     "💾 Download as DOCX",
-#                     data=cover_docx,
-#                     file_name="cover_letter.docx",
-#                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-#                 )
-#             except Exception as e:
-#                 st.error(f"Could not generate DOCX: {e}")
-
-#         with col2:
-#             try:
-#                 cover_pdf = build_pdf(cover_text)
-#                 st.download_button(
-#                     "📄 Download as PDF",
-#                     data=cover_pdf,
-#                     file_name="cover_letter.pdf",
-#                     mime="application/pdf",
-#                 )
-#             except Exception as e:
-#                 st.error(f"Could not generate PDF: {e}")
-
-#     # ---- Emails ----
-#     with tab_emails:
-#         st.markdown("### Email Templates")
-#         emails_text = st.text_area(
-#             "Edit email templates:",
-#             value=st.session_state.emails_text,
-#             height=500,
-#         )
-#         st.session_state.emails_text = emails_text
-
-#         col1, col2 = st.columns(2)
-#         with col1:
-#             try:
-#                 emails_docx = build_docx(emails_text)
-#                 st.download_button(
-#                     "💾 Download as DOCX",
-#                     data=emails_docx,
-#                     file_name="emails.docx",
-#                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-#                 )
-#             except Exception as e:
-#                 st.error(f"Could not generate DOCX: {e}")
-
-#         with col2:
-#             try:
-#                 emails_pdf = build_pdf(emails_text)
-#                 st.download_button(
-#                     "📄 Download as PDF",
-#                     data=emails_pdf,
-#                     file_name="emails.pdf",
-#                     mime="application/pdf",
-#                 )
-#             except Exception as e:
-#                 st.error(f"Could not generate PDF: {e}")
-
-#     # ---- ATS Summary ----
-#     with tab_ats:
-#         st.markdown("### ATS Summary")
-#         ats_text = st.text_area(
-#             "Edit ATS summary:",
-#             value=st.session_state.ats_text,
-#             height=500,
-#         )
-#         st.session_state.ats_text = ats_text
-
-#         col1, col2 = st.columns(2)
-#         with col1:
-#             try:
-#                 ats_docx = build_docx(ats_text)
-#                 st.download_button(
-#                     "💾 Download as DOCX",
-#                     data=ats_docx,
-#                     file_name="ats_summary.docx",
-#                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-#                 )
-#             except Exception as e:
-#                 st.error(f"Could not generate DOCX: {e}")
-
-#         with col2:
-#             try:
-#                 ats_pdf = build_pdf(ats_text)
-#                 st.download_button(
-#                     "📄 Download as PDF",
-#                     data=ats_pdf,
-#                     file_name="ats_summary.pdf",
-#                     mime="application/pdf",
-#                 )
-#             except Exception as e:
-#                 st.error(f"Could not generate PDF: {e}")
-
-# else:
-#     st.info("Paste a job description above and click **Generate Application Content** to get started.")
