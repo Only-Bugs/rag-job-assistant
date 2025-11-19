@@ -1,0 +1,77 @@
+"""
+profile_config.py
+-----------------
+User profile configuration for the Job Application RAG Assistant.
+
+This file allows users to customize:
+- Name & basic details
+- Contact information
+- Links
+- Skills
+- Achievements
+- Personal summary / pitch
+
+Feel free to edit any fields to match your background.
+Nothing outside this dictionary is required.
+"""
+
+USER_PROFILE = {
+    # ----------------------------------------------------
+    # Basic Information
+    # ----------------------------------------------------
+    "name": "Your Name Here",
+    "title": "Your Role (e.g., AI/ML Engineer, Data Scientist, Developer)",
+    "location": "City, Country",
+
+    # ----------------------------------------------------
+    # Contact Information
+    # ----------------------------------------------------
+    "email": "your_email@example.com",
+    "phone": "your_phone_number",
+
+    # ----------------------------------------------------
+    # Links (Add GitHub, LinkedIn, Portfolio, Website, etc.)
+    # ----------------------------------------------------
+    "links": [
+        "https://github.com/your-handle",
+        "https://www.linkedin.com/in/your-handle",
+    ],
+
+    # ----------------------------------------------------
+    # Skills (Add technical + soft skills)
+    # ----------------------------------------------------
+    "skills": [
+        "Python",
+        "PyTorch",
+        "TensorFlow",
+        "LangChain",
+        "Transformers",
+        "RAG",
+        "Docker",
+        "FastAPI",
+        "Machine Learning",
+        "Deep Learning",
+        "NLP",
+        "Communication",
+        "Teamwork",
+    ],
+
+    # ----------------------------------------------------
+    # Achievements (Small bullet points for PDF/Docx output)
+    # ----------------------------------------------------
+    "achievements": [
+        "Implemented end-to-end ML pipelines.",
+        "Built and deployed AI/LLM-powered applications.",
+        "Worked with vector databases and retrieval systems.",
+        "Developed interactive dashboards and tools.",
+    ],
+
+    # ----------------------------------------------------
+    # Personal Pitch (2–3 sentences max)
+    # ----------------------------------------------------
+    "pitch": (
+        "I build practical, reliable AI systems with a focus on clarity, "
+        "performance, and real-world application. I enjoy solving complex "
+        "problems and creating tools that help people work smarter."
+    ),
+}
