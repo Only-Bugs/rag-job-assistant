@@ -20,6 +20,7 @@ data/outputs/
 data/job_rag/chroma_db/
 /data/chroma_db/
 data/job_rag/profile_docs/
+data/job_rag/profile_settings.json
 /**/chroma.sqlite3
 *.pdf
 *.txt
@@ -34,5 +35,3 @@ data/job_rag/profile_docs/
 # --- Logs / temp ---
 *.log
 tmp/
-
-src/rag/config/profile.py

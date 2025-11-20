@@ -92,13 +92,22 @@ streamlit run src/ui/app.py
 
 ### 6️⃣ (Optional) Personalize your profile
 
-Edit `src/rag/config/profile.py` (or copy `profile_config(template).txt`) with your contact details, skills, and achievements so the generator can tailor the outputs.
+Use the in-app **Profile & Role Settings** panel (or edit `data/job_rag/profile_settings.json`) with your contact details, skills, and achievements so the generator can tailor the outputs.
+
+### 🔧 Optional: Runtime overrides
+
+Copy `.env.example` to `.env` and adjust values (e.g., `OLLAMA_HOST`, log level) without touching the codebase:
+
+```bash
+cp .env.example .env
+# edit .env as needed
+```
 
 ## 🧩 Configuration Files
 
 - `src/rag/config/settings.yaml` – filesystem layout, chunking parameters, and retrieval defaults.
 - `src/rag/config/model_config.yaml` – default embedding + LLM model names and Ollama host.
-- `src/rag/config/profile.py` – your personal data used to ground responses.
+- `data/job_rag/profile_settings.json` – active persona data; edit via code or through the Streamlit **Profile & Role Settings** expander.
 
 ## 🧩 Environment Variables
 

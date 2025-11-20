@@ -5,10 +5,12 @@ Loads configuration for the RAG assistant from YAML files.
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any, Dict
 
 import yaml
+from dotenv import load_dotenv
 
 from rag.utils.helpers import ensure_dir
 
@@ -26,6 +28,8 @@ def _load_yaml(path: Path) -> Dict[str, Any]:
 # This file lives in project_root/src/rag/config/settings.py
 # So ROOT = project_root
 ROOT = Path(__file__).resolve().parents[3]
+ENV_PATH = ROOT / ".env"
+load_dotenv(dotenv_path=ENV_PATH, override=False)
 CONFIG_DIR = Path(__file__).resolve().parent
 
 SETTINGS_FILE = CONFIG_DIR / "settings.yaml"
@@ -71,6 +75,7 @@ EMBED_MODEL = embedding_cfg.get("model_name", "all-MiniLM-L6-v2")
 llm_cfg = MODEL_DATA.get("llm", {})
 MODEL_NAME = llm_cfg.get("model_name", "llama3.2:3b")
 OLLAMA_HOST_DEFAULT = llm_cfg.get("host", "http://localhost:11434")
+OLLAMA_HOST = os.getenv("OLLAMA_HOST", OLLAMA_HOST_DEFAULT)
 
 
 __all__ = [
@@ -86,4 +91,5 @@ __all__ = [
     "EMBED_MODEL",
     "MODEL_NAME",
     "OLLAMA_HOST_DEFAULT",
+    "OLLAMA_HOST",
 ]

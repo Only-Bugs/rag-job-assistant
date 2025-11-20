@@ -11,9 +11,7 @@ from langchain_ollama import ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
-from rag.config.settings import MODEL_NAME, OLLAMA_HOST_DEFAULT
-
-OLLAMA_HOST = os.getenv("OLLAMA_HOST", OLLAMA_HOST_DEFAULT)
+from rag.config.settings import MODEL_NAME, OLLAMA_HOST
 LLM_MODEL = os.getenv("LLM_MODEL", MODEL_NAME)
 
 llm = ChatOllama(

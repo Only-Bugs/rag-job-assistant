@@ -9,12 +9,7 @@ from datetime import datetime
 from typing import Dict, Any
 
 from rag.config.settings import OUT_DIR
-
-try:
-    from rag.config.profile import USER_PROFILE
-except ImportError:
-    USER_PROFILE = None
-
+from rag.profile import load_profile
 from rag.utils.exceptions import ProfileNotConfiguredError
 from rag.ingestion.ingest import index_profile_docs, index_jd_text
 from rag.retrieval.retriever import retrieve, format_docs
@@ -54,8 +49,11 @@ def generate_application_package(jd_text: str, save_to_disk: bool = False) -> Di
     4. Build the consolidated context block.
     5. Generate skills, cover letter, emails, ATS summary.
     """
-    if USER_PROFILE is None:
-        raise ProfileNotConfiguredError("USER_PROFILE is not set. Fill in rag/config/profile.py locally.")
+    profile = load_profile()
+    if not profile:
+        raise ProfileNotConfiguredError(
+            "USER_PROFILE is not set. Use the UI profile settings or edit data/job_rag/profile_settings.json."
+        )
 
     index_profile_docs()
     index_jd_text(jd_text)
@@ -66,10 +64,10 @@ def generate_application_package(jd_text: str, save_to_disk: bool = False) -> Di
     rag_profile = format_docs(profile_focus)
 
     jd_hard, jd_soft, keywords = extract_keywords(jd_text)
-    have_hard, have_soft, gaps = compute_alignment(USER_PROFILE["skills"], jd_hard, jd_soft)
+    have_hard, have_soft, gaps = compute_alignment(profile.get("skills", []), jd_hard, jd_soft)
 
     ctx = build_context(
-        USER_PROFILE,
+        profile,
         jd_text,
         rag_jd,
         rag_profile,

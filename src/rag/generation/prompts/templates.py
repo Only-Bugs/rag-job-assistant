@@ -10,10 +10,19 @@ from typing import Optional, Dict
 
 def build_basic_system_prompt(profile: Optional[Dict] = None) -> str:
     """Create a generic assistant prompt, enriched with the profile if present."""
+    focus_role = "AI/ML job application assistant"
+    if profile:
+        focus_role = (
+            profile.get("role_preferences", {}).get("role_description")
+            or profile.get("target_role")
+            or profile.get("domain_focus")
+            or focus_role
+        )
+
     base = (
-        "You are a helpful AI/ML job application assistant. "
+        f"You are a helpful {focus_role}. "
         "You generate CV bullet points, cover letters, and email drafts "
-        "tailored for AI/ML engineer roles.\n\n"
+        "tailored for the candidate's preferred roles.\n\n"
     )
 
     if not profile:
