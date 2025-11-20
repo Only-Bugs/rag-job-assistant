@@ -1,0 +1,10 @@
+data:
+  base_dir: data
+  outputs_dir: outputs
+  rag_dir: job_rag
+  profile_subdir: profile_docs
+  chroma_dir: chroma_db
+rag:
+  chunk_size: 800
+  chunk_overlap: 200
+  top_k: 5
