@@ -17,10 +17,7 @@ if str(SRC_DIR) not in sys.path:
 
 from rag.config.settings import OUT_DIR  # optional, inspect saved files
 from rag.generation.generator import generate_application_package
-try:
-    from rag.config.profile import USER_PROFILE
-except ImportError:
-    USER_PROFILE = None
+from rag.profile import load_profile, save_profile
 
 
 # ---------------------------------------------------------------------
@@ -57,6 +54,12 @@ def clean_text_for_pdf(text: str) -> str:
     return text
 
 
+def _lines_to_list(raw: str):
+    return [line.strip() for line in raw.splitlines() if line.strip()]
+
+
+def _list_to_lines(items):
+    return "\n".join(items or [])
 
 
 def build_pdf(text: str) -> bytes:
@@ -101,34 +104,15 @@ st.set_page_config(
 st.title("🧠 Job Application RAG Assistant")
 st.caption("Paste a job description, generate tailored content, edit it, and download as DOCX/PDF.")
 
-# Sidebar info
-with st.sidebar:
-    st.header("Profile")
-    if USER_PROFILE:
-        st.write(f"**Name:** {USER_PROFILE.get('name', '')}")
-        st.write(f"**Title:** {USER_PROFILE.get('title', '')}")
-        st.write(f"**Location:** {USER_PROFILE.get('location', '')}")
-        st.write("**Links:**")
-        for link in USER_PROFILE.get("links", []):
-            st.write(f"- {link}")
-    else:
-        st.warning("USER_PROFILE not found. Fill in src/rag/config/profile.py locally.")
 
-    st.markdown("---")
-    st.markdown(
-        "💡 *Place your resume / project summaries as .txt/.md/.pdf in* "
-        "`data/job_rag/profile_docs`."
-    )
-
-
-# ---------------------------------------------------------------------
-# Session state init
-# ---------------------------------------------------------------------
 if "jd_text" not in st.session_state:
     st.session_state.jd_text = ""
 
 if "result" not in st.session_state:
     st.session_state.result = None
+
+if "profile_data" not in st.session_state:
+    st.session_state.profile_data = load_profile()
 
 if "skills_text" not in st.session_state:
     st.session_state.skills_text = ""
@@ -157,6 +141,75 @@ jd_text = st.text_area(
 )
 
 st.session_state.jd_text = jd_text
+
+# Sidebar profile/role settings
+profile_data = st.session_state.profile_data or {}
+with st.sidebar:
+    st.header("Profile")
+    if profile_data:
+        st.write(f"**Name:** {profile_data.get('name', '')}")
+        st.write(f"**Title:** {profile_data.get('title', '')}")
+        st.write(f"**Location:** {profile_data.get('location', '')}")
+        st.write(f"**Target Role:** {profile_data.get('target_role', '')}")
+        st.write("**Links:**")
+        for link in profile_data.get("links", []):
+            st.write(f"- {link}")
+    else:
+        st.warning("USER_PROFILE not found. Use the Profile editor or create data/job_rag/profile_settings.json.")
+
+    with st.expander("Edit Profile & Role", expanded=False):
+        with st.form("profile_settings_form_sidebar"):
+            name = st.text_input("Name", value=profile_data.get("name", ""))
+            title = st.text_input("Title", value=profile_data.get("title", ""))
+            location = st.text_input("Location", value=profile_data.get("location", ""))
+            target_role = st.text_input("Target Role", value=profile_data.get("target_role", ""))
+            domain_focus = st.text_input("Domain Focus", value=profile_data.get("domain_focus", ""))
+            persona_tone = st.text_input("Persona Tone", value=profile_data.get("persona_tone", ""))
+            links_text = st.text_area(
+                "Links (one per line)",
+                value=_list_to_lines(profile_data.get("links", [])),
+                height=80,
+            )
+            role_keywords_text = st.text_area(
+                "Role Keywords (one per line)",
+                value=_list_to_lines(profile_data.get("role_keywords", [])),
+                height=80,
+            )
+            skills_text = st.text_area(
+                "Key Skills (one per line)",
+                value=_list_to_lines(profile_data.get("skills", [])),
+                height=120,
+            )
+            pitch_text = st.text_area(
+                "Personal Pitch",
+                value=profile_data.get("pitch", ""),
+                height=100,
+            )
+            submitted = st.form_submit_button("Save Profile Settings", use_container_width=True)
+            if submitted:
+                updated_profile = {
+                    **(profile_data or {}),
+                    "name": name.strip(),
+                    "title": title.strip(),
+                    "location": location.strip(),
+                    "target_role": target_role.strip(),
+                    "domain_focus": domain_focus.strip(),
+                    "persona_tone": persona_tone.strip(),
+                    "links": _lines_to_list(links_text),
+                    "role_keywords": _lines_to_list(role_keywords_text),
+                    "skills": _lines_to_list(skills_text),
+                    "pitch": pitch_text.strip(),
+                }
+                save_profile(updated_profile)
+                st.session_state.profile_data = updated_profile
+                profile_data = updated_profile
+                st.success("Profile updated. Regenerate to use the latest settings.")
+
+    st.markdown("---")
+    # st.markdown(
+    #     "💡 *Place your resume / project summaries as .txt/.md/.pdf in* "
+    #     "`data/job_rag/profile_docs`."
+    # )
 
 col_generate, col_dummy = st.columns([1, 3])
 with col_generate:
