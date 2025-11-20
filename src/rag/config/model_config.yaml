@@ -1,0 +1,5 @@
+llm:
+  model_name: llama3.2:3b
+  host: http://localhost:11434
+embeddings:
+  model_name: all-MiniLM-L6-v2

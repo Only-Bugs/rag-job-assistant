@@ -10,14 +10,15 @@ import unicodedata
 # ---------------------------------------------------------------------
 # Make sure we can import from src/
 # ---------------------------------------------------------------------
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 SRC_DIR = ROOT / "src"
-sys.path.append(str(SRC_DIR))
+if str(SRC_DIR) not in sys.path:
+    sys.path.append(str(SRC_DIR))
 
-from config import OUT_DIR  # optional, if you want to inspect saved files
-from rag_pipeline import generate_all_from_jd
+from rag.config.settings import OUT_DIR  # optional, inspect saved files
+from rag.generation.generator import generate_application_package
 try:
-    from profile_config import USER_PROFILE
+    from rag.config.profile import USER_PROFILE
 except ImportError:
     USER_PROFILE = None
 
@@ -111,7 +112,7 @@ with st.sidebar:
         for link in USER_PROFILE.get("links", []):
             st.write(f"- {link}")
     else:
-        st.warning("USER_PROFILE not found. Fill in src/profile_config.py locally.")
+        st.warning("USER_PROFILE not found. Fill in src/rag/config/profile.py locally.")
 
     st.markdown("---")
     st.markdown(
@@ -170,7 +171,7 @@ with col_generate:
 #         st.error("Please paste a job description first.")
 #     else:
 #         with st.spinner("Running RAG pipeline and generating content..."):
-#             result = generate_all_from_jd(jd_text, save_to_disk=False)
+#             result = generate_application_package(jd_text, save_to_disk=False)
 
 #         st.session_state.result = result
 #         st.session_state.skills_text = result["skills"]
@@ -193,7 +194,7 @@ if generate_btn:
     else:
         with st.spinner("Running RAG pipeline and generating content..."):
             try:
-                result = generate_all_from_jd(jd_text, save_to_disk=False)
+                result = generate_application_package(jd_text, save_to_disk=False)
             except Exception as e:
                 st.error(f"Pipeline failed: {e}")
                 traceback.print_exc()
@@ -390,7 +391,3 @@ if st.session_state.result is not None:
 
 else:
     st.info("Paste a job description above and click **Generate Application Content** to get started.")
-
-
-
-

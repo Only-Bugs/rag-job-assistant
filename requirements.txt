@@ -16,6 +16,8 @@ langchain-community==0.3.1
 langchain-core==0.3.63
 langchain-text-splitters==0.3.0
 langchain-ollama==0.2.0
+langchain-chroma>=0.1.0
+langchain-huggingface>=0.0.7
 
 # Ollama Python client
 ollama==0.6.0
@@ -24,6 +26,7 @@ ollama==0.6.0
 chromadb==0.4.22        
 chroma-hnswlib==0.7.3
 onnxruntime==1.18.1
+posthog<3
 
 # Embeddings + NLP
 transformers==4.46.2
@@ -40,6 +43,7 @@ tqdm==4.66.5
 requests==2.32.3
 python-dotenv==1.0.1
 pypdf==5.0.1
+PyYAML==6.0.2
 
 # Web / UI (Streamlit app)
 streamlit==1.51.0
