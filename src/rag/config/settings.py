@@ -76,6 +76,18 @@ llm_cfg = MODEL_DATA.get("llm", {})
 MODEL_NAME = llm_cfg.get("model_name", "llama3.2:3b")
 OLLAMA_HOST_DEFAULT = llm_cfg.get("host", "http://localhost:11434")
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", OLLAMA_HOST_DEFAULT)
+LLM_TEMPERATURE = float(llm_cfg.get("temperature", 0.2))
+LLM_PARALLEL_WORKERS = int(llm_cfg.get("parallel_workers", 4))
+LLM_MAX_TOKENS = llm_cfg.get(
+    "max_tokens",
+    {"skills": 450, "cover": 650, "emails": 700, "ats": 280, "default": 512},
+)
+
+runtime_cfg = MODEL_DATA.get("runtime", {})
+context_limits_cfg = runtime_cfg.get("context_limits", {})
+JD_CHAR_LIMIT = int(context_limits_cfg.get("jd_chars", 3500))
+RETRIEVED_JD_CHAR_LIMIT = int(context_limits_cfg.get("retrieved_jd_chars", 2200))
+RETRIEVED_PROFILE_CHAR_LIMIT = int(context_limits_cfg.get("retrieved_profile_chars", 2200))
 
 
 __all__ = [
@@ -92,4 +104,10 @@ __all__ = [
     "MODEL_NAME",
     "OLLAMA_HOST_DEFAULT",
     "OLLAMA_HOST",
+    "LLM_TEMPERATURE",
+    "LLM_PARALLEL_WORKERS",
+    "LLM_MAX_TOKENS",
+    "JD_CHAR_LIMIT",
+    "RETRIEVED_JD_CHAR_LIMIT",
+    "RETRIEVED_PROFILE_CHAR_LIMIT",
 ]

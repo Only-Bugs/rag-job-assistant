@@ -1,6 +1,12 @@
 import sys
+import threading
+import time
+import traceback
+from datetime import datetime
 from pathlib import Path
 from io import BytesIO
+from uuid import uuid4
+from time import perf_counter
 
 import streamlit as st
 from docx import Document
@@ -18,6 +24,12 @@ if str(SRC_DIR) not in sys.path:
 from rag.config.settings import OUT_DIR  # optional, inspect saved files
 from rag.generation.generator import generate_application_package
 from rag.profile import load_profile, save_profile
+from rag.utils.logging import log_run_end, log_run_start, set_request_id
+from ui.components.logboard import (
+    PipelineProgress,
+    build_run_history_label,
+    render_progress_toast,
+)
 
 
 # ---------------------------------------------------------------------
@@ -126,6 +138,10 @@ if "top_choice_text" not in st.session_state:
     st.session_state.top_choice_text = ""
 if "short_recruiter_email_text" not in st.session_state:
     st.session_state.short_recruiter_email_text = ""
+if "run_history" not in st.session_state:
+    st.session_state.run_history = []
+if "rag_prev_runs_open" not in st.session_state:
+    st.session_state.rag_prev_runs_open = False
 
 
 # ---------------------------------------------------------------------
@@ -156,6 +172,11 @@ with st.sidebar:
             st.write(f"- {link}")
     else:
         st.warning("USER_PROFILE not found. Use the Profile editor or create data/job_rag/profile_settings.json.")
+
+    st.checkbox(
+        "Expand “Previous runs” in progress toast (after a run finishes)",
+        key="rag_prev_runs_open",
+    )
 
     with st.expander("Edit Profile & Role", expanded=False):
         with st.form("profile_settings_form_sidebar"):
@@ -239,21 +260,74 @@ with col_generate:
 
 
 
-import traceback  # put this at the top of app.py if not already there
-
 if generate_btn:
     if not jd_text.strip():
         st.error("Please paste a job description first.")
     else:
-        with st.spinner("Running RAG pipeline and generating content..."):
-            try:
-                result = generate_application_package(jd_text, save_to_disk=False)
-            except Exception as e:
-                st.error(f"Pipeline failed: {e}")
-                traceback.print_exc()
-                st.stop()
+        request_id = uuid4().hex[:8]
+        set_request_id(request_id)
+        run_start = perf_counter()
+        log_run_start("generate_application_package", args_preview=jd_text[:80])
 
-        # only runs if no exception
+        progress = PipelineProgress()
+        result_holder: dict = {"result": None, "error": None}
+
+        def _run_pipeline() -> None:
+            try:
+                result_holder["result"] = generate_application_package(
+                    jd_text, save_to_disk=False, progress=progress
+                )
+            except Exception as exc:  # noqa: BLE001 — surface in UI
+                result_holder["error"] = exc
+
+        worker = threading.Thread(target=_run_pipeline, daemon=True)
+        worker.start()
+        hist = st.session_state.run_history
+        _, _toast_col = st.columns([3, 1])
+        with _toast_col:
+            log_placeholder = st.empty()
+        while worker.is_alive():
+            with _toast_col:
+                with log_placeholder.container():
+                    render_progress_toast(
+                        progress,
+                        hist,
+                        show_previous_runs=False,
+                        previous_runs_open=bool(st.session_state.rag_prev_runs_open),
+                    )
+            time.sleep(0.4)
+        with _toast_col:
+            with log_placeholder.container():
+                render_progress_toast(
+                    progress,
+                    hist,
+                    show_previous_runs=True,
+                    previous_runs_open=bool(st.session_state.rag_prev_runs_open),
+                )
+
+        err = result_holder["error"]
+        if err is not None:
+            run_elapsed_ms = (perf_counter() - run_start) * 1000
+            log_run_end("generate_application_package", run_elapsed_ms, success=False, error=str(err))
+            st.error(f"Pipeline failed: {err}")
+            traceback.print_exc()
+            st.stop()
+
+        result = result_holder["result"]
+        run_elapsed_ms = (perf_counter() - run_start) * 1000
+        log_run_end("generate_application_package", run_elapsed_ms, success=True)
+
+        rh = st.session_state.run_history
+        rh.append(
+            {
+                "label": build_run_history_label(jd_text, st.session_state.profile_data or {}),
+                "duration_ms": run_elapsed_ms,
+                "timestamp": datetime.now(),
+            }
+        )
+        if len(rh) > 50:
+            st.session_state.run_history = rh[-50:]
+
         st.session_state.result = result
         st.session_state.skills_text = result["skills"]
         st.session_state.cover_text = result["cover"]
@@ -261,7 +335,6 @@ if generate_btn:
         st.session_state.ats_text = result["ats"]
         st.session_state.top_choice_text = result.get("top_choice", "")
         st.session_state.short_recruiter_email_text = result.get("short_recruiter_email", "")
-
 
         st.success("Done! Scroll down to review, edit, and download your content.")
 

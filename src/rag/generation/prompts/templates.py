@@ -48,7 +48,7 @@ You are a job-application copilot. From the context:
 2) SOFT skills tailored to the JD.
 3) 15–25 SEO keywords for CV/ATS.
 Rules:
-- Ground items in [RETRIEVED_*] where possible. No fabrications.
+- Ground items in [RETRIEVED_JD_SNIPPETS] and [PROFILE_SKILLS] where possible. No fabrications.
 - Use canonical names. Output as three sections with bullet lists.
 """
 
@@ -65,7 +65,8 @@ Write three short emails tailored to the JD and candidate:
 1) Application email (80–140 words) + 2–3 subject options.
 2) Cold recruiter outreach (40–80 words) + 2–3 subject options.
 3) Follow-up after 7–10 days (50–90 words) + 2–3 subject options.
-Ground skills in [RETRIEVED_*]. No exaggeration. Clean signature from [PROFILE].
+Ground claims in [RETRIEVED_JD_SNIPPETS], [RETRIEVED_PROFILE_SNIPPETS], and [KEY_SELLING_POINTS].
+No exaggeration. Clean signature from [PROFILE].
 Format:
 === Email 1 ===
 Subject: ...
@@ -81,7 +82,7 @@ SYSTEM_ATS = """
 Create a compact ATS-friendly resume summary:
 - 3 bullets (outcomes-focused) aligned to JD.
 - One 'Core Stack' line (comma-separated tools).
-Keep to 80–120 words. Ground in [RETRIEVED_*]; no fabrications.
+Keep to 80–120 words. Ground in [RETRIEVED_PROFILE_SNIPPETS], [PROFILE_BULLETS], and [EXTRACTED_FROM_JD]; no fabrications.
 """
 
 

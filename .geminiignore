@@ -1,0 +1,63 @@
+# --- General & OS ---
+
+.git/
+.svn/
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# --- Node.js (The Quota Killer) ---
+
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+dist/
+build/
+.next/
+.expo/
+
+# --- Python & MLOps (For your BirdNET/RAG projects) ---
+
+**pycache**/
+_.pyc
+.venv/
+venv/
+env/
+.pytest_cache/
+.ipynb_checkpoints/
+data/
+models/
+_.h5
+_.tflite
+_.onnx
+
+# --- Android & Java (For your AOSP work) ---
+
+# NOTE: If you are in a full AOSP tree, Gemini will struggle
+
+# regardless. It's best to run Gemini only in specific subfolders.
+
+out/
+_.class
+_.jar
+\*.aar
+.gradle/
+
+# --- Docker & Infrastructure ---
+
+.terraform/
+_.tfstate_
+.aws/
+.kube/
+
+# --- Large Files & Logs ---
+
+_.log
+_.zip
+_.tar.gz
+_.7z
+_.pdf
+_.csv
+\*.jsonl

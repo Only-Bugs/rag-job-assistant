@@ -1,5 +1,19 @@
+# For faster runs, use a smaller/quantised Ollama tag; set OLLAMA_KEEP_ALIVE=24h on the server process to keep weights loaded.
 llm:
   model_name: llama3.2:3b
   host: http://localhost:11434
+  temperature: 0.2
+  parallel_workers: 4
+  max_tokens:
+    skills: 450
+    cover: 650
+    emails: 700
+    ats: 280
+    default: 512
+runtime:
+  context_limits:
+    jd_chars: 3500
+    retrieved_jd_chars: 2200
+    retrieved_profile_chars: 2200
 embeddings:
   model_name: all-MiniLM-L6-v2

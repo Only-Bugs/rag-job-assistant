@@ -11,6 +11,8 @@ from rag.config.settings import RAG_DIR
 from rag.utils.helpers import ensure_dir
 
 PROFILE_STORE_PATH = RAG_DIR / "profile_settings.json"
+# Backwards-compatible alias; older code referenced DEFAULT_PROFILE_PATH.
+DEFAULT_PROFILE_PATH = PROFILE_STORE_PATH
 
 DEFAULT_PROFILE: Dict[str, Any] = {
     "name": "Prabhakar Reddy Shashank",
@@ -124,6 +126,7 @@ def reset_profile() -> Dict[str, Any]:
 __all__ = [
     "DEFAULT_PROFILE",
     "PROFILE_STORE_PATH",
+    "DEFAULT_PROFILE_PATH",
     "load_profile",
     "save_profile",
     "reset_profile",

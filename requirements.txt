@@ -36,6 +36,7 @@ nltk==3.9.1
 rapidfuzz==3.9.7
 
 # Data + utils
+psutil==6.1.0
 numpy==1.26.4
 pandas==2.2.2
 scikit-learn==1.7.2
