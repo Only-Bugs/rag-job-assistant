@@ -16,6 +16,8 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 # ---------------------------------------------------------------------------
 # Path bootstrap — mirror src/ui/app.py so rag.* imports resolve correctly
@@ -29,8 +31,10 @@ if str(_SRC_DIR) not in sys.path:
 # ---------------------------------------------------------------------------
 from rag.config.settings import MODEL_NAME  # noqa: E402
 
+from api.routes.export import router as export_router  # noqa: E402
 from api.routes.generate import router as generate_router  # noqa: E402
 from api.routes.health import router as health_router  # noqa: E402
+from api.routes.profile import router as profile_router  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s  %(name)s  %(message)s")
 logger = logging.getLogger("api")
@@ -61,3 +65,19 @@ app.add_middleware(
 
 app.include_router(health_router)
 app.include_router(generate_router)
+app.include_router(profile_router)
+app.include_router(export_router)
+
+# Frontend — serve Phase 2 static UI
+_FRONTEND_DIR = _SRC_DIR / "frontend"
+app.mount("/static", StaticFiles(directory=str(_FRONTEND_DIR)), name="static")
+
+
+@app.get("/")
+async def serve_frontend() -> FileResponse:
+    return FileResponse(str(_FRONTEND_DIR / "index.html"))
+
+
+@app.get("/settings")
+async def serve_settings() -> FileResponse:
+    return FileResponse(str(_FRONTEND_DIR / "settings.html"))

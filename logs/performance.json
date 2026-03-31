@@ -22,3 +22,15 @@
 {"task_name": "gen_cover", "stage": "generation", "ttft_ms": 679.4579160050489, "total_ms": 10400.558833003743, "status": "ok", "timestamp": "2026-03-31T03:57:04.900250+00:00"}
 {"task_name": "gen_emails", "stage": "generation", "ttft_ms": 669.967167021241, "total_ms": 8532.521625020308, "status": "ok", "timestamp": "2026-03-31T03:57:13.439326+00:00"}
 {"task_name": "gen_ats", "stage": "generation", "ttft_ms": 480.4659170040395, "total_ms": 4120.866625016788, "status": "ok", "timestamp": "2026-03-31T03:57:17.567351+00:00"}
+{"task_name": "gen_skills", "stage": "generation", "ttft_ms": 2310.370042017894, "total_ms": 12275.541209004587, "status": "ok", "timestamp": "2026-03-31T04:33:42.974558+00:00"}
+{"task_name": "gen_cover", "stage": "generation", "ttft_ms": 1803.9995419967454, "total_ms": 4375.563749985304, "status": "ok", "timestamp": "2026-03-31T04:33:47.356492+00:00"}
+{"task_name": "gen_emails", "stage": "generation", "ttft_ms": 1576.1100410018116, "total_ms": 8689.258916012477, "status": "ok", "timestamp": "2026-03-31T04:33:56.046337+00:00"}
+{"task_name": "gen_ats", "stage": "generation", "ttft_ms": 491.9562080176547, "total_ms": 3056.4805830072146, "status": "ok", "timestamp": "2026-03-31T04:33:59.104444+00:00"}
+{"task_name": "gen_skills", "stage": "generation", "ttft_ms": 1961.1136669991538, "total_ms": 7655.154208012391, "status": "ok", "timestamp": "2026-03-31T04:35:00.753335+00:00"}
+{"task_name": "gen_cover", "stage": "generation", "ttft_ms": 2076.1319999874104, "total_ms": 20351.68695799075, "status": "ok", "timestamp": "2026-03-31T04:35:21.107353+00:00"}
+{"task_name": "gen_emails", "stage": "generation", "ttft_ms": 1568.5546250024345, "total_ms": 14793.461958994158, "status": "ok", "timestamp": "2026-03-31T04:35:35.902931+00:00"}
+{"task_name": "gen_ats", "stage": "generation", "ttft_ms": 554.5294999901671, "total_ms": 3222.0841249800287, "status": "ok", "timestamp": "2026-03-31T04:35:39.130280+00:00"}
+{"task_name": "gen_skills", "stage": "generation", "ttft_ms": 3005.6355000124313, "total_ms": 5555.27583300136, "status": "ok", "timestamp": "2026-03-31T04:59:58.674088+00:00"}
+{"task_name": "gen_cover", "stage": "generation", "ttft_ms": 2094.1292089992203, "total_ms": 12671.916749997763, "status": "ok", "timestamp": "2026-03-31T05:00:11.350117+00:00"}
+{"task_name": "gen_emails", "stage": "generation", "ttft_ms": 1535.4673749825452, "total_ms": 13121.205374976853, "status": "ok", "timestamp": "2026-03-31T05:00:24.474462+00:00"}
+{"task_name": "gen_ats", "stage": "generation", "ttft_ms": 563.5400000028312, "total_ms": 3130.6697499821894, "status": "ok", "timestamp": "2026-03-31T05:00:27.606263+00:00"}

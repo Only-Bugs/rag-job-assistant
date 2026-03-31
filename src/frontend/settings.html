@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RJA — Settings</title>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0f0f0f;
+      --surface:   #1a1a1a;
+      --border:    #2a2a2a;
+      --text:      #e8e8e8;
+      --muted:     #666666;
+      --accent:    #7c6af7;
+      --success:   #4ade80;
+      --error:     #f87171;
+      --radius:    8px;
+    }
+
+    html, body {
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    .shell {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 20px 60px;
+    }
+
+    /* ── Header ──────────────────────────────────────────────────── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 0 16px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 32px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .logo {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+      color: var(--text);
+    }
+
+    .logo span { color: var(--accent); }
+
+    .nav-link {
+      font-size: 13px;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    .nav-link:hover { color: var(--text); }
+
+    /* ── Page heading ────────────────────────────────────────────── */
+    h1 {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .page-sub {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 32px;
+    }
+
+    /* ── Form sections ───────────────────────────────────────────── */
+    .form-section {
+      margin-bottom: 32px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .field input,
+    .field textarea {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 14px;
+      line-height: 1.6;
+      padding: 10px 12px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .field input:focus,
+    .field textarea:focus { border-color: var(--accent); }
+
+    .field input::placeholder,
+    .field textarea::placeholder { color: var(--muted); }
+
+    .field textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    .field textarea.tall {
+      min-height: 130px;
+    }
+
+    .field-hint {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 5px;
+    }
+
+    /* ── Two-col row ─────────────────────────────────────────────── */
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .field-row .field { margin-bottom: 0; }
+
+    /* ── Save button ─────────────────────────────────────────────── */
+    .save-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-top: 8px;
+    }
+
+    #save-btn {
+      padding: 10px 28px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-family: inherit;
+      letter-spacing: 0.02em;
+      transition: opacity 0.15s;
+    }
+
+    #save-btn:hover:not(:disabled) { opacity: 0.88; }
+    #save-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    #save-feedback {
+      font-size: 13px;
+      display: none;
+    }
+
+    #save-feedback.success { color: var(--success); display: inline; }
+    #save-feedback.error   { color: var(--error);   display: inline; }
+
+    /* ── Scrollbar ───────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3a3a3a; }
+  </style>
+</head>
+<body>
+
+<div class="shell">
+
+  <header>
+    <div class="header-left">
+      <div class="logo">RJ<span>A</span></div>
+      <a class="nav-link" href="/">← Back</a>
+    </div>
+  </header>
+
+  <h1>Profile Settings</h1>
+  <p class="page-sub">This data is used to tailor all generated content to your background.</p>
+
+  <form id="profile-form" autocomplete="off">
+
+    <!-- Identity -->
+    <div class="form-section">
+      <div class="section-title">Identity</div>
+      <div class="field-row">
+        <div class="field">
+          <label for="f-name">Full name</label>
+          <input type="text" id="f-name" name="name" placeholder="Your name" />
+        </div>
+        <div class="field">
+          <label for="f-title">Current title</label>
+          <input type="text" id="f-title" name="title" placeholder="e.g. Software Engineer" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="f-location">Location</label>
+        <input type="text" id="f-location" name="location" placeholder="e.g. Melbourne, Australia" />
+      </div>
+    </div>
+
+    <!-- Contact -->
+    <div class="form-section">
+      <div class="section-title">Contact</div>
+      <div class="field-row">
+        <div class="field">
+          <label for="f-email">Email</label>
+          <input type="email" id="f-email" name="email" placeholder="you@example.com" />
+        </div>
+        <div class="field">
+          <label for="f-phone">Phone</label>
+          <input type="text" id="f-phone" name="phone" placeholder="+61 4xx xxx xxx" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="f-links">Links</label>
+        <textarea id="f-links" name="links" placeholder="One URL per line (GitHub, LinkedIn, portfolio...)"></textarea>
+        <p class="field-hint">One per line — stored as a list.</p>
+      </div>
+    </div>
+
+    <!-- Target role -->
+    <div class="form-section">
+      <div class="section-title">Target Role</div>
+      <div class="field">
+        <label for="f-target-role">Target role(s)</label>
+        <input type="text" id="f-target-role" name="target_role" placeholder="e.g. Full Stack Developer, DevOps Engineer" />
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="f-domain">Domain focus</label>
+          <input type="text" id="f-domain" name="domain_focus" placeholder="e.g. DevOps, CloudOps" />
+        </div>
+        <div class="field">
+          <label for="f-tone">Persona / tone</label>
+          <input type="text" id="f-tone" name="persona_tone" placeholder="e.g. Confident, pragmatic" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="f-keywords">Role keywords</label>
+        <textarea id="f-keywords" name="role_keywords" placeholder="One keyword per line (used in ATS optimisation)"></textarea>
+        <p class="field-hint">One per line — stored as a list.</p>
+      </div>
+    </div>
+
+    <!-- Background -->
+    <div class="form-section">
+      <div class="section-title">Background</div>
+      <div class="field">
+        <label for="f-skills">Skills</label>
+        <textarea id="f-skills" name="skills" class="tall" placeholder="One skill per line"></textarea>
+        <p class="field-hint">One per line — stored as a list.</p>
+      </div>
+      <div class="field">
+        <label for="f-achievements">Key achievements</label>
+        <textarea id="f-achievements" name="achievements" class="tall" placeholder="One achievement per line"></textarea>
+        <p class="field-hint">One per line — stored as a list.</p>
+      </div>
+      <div class="field">
+        <label for="f-pitch">Elevator pitch</label>
+        <textarea id="f-pitch" name="pitch" class="tall" placeholder="2–4 sentences summarising your value proposition"></textarea>
+      </div>
+    </div>
+
+    <div class="save-row">
+      <button type="submit" id="save-btn">Save Profile</button>
+      <span id="save-feedback"></span>
+    </div>
+
+  </form>
+
+</div>
+
+<script>
+  const form     = document.getElementById('profile-form');
+  const saveBtn  = document.getElementById('save-btn');
+  const feedback = document.getElementById('save-feedback');
+
+  // Fields whose value is a newline-separated list → stored as array
+  const LIST_FIELDS = new Set(['links', 'role_keywords', 'skills', 'achievements']);
+
+  function showFeedback(type, msg) {
+    feedback.className = type;
+    feedback.textContent = msg;
+    setTimeout(() => { feedback.className = ''; feedback.textContent = ''; }, 3000);
+  }
+
+  // ── Populate form from profile object ────────────────────────────
+  function populateForm(data) {
+    for (const [key, val] of Object.entries(data)) {
+      const el = form.elements[key];
+      if (!el) continue;
+      if (LIST_FIELDS.has(key) && Array.isArray(val)) {
+        el.value = val.join('\n');
+      } else if (typeof val === 'string') {
+        el.value = val;
+      }
+    }
+  }
+
+  // ── Collect form into profile object ─────────────────────────────
+  function collectForm() {
+    const out = {};
+    for (const el of form.elements) {
+      if (!el.name || el.name === '') continue;
+      const raw = el.value.trim();
+      if (LIST_FIELDS.has(el.name)) {
+        out[el.name] = raw ? raw.split('\n').map(s => s.trim()).filter(Boolean) : [];
+      } else {
+        out[el.name] = raw;
+      }
+    }
+    return out;
+  }
+
+  // ── Load on page init ─────────────────────────────────────────────
+  (async function init() {
+    try {
+      const res = await fetch('/profile');
+      if (res.ok) {
+        const data = await res.json();
+        populateForm(data);
+      }
+    } catch (_) { /* no profile yet — leave form empty */ }
+  })();
+
+  // ── Save on submit ────────────────────────────────────────────────
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving...';
+    try {
+      const payload = collectForm();
+      const res = await fetch('/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      showFeedback('success', 'Profile saved.');
+    } catch (err) {
+      showFeedback('error', `Save failed: ${err.message}`);
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Save Profile';
+    }
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RJA — Resume & Job Application Assistant</title>
+
+  <style>
+    /* ── Reset & base ────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0f0f0f;
+      --surface:   #1a1a1a;
+      --border:    #2a2a2a;
+      --text:      #e8e8e8;
+      --muted:     #666666;
+      --accent:    #7c6af7;
+      --success:   #4ade80;
+      --error:     #f87171;
+      --radius:    8px;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    /* ── Layout shell ────────────────────────────────────────────── */
+    .shell {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    /* ── Header ──────────────────────────────────────────────────── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 0 16px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .logo {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+      color: var(--text);
+    }
+
+    .logo span { color: var(--accent); }
+
+    .nav-link {
+      font-size: 13px;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    .nav-link:hover { color: var(--text); }
+
+    /* Status pill */
+    #status-pill {
+      font-size: 12px;
+      font-weight: 500;
+      padding: 4px 12px;
+      border-radius: 99px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      transition: all 0.2s;
+    }
+
+    #status-pill.ready   { color: var(--muted); border-color: var(--border); }
+    #status-pill.running { color: var(--accent); border-color: var(--accent); animation: pulse 1.5s ease-in-out infinite; }
+    #status-pill.done    { color: var(--success); border-color: var(--success); }
+    #status-pill.error   { color: var(--error);   border-color: var(--error); }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.5; }
+    }
+
+    /* ── Profile bar ─────────────────────────────────────────────── */
+    #profile-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      margin: 16px 0 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      flex-shrink: 0;
+    }
+
+    #profile-bar.hidden { display: none; }
+
+    .profile-info {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    #profile-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    #profile-meta {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    #profile-bar a {
+      font-size: 12px;
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    #profile-bar a:hover { text-decoration: underline; }
+
+    /* ── Input section ───────────────────────────────────────────── */
+    .input-section {
+      padding: 16px 0 16px;
+      flex-shrink: 0;
+    }
+
+    .input-section label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 10px;
+    }
+
+    #jd-input {
+      width: 100%;
+      min-height: 120px;
+      max-height: 260px;
+      resize: vertical;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 14px;
+      line-height: 1.6;
+      padding: 12px 14px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    #jd-input:focus       { border-color: var(--accent); }
+    #jd-input:disabled    { opacity: 0.45; cursor: not-allowed; }
+    #jd-input::placeholder { color: var(--muted); }
+
+    #generate-btn {
+      display: block;
+      width: 100%;
+      margin-top: 12px;
+      padding: 11px 0;
+      background: var(--accent);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      letter-spacing: 0.02em;
+      transition: opacity 0.15s;
+    }
+
+    #generate-btn:hover:not(:disabled) { opacity: 0.88; }
+    #generate-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    /* ── Tab bar ─────────────────────────────────────────────────── */
+    .tab-bar {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .tab-btn {
+      position: relative;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 10px 18px;
+      cursor: pointer;
+      transition: color 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .tab-btn::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0; right: 0;
+      height: 2px;
+      background: var(--accent);
+      border-radius: 2px 2px 0 0;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    .tab-btn:hover          { color: var(--text); }
+    .tab-btn.active         { color: var(--text); }
+    .tab-btn.active::after  { opacity: 1; }
+
+    /* Green dot on completed tab */
+    .tab-dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+      flex-shrink: 0;
+    }
+
+    /* ── Content area ────────────────────────────────────────────── */
+    .content-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 0 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .tab-panel {
+      display: none;
+      flex: 1;
+    }
+
+    .tab-panel.active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .waiting-text {
+      color: var(--muted);
+      font-size: 14px;
+      font-style: italic;
+      padding: 8px 0;
+    }
+
+    /* ── Output textarea ─────────────────────────────────────────── */
+    .output-textarea {
+      flex: 1;
+      width: 100%;
+      min-height: 300px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 14px;
+      line-height: 1.7;
+      padding: 14px 16px;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .output-textarea:focus { border-color: var(--accent); }
+
+    .output-textarea::placeholder {
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    /* ── Download bar ────────────────────────────────────────────── */
+    #download-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 0 20px;
+      flex-shrink: 0;
+    }
+
+    #download-bar.hidden { display: none; }
+
+    .dl-label {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-right: 4px;
+    }
+
+    .dl-btn {
+      padding: 8px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+      font-family: inherit;
+    }
+
+    .dl-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .dl-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Scrollbar ───────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3a3a3a; }
+  </style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- Header -->
+  <header>
+    <div class="header-left">
+      <div class="logo">RJ<span>A</span></div>
+      <a class="nav-link" href="/settings">Settings</a>
+    </div>
+    <div id="status-pill" class="ready">Ready</div>
+  </header>
+
+  <!-- Profile bar -->
+  <div id="profile-bar" class="hidden">
+    <div class="profile-info">
+      <span id="profile-name"></span>
+      <span id="profile-meta"></span>
+    </div>
+    <a href="/settings">Edit Profile</a>
+  </div>
+
+  <!-- Input -->
+  <div class="input-section">
+    <label for="jd-input">Job Description</label>
+    <textarea
+      id="jd-input"
+      placeholder="Paste the full job description here..."
+    ></textarea>
+    <button id="generate-btn">Generate Application</button>
+  </div>
+
+  <!-- Tab bar -->
+  <div class="tab-bar" role="tablist">
+    <button class="tab-btn active" data-tab="skills" role="tab">Skills</button>
+    <button class="tab-btn"        data-tab="cover"  role="tab">Cover Letter</button>
+    <button class="tab-btn"        data-tab="emails" role="tab">Emails</button>
+    <button class="tab-btn"        data-tab="ats"    role="tab">ATS Summary</button>
+  </div>
+
+  <!-- Content panels -->
+  <div class="content-area">
+    <div id="panel-skills" class="tab-panel active">
+      <p class="waiting-text">Waiting...</p>
+    </div>
+    <div id="panel-cover" class="tab-panel">
+      <p class="waiting-text">Waiting...</p>
+    </div>
+    <div id="panel-emails" class="tab-panel">
+      <p class="waiting-text">Waiting...</p>
+    </div>
+    <div id="panel-ats" class="tab-panel">
+      <p class="waiting-text">Waiting...</p>
+    </div>
+  </div>
+
+  <!-- Download bar (hidden until done) -->
+  <div id="download-bar" class="hidden">
+    <span class="dl-label">Download</span>
+    <button class="dl-btn" id="dl-pdf">PDF</button>
+    <button class="dl-btn" id="dl-docx">DOCX</button>
+  </div>
+
+</div>
+
+<script>
+  // ── DOM refs ─────────────────────────────────────────────────────
+  const jdInput      = document.getElementById('jd-input');
+  const generateBtn  = document.getElementById('generate-btn');
+  const statusPill   = document.getElementById('status-pill');
+  const profileBar   = document.getElementById('profile-bar');
+  const profileName  = document.getElementById('profile-name');
+  const profileMeta  = document.getElementById('profile-meta');
+  const downloadBar  = document.getElementById('download-bar');
+  const tabBtns      = document.querySelectorAll('.tab-btn');
+  const panels = {
+    skills: document.getElementById('panel-skills'),
+    cover:  document.getElementById('panel-cover'),
+    emails: document.getElementById('panel-emails'),
+    ats:    document.getElementById('panel-ats'),
+  };
+
+  // Tracks latest generated content for export
+  const outputContent = { skills: '', cover: '', emails: '', ats: '' };
+
+  // ── Load profile ──────────────────────────────────────────────────
+  async function loadProfile() {
+    try {
+      const res = await fetch('/profile');
+      if (!res.ok) return;
+      const data = await res.json();
+      const name = data.name || '';
+      if (!name) return;
+      profileName.textContent = name;
+      const parts = [];
+      if (data.title)    parts.push(data.title);
+      if (data.location) parts.push(data.location);
+      profileMeta.textContent = parts.join(' · ');
+      profileBar.classList.remove('hidden');
+    } catch (_) { /* no profile yet */ }
+  }
+
+  loadProfile();
+
+  // ── Tab switching ─────────────────────────────────────────────────
+  function activateTab(name) {
+    tabBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === name));
+    Object.entries(panels).forEach(([key, panel]) => {
+      panel.classList.toggle('active', key === name);
+    });
+  }
+
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => activateTab(btn.dataset.tab));
+  });
+
+  // ── Status pill ───────────────────────────────────────────────────
+  function setStatus(state, text) {
+    statusPill.className = state;
+    statusPill.textContent = text;
+  }
+
+  // ── Mark a tab as complete (green dot) ───────────────────────────
+  function markTabDone(name) {
+    const btn = document.querySelector(`.tab-btn[data-tab="${name}"]`);
+    if (btn && !btn.querySelector('.tab-dot')) {
+      const dot = document.createElement('span');
+      dot.className = 'tab-dot';
+      dot.setAttribute('aria-hidden', 'true');
+      btn.appendChild(dot);
+    }
+  }
+
+  // ── Render a task result into its panel ──────────────────────────
+  function renderTask(name, content) {
+    const panel = panels[name];
+    if (!panel) return;
+    outputContent[name] = content;
+    const ta = document.createElement('textarea');
+    ta.className = 'output-textarea';
+    ta.value = content;
+    ta.addEventListener('input', () => { outputContent[name] = ta.value; });
+    panel.innerHTML = '';
+    panel.appendChild(ta);
+    markTabDone(name);
+    activateTab(name);
+  }
+
+  // ── Download helpers ──────────────────────────────────────────────
+  async function downloadExport(format) {
+    const btn = format === 'pdf' ? document.getElementById('dl-pdf') : document.getElementById('dl-docx');
+    btn.disabled = true;
+    btn.textContent = 'Exporting...';
+    try {
+      const res = await fetch(`/export/${format}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: outputContent }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = `rja_application.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert(`Export failed: ${err.message}`);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = format.toUpperCase();
+    }
+  }
+
+  document.getElementById('dl-pdf').addEventListener('click',  () => downloadExport('pdf'));
+  document.getElementById('dl-docx').addEventListener('click', () => downloadExport('docx'));
+
+  // ── SSE stream consumer (fetch + ReadableStream) ─────────────────
+  async function runGeneration(jdText) {
+    const response = await fetch('/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ job_description: jdText }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const frames = buffer.split('\n\n');
+      buffer = frames.pop();
+
+      for (const frame of frames) {
+        if (!frame.trim()) continue;
+
+        let eventName = 'message';
+        let dataLine  = '';
+        for (const line of frame.split('\n')) {
+          if (line.startsWith('event: ')) eventName = line.slice(7).trim();
+          if (line.startsWith('data: '))  dataLine  = line.slice(6).trim();
+        }
+
+        if (eventName === 'status') {
+          if (dataLine === 'done') {
+            setStatus('done', 'Done');
+            downloadBar.classList.remove('hidden');
+          }
+        } else if (eventName === 'task') {
+          const { task, content } = JSON.parse(dataLine);
+          renderTask(task, content);
+        } else if (eventName === 'error') {
+          const { message } = JSON.parse(dataLine);
+          throw new Error(message);
+        }
+      }
+    }
+  }
+
+  // ── Generate button handler ───────────────────────────────────────
+  generateBtn.addEventListener('click', async () => {
+    const jdText = jdInput.value.trim();
+    if (!jdText) {
+      jdInput.focus();
+      return;
+    }
+
+    // Reset panels
+    Object.keys(panels).forEach(key => {
+      panels[key].innerHTML = '<p class="waiting-text">Waiting...</p>';
+      outputContent[key] = '';
+    });
+    tabBtns.forEach(btn => { const dot = btn.querySelector('.tab-dot'); if (dot) dot.remove(); });
+    downloadBar.classList.add('hidden');
+    activateTab('skills');
+
+    jdInput.disabled = true;
+    generateBtn.disabled = true;
+    generateBtn.textContent = 'Generating...';
+    setStatus('running', 'Generating...');
+
+    try {
+      await runGeneration(jdText);
+    } catch (err) {
+      console.error('Generation error:', err);
+      setStatus('error', `Error: ${err.message}`);
+    } finally {
+      jdInput.disabled = false;
+      generateBtn.disabled = false;
+      generateBtn.textContent = 'Generate Application';
+      if (statusPill.className === 'running') setStatus('ready', 'Ready');
+    }
+  });
+</script>
+
+</body>
+</html>

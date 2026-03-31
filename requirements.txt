@@ -53,6 +53,7 @@ streamlit==1.51.0
 # Export / docs
 python-docx==1.2.0
 fpdf==1.7.2
+reportlab>=4.0.0
 
 # FastAPI backend (Phase 1 API — active)
 fastapi>=0.111.0
