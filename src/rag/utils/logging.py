@@ -2,20 +2,51 @@
 
 from __future__ import annotations
 
+import json
 import logging
 from contextlib import contextmanager
 from contextvars import ContextVar
+from datetime import datetime, timezone
 from functools import wraps
 from pathlib import Path
 import threading
 from time import perf_counter
-from typing import Any, Callable, Iterator, Mapping, TypeVar
+from typing import Any, Callable, Iterator, Mapping, TypeVar, TypedDict
 
 logger = logging.getLogger("rag")
+logger.info(
+    "CURSOR_ACTION: Modifying %s for PerformanceLog schema, log_performance_json, and JSONL performance log",
+    __file__,
+)
 
 F = TypeVar("F", bound=Callable[..., Any])
 _REQUEST_ID: ContextVar[str] = ContextVar("request_id", default="-")
 _LOG_PATH = Path(__file__).resolve().parents[3] / "logs" / "runtime.log"
+_PERFORMANCE_LOG_PATH = Path(__file__).resolve().parents[3] / "logs" / "performance.json"
+_performance_json_lock = threading.Lock()
+
+
+class PerformanceLog(TypedDict):
+    """JSON schema for lines written to ``logs/performance.json`` (JSON Lines)."""
+
+    timestamp: str
+    task_name: str
+    stage: str
+    ttft_ms: float | None
+    total_ms: float
+    status: str
+
+
+def log_performance_json(data: dict[str, Any]) -> None:
+    """Append one JSON object per line to ``logs/performance.json`` (thread-safe)."""
+    line_obj = dict(data)
+    if "timestamp" not in line_obj:
+        line_obj["timestamp"] = datetime.now(timezone.utc).isoformat()
+    _PERFORMANCE_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+    line = json.dumps(line_obj, ensure_ascii=False) + "\n"
+    with _performance_json_lock:
+        with _PERFORMANCE_LOG_PATH.open("a", encoding="utf-8") as fh:
+            fh.write(line)
 _COLOR = {
     "OK": "\033[92m",
     "WARN": "\033[93m",
@@ -61,9 +92,9 @@ def _format_metadata(metadata: Mapping[str, Any] | None) -> str:
 
 
 def _status_for(elapsed_ms: float, success: bool) -> str:
-    if not success or elapsed_ms > 1000:
+    if not success:
         return "CHECK RUNTIME ERR"
-    if elapsed_ms > 100:
+    if elapsed_ms > 120_000:
         return "WARN"
     return "OK"
 
@@ -217,4 +248,6 @@ __all__ = [
     "timed_block",
     "set_request_id",
     "get_request_id",
+    "PerformanceLog",
+    "log_performance_json",
 ]

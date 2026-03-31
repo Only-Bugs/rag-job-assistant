@@ -5,13 +5,14 @@ High-level generation helpers and the overall application workflow.
 
 from __future__ import annotations
 
-from concurrent.futures import ThreadPoolExecutor
+import logging
+
+import time
 from datetime import datetime
 from time import perf_counter
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, Iterator, Optional
 
-from rag.config.settings import LLM_MAX_TOKENS, LLM_PARALLEL_WORKERS, OUT_DIR
-from rag.utils.resources import effective_parallel_workers
+from rag.config.settings import LLM_MAX_TOKENS, OUT_DIR
 from rag.profile import load_profile
 from rag.utils.exceptions import ProfileNotConfiguredError
 from rag.ingestion.ingest import index_profile_docs, index_jd_text
@@ -19,8 +20,8 @@ from rag.retrieval.retriever import retrieve, format_docs
 from rag.ingestion.preprocessing.keywords import extract_keywords, compute_alignment
 from rag.generation.context_builder import build_context, build_task_context
 from rag.models.llm.ollama_client import run_prompt
-from rag.utils.logging import get_request_id, set_request_id, timed
-from ui.components.logboard import GEN_PARALLEL_KEYS, PipelineProgress, tracked_block
+from rag.utils.logging import timed
+from ui.components.logboard import PipelineProgress, tracked_block
 
 from rag.generation.prompts.templates import (
     SYSTEM_SKILLS,
@@ -29,40 +30,72 @@ from rag.generation.prompts.templates import (
     SYSTEM_ATS,
 )
 
+logger = logging.getLogger("rag")
+logger.info(
+    "CURSOR_ACTION: Modifying %s for per-task run_prompt names (parallel straggler identification)",
+    __file__,
+)
+
 
 @timed
 def gen_skills(context: str) -> str:
-    return run_prompt(SYSTEM_SKILLS, context, max_tokens=int(LLM_MAX_TOKENS.get("skills", 450)))
+    return run_prompt(
+        SYSTEM_SKILLS,
+        context,
+        max_tokens=int(LLM_MAX_TOKENS.get("skills", 450)),
+        task_name="gen_skills",
+        stage="generation",
+    )
 
 
 @timed
 def gen_cover(context: str) -> str:
-    return run_prompt(SYSTEM_COVER, context, max_tokens=int(LLM_MAX_TOKENS.get("cover", 650)))
+    return run_prompt(
+        SYSTEM_COVER,
+        context,
+        max_tokens=int(LLM_MAX_TOKENS.get("cover", 650)),
+        task_name="gen_cover",
+        stage="generation",
+    )
 
 
 @timed
 def gen_emails(context: str) -> str:
-    return run_prompt(SYSTEM_EMAILS, context, max_tokens=int(LLM_MAX_TOKENS.get("emails", 700)))
+    return run_prompt(
+        SYSTEM_EMAILS,
+        context,
+        max_tokens=int(LLM_MAX_TOKENS.get("emails", 700)),
+        task_name="gen_emails",
+        stage="generation",
+    )
 
 
 @timed
 def gen_ats(context: str) -> str:
-    return run_prompt(SYSTEM_ATS, context, max_tokens=int(LLM_MAX_TOKENS.get("ats", 280)))
+    return run_prompt(
+        SYSTEM_ATS,
+        context,
+        max_tokens=int(LLM_MAX_TOKENS.get("ats", 280)),
+        task_name="gen_ats",
+        stage="generation",
+    )
 
 
-@timed
 def generate_application_package(
     jd_text: str,
     save_to_disk: bool = False,
     progress: Optional[PipelineProgress] = None,
-) -> Dict[str, Any]:
+) -> Iterator[tuple[str, Any]]:
     """
-    Full workflow:
+    Full workflow — generator that yields (task_name, value) tuples:
+      ("skills", str), ("cover", str), ("emails", str), ("ats", str),
+      ("_meta", dict)   <- context, keywords, alignment fields
+
     1. Index profile docs and this JD.
     2. Retrieve focused snippets.
     3. Extract skills/keywords + compute alignment.
     4. Build the consolidated context block.
-    5. Generate skills, cover letter, emails, ATS summary.
+    5. Yield each generation task result as it completes.
     """
     profile = load_profile()
     if not profile:
@@ -73,7 +106,7 @@ def generate_application_package(
     if progress is not None:
         progress.pipeline_start()
     try:
-        return _generate_application_package_body(
+        yield from _generate_application_package_body(
             jd_text, save_to_disk, progress, profile
         )
     finally:
@@ -86,7 +119,7 @@ def _generate_application_package_body(
     save_to_disk: bool,
     progress: Optional[PipelineProgress],
     profile: Dict[str, Any],
-) -> Dict[str, Any]:
+) -> Iterator[tuple[str, Any]]:
     with tracked_block("index_profile_docs", progress):
         index_profile_docs()
     with tracked_block("index_jd_text", progress):
@@ -133,50 +166,50 @@ def _generate_application_package_body(
     )
     task_ctx = {name: build_task_context(name, *_ctx_args) for name in ("skills", "cover", "emails", "ats")}
 
-    parallel_workers_effective = effective_parallel_workers(int(LLM_PARALLEL_WORKERS))
+    def _is_connection_error(exc: Exception) -> bool:
+        text = f"{type(exc).__name__} {exc}".lower()
+        return any(kw in text for kw in (
+            "disconnected", "connectionerror", "connect error",
+            "remoteprotocol", "timeout",
+        ))
 
-    meta = {
-        "workers": parallel_workers_effective,
-        "workers_configured": int(LLM_PARALLEL_WORKERS),
-    }
-
-    def _run_generation_tasks() -> tuple[str, str, str, str]:
-        workers = parallel_workers_effective
-        request_id = get_request_id()
-
-        def _tracked_gen(gen_key: str, fn: Callable[[str], str], context: str) -> str:
-            set_request_id(request_id)
-            t0 = perf_counter()
-            try:
-                return fn(context)
-            except Exception:
-                if progress is not None:
-                    progress.finish(gen_key, "error", (perf_counter() - t0) * 1000)
-                raise
+    def _tracked_gen(gen_key: str, fn: Callable[[str], str], context: str) -> str:
+        if progress is not None:
+            progress.start(gen_key)
+        t0 = perf_counter()
+        try:
+            result = fn(context)
+        except Exception as exc:
+            if _is_connection_error(exc):
+                time.sleep(2)
+                try:
+                    result = fn(context)
+                except Exception as retry_exc:
+                    if progress is not None:
+                        progress.finish(gen_key, "error", (perf_counter() - t0) * 1000)
+                    raise RuntimeError(
+                        f"[{gen_key}] Ollama connection error after retry: {retry_exc}"
+                    ) from retry_exc
             else:
                 if progress is not None:
-                    progress.finish(gen_key, "ok", (perf_counter() - t0) * 1000)
-
+                    progress.finish(gen_key, "error", (perf_counter() - t0) * 1000)
+                raise RuntimeError(f"[{gen_key}] failed: {exc}") from exc
         if progress is not None:
-            for gk in GEN_PARALLEL_KEYS:
-                progress.start(gk)
+            progress.finish(gen_key, "ok", (perf_counter() - t0) * 1000)
+        return result
 
-        with ThreadPoolExecutor(max_workers=workers) as executor:
-            futures = {
-                "skills": executor.submit(_tracked_gen, "gen_skills", gen_skills, task_ctx["skills"]),
-                "cover": executor.submit(_tracked_gen, "gen_cover", gen_cover, task_ctx["cover"]),
-                "emails": executor.submit(_tracked_gen, "gen_emails", gen_emails, task_ctx["emails"]),
-                "ats": executor.submit(_tracked_gen, "gen_ats", gen_ats, task_ctx["ats"]),
-            }
-            return (
-                futures["skills"].result(),
-                futures["cover"].result(),
-                futures["emails"].result(),
-                futures["ats"].result(),
-            )
-
-    with tracked_block("generation_parallel_bundle", progress, metadata=meta):
-        skills_out, cover_out, emails_out, ats_out = _run_generation_tasks()
+    # Generation: yield each result as it completes so the UI can render
+    # progressively. tracked_block("generation_sequential") times the full
+    # span from gen_skills start to gen_ats end.
+    with tracked_block("generation_sequential", progress):
+        skills_out = _tracked_gen("gen_skills", gen_skills, task_ctx["skills"])
+        yield ("skills", skills_out)
+        cover_out = _tracked_gen("gen_cover", gen_cover, task_ctx["cover"])
+        yield ("cover", cover_out)
+        emails_out = _tracked_gen("gen_emails", gen_emails, task_ctx["emails"])
+        yield ("emails", emails_out)
+        ats_out = _tracked_gen("gen_ats", gen_ats, task_ctx["ats"])
+        yield ("ats", ats_out)
 
     if save_to_disk:
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -185,19 +218,15 @@ def _generate_application_package_body(
         (OUT_DIR / f"{ts}_emails.md").write_text(emails_out, encoding="utf-8")
         (OUT_DIR / f"{ts}_ats_summary.md").write_text(ats_out, encoding="utf-8")
 
-    return {
+    yield ("_meta", {
         "context": ctx,
-        "skills": skills_out,
-        "cover": cover_out,
-        "emails": emails_out,
-        "ats": ats_out,
         "jd_hard": jd_hard,
         "jd_soft": jd_soft,
         "keywords": keywords,
         "have_hard": have_hard,
         "have_soft": have_soft,
         "gaps": gaps,
-    }
+    })
 
 
 # Backwards-compatible alias for legacy imports

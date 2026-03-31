@@ -13,8 +13,10 @@ See: https://github.com/ollama/ollama/blob/main/docs/faq.md
 
 from __future__ import annotations
 
+import logging
 import os
 from threading import Lock
+from time import perf_counter
 from typing import Optional
 
 from langchain_ollama import ChatOllama
@@ -22,6 +24,13 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
 from rag.config.settings import LLM_MAX_TOKENS, LLM_TEMPERATURE, MODEL_NAME, OLLAMA_HOST
+from rag.utils.logging import log_call, log_performance_json
+
+logger = logging.getLogger("rag")
+logger.info(
+    "CURSOR_ACTION: Modifying %s for TTFT/total latency and performance JSON logging",
+    __file__,
+)
 
 LLM_MODEL = os.getenv("LLM_MODEL", MODEL_NAME)
 
@@ -44,7 +53,14 @@ def _get_shared_chat_ollama() -> ChatOllama:
         return _shared_llm
 
 
-def run_prompt(system_prompt: str, user_text: str, max_tokens: int | None = None) -> str:
+def run_prompt(
+    system_prompt: str,
+    user_text: str,
+    max_tokens: int | None = None,
+    *,
+    task_name: str = "llm",
+    stage: str = "generation",
+) -> str:
     """Build a chat prompt, stream tokens from Ollama, and return the full reply."""
     prompt = ChatPromptTemplate.from_messages(
         [
@@ -56,10 +72,31 @@ def run_prompt(system_prompt: str, user_text: str, max_tokens: int | None = None
     llm = _get_shared_chat_ollama().bind(num_predict=token_limit)
     chain = prompt | llm | parser
     parts: list[str] = []
-    for chunk in chain.stream({"input": user_text}):
-        if chunk:
-            parts.append(chunk if isinstance(chunk, str) else str(chunk))
-    return "".join(parts)
+    t0 = perf_counter()
+    ttft_ms: float | None = None
+    status = "ok"
+    try:
+        for chunk in chain.stream({"input": user_text}):
+            if ttft_ms is None:
+                ttft_ms = (perf_counter() - t0) * 1000
+                log_call(f"{task_name}:ttft", ttft_ms, success=True)
+            if chunk:
+                parts.append(chunk if isinstance(chunk, str) else str(chunk))
+        return "".join(parts)
+    except Exception:
+        status = "error"
+        raise
+    finally:
+        total_ms = (perf_counter() - t0) * 1000
+        log_performance_json(
+            {
+                "task_name": task_name,
+                "stage": stage,
+                "ttft_ms": ttft_ms,
+                "total_ms": total_ms,
+                "status": status,
+            }
+        )
 
 
 __all__ = ["run_prompt"]

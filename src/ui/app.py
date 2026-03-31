@@ -270,22 +270,58 @@ if generate_btn:
         log_run_start("generate_application_package", args_preview=jd_text[:80])
 
         progress = PipelineProgress()
-        result_holder: dict = {"result": None, "error": None}
+        result_holder: dict = {
+            "result": None, "error": None,
+            "skills": None, "cover": None, "emails": None, "ats": None, "_meta": None,
+        }
 
         def _run_pipeline() -> None:
             try:
-                result_holder["result"] = generate_application_package(
+                for task_name, value in generate_application_package(
                     jd_text, save_to_disk=False, progress=progress
-                )
+                ):
+                    result_holder[task_name] = value
+                meta = result_holder.get("_meta") or {}
+                result_holder["result"] = {
+                    "skills": result_holder.get("skills") or "",
+                    "cover": result_holder.get("cover") or "",
+                    "emails": result_holder.get("emails") or "",
+                    "ats": result_holder.get("ats") or "",
+                    **meta,
+                }
             except Exception as exc:  # noqa: BLE001 — surface in UI
                 result_holder["error"] = exc
 
         worker = threading.Thread(target=_run_pipeline, daemon=True)
         worker.start()
         hist = st.session_state.run_history
-        _, _toast_col = st.columns([3, 1])
+
+        # Layout: live preview in the main column, toast in the right column.
+        _main_col, _toast_col = st.columns([3, 1])
+        _LIVE_LABELS = {
+            "skills": "Skills & Keywords",
+            "cover": "Cover Letter",
+            "emails": "Email Templates",
+            "ats": "ATS Summary",
+        }
+        live_placeholders: dict = {}
+        with _main_col:
+            for _key, _label in _LIVE_LABELS.items():
+                live_placeholders[_key] = st.empty()
+
         with _toast_col:
             log_placeholder = st.empty()
+
+        _shown: set[str] = set()
+
+        def _update_live_previews() -> None:
+            for _key in ("skills", "cover", "emails", "ats"):
+                if _key not in _shown and result_holder.get(_key) is not None:
+                    live_placeholders[_key].markdown(
+                        f"**{_LIVE_LABELS[_key]}**\n\n{result_holder[_key]}"
+                    )
+                    _shown.add(_key)
+
         while worker.is_alive():
             with _toast_col:
                 with log_placeholder.container():
@@ -295,7 +331,12 @@ if generate_btn:
                         show_previous_runs=False,
                         previous_runs_open=bool(st.session_state.rag_prev_runs_open),
                     )
+            _update_live_previews()
             time.sleep(0.4)
+
+        # Catch anything that completed in the final slice before the loop exited.
+        _update_live_previews()
+
         with _toast_col:
             with log_placeholder.container():
                 render_progress_toast(
@@ -309,7 +350,15 @@ if generate_btn:
         if err is not None:
             run_elapsed_ms = (perf_counter() - run_start) * 1000
             log_run_end("generate_application_package", run_elapsed_ms, success=False, error=str(err))
-            st.error(f"Pipeline failed: {err}")
+            err_str = str(err)
+            if any(kw in err_str.lower() for kw in ("disconnected", "connection", "remoteprotocol", "timeout")):
+                st.error(
+                    f"Ollama connection error — is `ollama serve` running and the model loaded?\n\n"
+                    f"Run: `OLLAMA_KEEP_ALIVE=24h ollama serve`\n\n"
+                    f"Detail: {err_str}"
+                )
+            else:
+                st.error(f"Generation failed: {err_str}")
             traceback.print_exc()
             st.stop()
 
@@ -327,6 +376,11 @@ if generate_btn:
         )
         if len(rh) > 50:
             st.session_state.run_history = rh[-50:]
+
+        # Clear live preview placeholders — the full editable tabs section
+        # below will render the final content in the proper tab interface.
+        for _ph in live_placeholders.values():
+            _ph.empty()
 
         st.session_state.result = result
         st.session_state.skills_text = result["skills"]

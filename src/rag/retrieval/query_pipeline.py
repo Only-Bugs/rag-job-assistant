@@ -5,12 +5,20 @@ Utility for a lightweight RAG answer without full pipeline context.
 
 from __future__ import annotations
 
+import logging
+
 from rag.config.settings import TOP_K
 from rag.profile import load_profile
 from rag.utils.exceptions import ProfileNotConfiguredError
 from rag.vectorstore.chroma_instance import get_vectordb
 from rag.generation.prompts.templates import build_basic_system_prompt
 from rag.models.llm.ollama_client import run_prompt
+
+logger = logging.getLogger("rag")
+logger.info(
+    "CURSOR_ACTION: Modifying %s for run_prompt task_name/stage forwarding",
+    __file__,
+)
 
 
 def generate_answer(query: str, k: int = TOP_K) -> str:
@@ -48,7 +56,12 @@ Write a clear, professional answer tailored for {role_label} job applications.
 Avoid hallucinating technologies I don't know unless the user explicitly asks to learn them.
 """
 
-    return run_prompt("You are a helpful assistant.", prompt_text)
+    return run_prompt(
+        "You are a helpful assistant.",
+        prompt_text,
+        task_name="generate_answer",
+        stage="generation",
+    )
 
 
 __all__ = ["generate_answer"]

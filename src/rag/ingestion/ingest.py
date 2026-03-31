@@ -15,6 +15,7 @@ from langchain_community.document_loaders import PyPDFLoader, TextLoader
 
 from rag.config.settings import PROFILE_DOC_DIR, RAG_DIR
 from rag.ingestion.chunking.text_splitter import SPLITTER
+from rag.utils.logging import timed_block
 from rag.vectorstore.chroma_instance import get_vectordb
 
 logger = logging.getLogger("rag")
@@ -91,10 +92,13 @@ def index_profile_docs() -> int:
     except Exception:
         # Non-fatal: continue to avoid blocking generation on store-specific delete behavior.
         pass
-    docs = load_docs_from(PROFILE_DOC_DIR, "profile")
-    chunks = SPLITTER.split_documents(docs)
+    with timed_block("profile_load_docs"):
+        docs = load_docs_from(PROFILE_DOC_DIR, "profile")
+    with timed_block("profile_chunk"):
+        chunks = SPLITTER.split_documents(docs)
     if chunks:
-        vectordb.add_documents(chunks)
+        with timed_block("profile_embed_add"):
+            vectordb.add_documents(chunks)
     _save_profile_state()
     return len(chunks)
 
@@ -146,11 +150,14 @@ def index_jd_text(jd_text: str) -> int:
     except Exception:
         pass
 
-    docs = load_docs_from(RAG_DIR, "jd")
+    with timed_block("jd_load_docs"):
+        docs = load_docs_from(RAG_DIR, "jd")
     docs = [d for d in docs if "jd.txt" in d.metadata.get("source", "")]
-    chunks = SPLITTER.split_documents(docs)
+    with timed_block("jd_chunk"):
+        chunks = SPLITTER.split_documents(docs)
     if chunks:
-        vectordb.add_documents(chunks)
+        with timed_block("jd_embed_add"):
+            vectordb.add_documents(chunks)
     count = len(chunks)
     state_path.write_text(
         json.dumps({"jd_sha256": fp, "chunk_count": count}, indent=2),
