@@ -54,6 +54,8 @@ streamlit==1.51.0
 python-docx==1.2.0
 fpdf==1.7.2
 
-# Optional: FastAPI backend (only if you use it)
-fastapi==0.121.0
-uvicorn==0.38.0
+# FastAPI backend (Phase 1 API — active)
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+httpx>=0.27.0
+anyio>=4.0.0

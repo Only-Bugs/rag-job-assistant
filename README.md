@@ -1,142 +1,233 @@
-# 🧠 Job Application RAG Assistant
+# RJA — Resume & Job Application Assistant
 
-A **Retrieval-Augmented Generation (RAG)** system that helps you craft tailored **Key skills, cover letters, and email template** for AI/ML roles using your personal project documents and resumes as context.  
-Built with **LangChain**, **Ollama (Llama 3.2:3B)**, and **Streamlit** — this assistant runs entirely **locally**, no external API needed.
+> Local-first. Fully offline. No cloud. No subscriptions.
+> Paste a job description, get a tailored skills matrix, cover letter,
+> email variants, and ATS summary — generated entirely on your machine.
 
-## 🚀 Features
+---
 
-- 📂 **Document ingestion** – Upload and index your resumes, project summaries, and portfolios
-- 🔍 **Vector-based retrieval** – Context-aware search using **ChromaDB**
-- 🧩 **LLM-powered reasoning** – Uses **Llama 3.2 (3B)** via Ollama for smart, offline generation
-- 💬 **Interactive Q&A** – Ask job-specific questions and get personalized answers
-- 🖥️ **Streamlit interface** – Simple UI for interacting with your assistant
-- 📘 **Jupyter support** – Test, debug, or fine-tune responses directly in notebooks
+## What it does
 
-## 🧰 Tech Stack
+RJA takes your resume documents and a job description, runs them through
+a local RAG pipeline, and produces a complete application package:
 
-| Component     | Description                         |
-| ------------- | ----------------------------------- |
-| **Ollama**    | Local LLM runner (Llama 3.2:3B)     |
-| **LangChain** | RAG pipeline & prompt management    |
-| **ChromaDB**  | Vector database for semantic search |
-| **Streamlit** | Web UI for user interaction         |
-| **Python**    | Core logic and orchestration        |
-| **Jupyter**   | Experimentation & development       |
+| Output         | Description                                              |
+| -------------- | -------------------------------------------------------- |
+| Skills Matrix  | Hard and soft skills mapped directly to the JD           |
+| Cover Letter   | Tailored narrative built from your actual experience     |
+| Email Variants | Application email + follow-up template                   |
+| ATS Summary    | Keyword-optimised summary for applicant tracking systems |
 
-## 📁 Directory Structure
+Everything runs on-device. Your documents never leave your machine.
 
-```
-project_root/
-│
-├── data/
-│   ├── chroma_db/          # Vector database storage
-│   ├── sample/             # Sample documents
-│   └── job_rag/
-│       └── profile_docs/   # User resumes, project files
-│
-├── notebooks/              # Jupyter notebooks for testing
-├── docs/                   # Architecture / design notes
-├── src/
-│   ├── rag/
-│   │   ├── config/         # settings + profile definitions
-│   │   ├── ingestion/      # loaders, chunking, preprocess, ingest orchestration
-│   │   ├── vectorstore/    # Chroma client + schemas
-│   │   ├── models/         # embedding + LLM clients
-│   │   ├── retrieval/      # retriever + query pipeline
-│   │   ├── generation/     # prompts + generator workflow
-│   │   ├── evaluation/     # (future) eval + metrics
-│   │   └── utils/          # text helpers, logging, etc.
-│   └── ui/                 # Streamlit interface (app.py)
-├── tests/
-├── requirements.txt
-├── README.md
-└── .gitignore
-```
+---
 
-## ⚙️ Setup Instructions
+## Tech stack
 
-### 1️⃣ Clone the repository
+| Component                      | What it does                              |
+| ------------------------------ | ----------------------------------------- |
+| FastAPI                        | REST API + SSE streaming backend          |
+| Ollama (qwen2.5:1.5b)          | Local LLM runner                          |
+| LangChain                      | RAG pipeline and prompt orchestration     |
+| ChromaDB                       | Local vector store for semantic retrieval |
+| HuggingFace (all-MiniLM-L6-v2) | Embedding model                           |
+| Python 3.10+                   | Core logic                                |
+
+---
+
+## Quick start
+
+### Prerequisites
+
+- Python 3.10+
+- Ollama installed — https://ollama.ai/download
+
+### 1. Clone and set up
 
 ```bash
-git clone https://github.com/sheikhmunim/rag-job-assistant.git
-cd job_application_rag
-```
-
-### 2️⃣ Create a virtual environment
-
-```bash
+git clone https://github.com/sheikhmunim/rja.git
+cd rja
 python -m venv venv
-source venv/bin/activate   # on Mac/Linux
-.\.venv\Scripts\activate   # on Windows
-```
-
-### 3️⃣ Install dependencies
-
-```bash
+source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 4️⃣ Install and start Ollama
+### 2. Pull the model
 
 ```bash
-# Download Ollama: https://ollama.ai/download
-ollama pull llama3.2:3b
-ollama serve
+ollama pull qwen2.5:1.5b
 ```
 
-### 5️⃣ Run the app
+### 3. Start Ollama (separate terminal)
 
 ```bash
-streamlit run src/ui/app.py
+OLLAMA_KEEP_ALIVE=24h ollama serve
 ```
 
-### 6️⃣ (Optional) Personalize your profile
+### 4. Start the API
 
-Use the in-app **Profile & Role Settings** panel (or edit `data/job_rag/profile_settings.json`) with your contact details, skills, and achievements so the generator can tailor the outputs.
+```bash
+uvicorn src.api.main:app --reload --port 8000
+```
 
-### 🔧 Optional: Runtime overrides
+### 5. Open the app
 
-Copy `.env.example` to `.env` and adjust values (e.g., `OLLAMA_HOST`, log level) without touching the codebase:
+```
+http://localhost:8000
+```
+
+---
+
+## Add your documents
+
+Drop your resume, portfolio, or project summaries into:
+
+```
+data/job_rag/profile_docs/
+```
+
+Supported: `.pdf` `.txt` `.md`
+
+The pipeline indexes them on first run automatically.
+
+---
+
+## Configuration
+
+Copy `.env.example` to `.env` to override defaults:
 
 ```bash
 cp .env.example .env
-# edit .env as needed
 ```
 
-## 🧩 Configuration Files
+Environment variables:
 
-- `src/rag/config/settings.yaml` – filesystem layout, chunking parameters, and retrieval defaults.
-- `src/rag/config/model_config.yaml` – default embedding + LLM model names and Ollama host.
-- `data/job_rag/profile_settings.json` – active persona data; edit via code or through the Streamlit **Profile & Role Settings** expander.
+| Variable      | Default                  | Description            |
+| ------------- | ------------------------ | ---------------------- |
+| `OLLAMA_HOST` | `http://localhost:11434` | Ollama server endpoint |
+| `LLM_MODEL`   | `qwen2.5:1.5b`           | Active model           |
+| `LOG_LEVEL`   | `INFO`                   | Logging verbosity      |
 
-## 🧩 Environment Variables
+Config files:
 
-| Variable      | Default                  | Description                  |
-| ------------- | ------------------------ | ---------------------------- |
-| `OLLAMA_HOST` | `http://localhost:11434` | Local Ollama server endpoint |
-| `MODEL_NAME`  | `llama3.2:3b`            | Model used for generation    |
-| `DATA_DIR`    | `./data/sample`          | Input data directory         |
-| `DB_DIR`      | `./data/chroma_db`       | Chroma database path         |
+- `src/rag/config/model_config.yaml` — model name, token limits, Ollama host
+- `src/rag/config/settings.yaml` — data paths, chunking parameters
+- `data/job_rag/profile_settings.json` — your profile (name, skills, experience)
 
-## 🧠 Example Queries
+---
 
-- “Generate a cover letter for a Machine Learning Engineer role at Canva.”
-- “Summarize my experience with ROS2 and PDDL planning.”
-- “Write a professional email to apply for an AI Engineer internship.”
+## API reference
 
-## 🧑‍💻 Development Notes
+### GET /health
 
-- Jupyter notebooks can be used to prototype and test RAG chains.
-- Streamlit is used for deployment-ready interactive UI.
-- All data stays local — **no cloud APIs required**.
+Returns API and Ollama status.
 
-## 🪪 License
+```json
+{
+  "status": "ok",
+  "model": "qwen2.5:1.5b",
+  "ollama_reachable": true
+}
+```
 
-This project is released under the **MIT License** — free to use and modify with attribution.
+### POST /generate
 
-## ✨ Author
+Streams the application package as server-sent events.
 
-**Sheikh Abdul Munim**
-Master of Artificial Intelligence, RMIT University  
-🔗 [LinkedIn](https://www.linkedin.com/in/sheikh-abdul-munim-b19391158/)  
-🔗 [GitHub](https://github.com/sheikhmunim)
+Request body:
+
+```json
+{
+  "job_description": "string"
+}
+```
+
+SSE event stream:
+
+```
+event: status  data: starting
+event: task    data: {"task": "skills", "content": "..."}
+event: task    data: {"task": "cover",  "content": "..."}
+event: task    data: {"task": "emails", "content": "..."}
+event: task    data: {"task": "ats",    "content": "..."}
+event: status  data: done
+```
+
+Test with curl:
+
+```bash
+curl -s http://localhost:8000/health | python -m json.tool
+```
+
+```bash
+curl -N -X POST http://localhost:8000/generate \
+  -H "Content-Type: application/json" \
+  -d '{"job_description": "Python engineer with RAG experience"}'
+```
+
+---
+
+## Project structure
+
+```
+project_root/
+├── src/
+│   ├── api/                  # FastAPI app (main.py, routes/, sse.py)
+│   ├── rag/                  # Pipeline (ingestion, retrieval, generation)
+│   │   ├── config/           # settings.yaml, model_config.yaml
+│   │   ├── ingestion/        # PDF/TXT/MD loaders, chunking, Chroma writes
+│   │   ├── vectorstore/      # Chroma singleton
+│   │   ├── models/           # Embedding + Ollama LLM clients
+│   │   ├── retrieval/        # Retriever + query pipeline
+│   │   ├── generation/       # Prompts + sequential generator
+│   │   └── utils/            # Logging, text helpers, exceptions
+│   ├── frontend/             # Static UI (index.html)
+│   └── ui/                   # Legacy Streamlit app (being retired)
+├── data/
+│   └── job_rag/
+│       └── profile_docs/     # Your resume files — read-only, never deleted
+├── scripts/                  # Benchmarking tools
+├── docs/                     # Architecture and performance notes
+├── old.backup/               # Archived dead files
+├── requirements.txt
+└── .env.example
+```
+
+---
+
+## Roadmap
+
+### In progress
+
+- [ ] Custom frontend (replacing Streamlit) — Phase 2
+- [ ] Docker setup with Ollama sidecar — Phase 3
+- [ ] GitHub Actions: build → ECR push → Discord notify — Phase 4
+- [ ] Terraform deployment to AWS EC2 — Phase 5
+
+### Planned
+
+- [ ] Profile management UI (currently JSON file only)
+- [ ] Multi-profile support
+- [ ] Real test coverage (`tests/` is currently empty)
+- [ ] Streaming token-level output (currently streams per task)
+- [ ] Support for more document formats (DOCX, HTML)
+
+### Completed
+
+- [x] Sequential generation (replaced ThreadPoolExecutor — 54% faster)
+- [x] Model swap llama3.2:3b → qwen2.5:1.5b (2x faster per task)
+- [x] SSE streaming backend via FastAPI
+- [x] Performance benchmarking scripts
+- [x] Sub-stage timing instrumentation
+
+---
+
+## Hard rules (for contributors)
+
+- No external LLM API calls — fully local and offline
+- Chroma telemetry must stay disabled (`anonymized_telemetry=False`)
+- Python 3.10 minimum
+
+## License
+
+MIT — free to use and modify with attribution.

@@ -14,3 +14,11 @@
 {"task_name": "gen_cover", "stage": "generation", "ttft_ms": 4388.301457976922, "total_ms": 21400.48662497429, "status": "ok", "timestamp": "2026-03-31T02:14:00.097864+00:00"}
 {"task_name": "gen_emails", "stage": "generation", "ttft_ms": 3829.3014579976443, "total_ms": 14419.82970800018, "status": "ok", "timestamp": "2026-03-31T02:14:14.519818+00:00"}
 {"task_name": "gen_ats", "stage": "generation", "ttft_ms": 1299.1056249884423, "total_ms": 8375.801291986136, "status": "ok", "timestamp": "2026-03-31T02:14:22.898314+00:00"}
+{"task_name": "gen_skills", "stage": "generation", "ttft_ms": 2915.8518339972943, "total_ms": 13592.021999997087, "status": "ok", "timestamp": "2026-03-31T03:33:49.402604+00:00"}
+{"task_name": "gen_cover", "stage": "generation", "ttft_ms": 662.1880839811638, "total_ms": 7417.343833978521, "status": "ok", "timestamp": "2026-03-31T03:33:56.821977+00:00"}
+{"task_name": "gen_emails", "stage": "generation", "ttft_ms": 652.372499986086, "total_ms": 8071.451124997111, "status": "ok", "timestamp": "2026-03-31T03:34:04.894659+00:00"}
+{"task_name": "gen_ats", "stage": "generation", "ttft_ms": 443.8175830000546, "total_ms": 3744.4582500029355, "status": "ok", "timestamp": "2026-03-31T03:34:08.640570+00:00"}
+{"task_name": "gen_skills", "stage": "generation", "ttft_ms": 3780.6096249842085, "total_ms": 8666.631458007032, "status": "ok", "timestamp": "2026-03-31T03:56:54.497951+00:00"}
+{"task_name": "gen_cover", "stage": "generation", "ttft_ms": 679.4579160050489, "total_ms": 10400.558833003743, "status": "ok", "timestamp": "2026-03-31T03:57:04.900250+00:00"}
+{"task_name": "gen_emails", "stage": "generation", "ttft_ms": 669.967167021241, "total_ms": 8532.521625020308, "status": "ok", "timestamp": "2026-03-31T03:57:13.439326+00:00"}
+{"task_name": "gen_ats", "stage": "generation", "ttft_ms": 480.4659170040395, "total_ms": 4120.866625016788, "status": "ok", "timestamp": "2026-03-31T03:57:17.567351+00:00"}
