@@ -23,11 +23,13 @@ async def health() -> dict:
             "Model is running on CPU — Metal GPU offload failed or not available. "
             "Expect 10-100x slower inference. Restart Ollama with more free RAM to recover."
         )
+    model_ready = compute in ("metal", "cpu")
     return {
         "status": "ok" if ollama_reachable else "degraded",
         "model": MODEL_NAME,
         "ollama_reachable": ollama_reachable,
         "compute": compute,
+        "model_ready": model_ready,
     }
 
 

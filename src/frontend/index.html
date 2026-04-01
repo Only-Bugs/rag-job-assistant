@@ -219,6 +219,27 @@
       cursor: not-allowed;
     }
 
+    /* Model-not-ready state — amber, pulsing dot */
+    #generate-btn.model-loading {
+      background: #2a2a2a;
+      border: 1px solid #555;
+      color: var(--muted);
+      cursor: not-allowed;
+      opacity: 1;
+    }
+
+    #generate-btn.model-loading::before {
+      content: '';
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      background: #f59e0b;
+      border-radius: 50%;
+      margin-right: 8px;
+      vertical-align: middle;
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+
     /* ── Tab bar ─────────────────────────────────────────────────── */
     .tab-bar {
       display: flex;
@@ -490,6 +511,45 @@
 
   loadUser();
 
+  // ── Model readiness polling ───────────────────────────────────────
+  // Disable the generate button until /health reports model_ready=true.
+  // This prevents users from submitting a job while Ollama is still loading
+  // weights into memory (which causes silent 30-90s delays with no feedback).
+  let _modelReady = false;
+  let _modelPollInterval = null;
+
+  function setModelLoading() {
+    generateBtn.disabled = true;
+    generateBtn.classList.add('model-loading');
+    generateBtn.textContent = 'Loading model — not ready yet';
+  }
+
+  function setModelReady() {
+    _modelReady = true;
+    generateBtn.disabled = false;
+    generateBtn.classList.remove('model-loading');
+    generateBtn.textContent = 'Generate Application';
+    setStatus('ready', 'Ready');
+    if (_modelPollInterval) {
+      clearInterval(_modelPollInterval);
+      _modelPollInterval = null;
+    }
+  }
+
+  async function checkModelReady() {
+    try {
+      const res = await fetch('/health');
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.model_ready) setModelReady();
+    } catch (_) { /* API not up yet */ }
+  }
+
+  // Check immediately on load, then poll every 3s until ready
+  setModelLoading();
+  checkModelReady();
+  _modelPollInterval = setInterval(checkModelReady, 3000);
+
   // ── Tab switching ─────────────────────────────────────────────────
   function activateTab(name) {
     tabBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === name));
@@ -618,6 +678,7 @@
 
   // ── Generate button handler ───────────────────────────────────────
   generateBtn.addEventListener('click', async () => {
+    if (!_modelReady) return;          // guard — button disabled, but be safe
     const jdText = jdInput.value.trim();
     if (!jdText) {
       jdInput.focus();

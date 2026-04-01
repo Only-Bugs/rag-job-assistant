@@ -46,6 +46,38 @@ wait_and_spin() {
     return 0
 }
 
+wait_model_ready() {
+    # Fire a tiny warm-up prompt so Ollama loads the model into memory.
+    # Spins until /health reports model_ready=true (compute = metal|cpu).
+    local model=$1 timeout_s=${2:-120}
+    local -a f=('⣾' '⣽' '⣻' '⢿' '⡿' '⣟' '⣯' '⣷')
+    local i=0 ticks=0 limit=$(( timeout_s * 10 ))
+
+    # Kick off a minimal inference in the background — forces Ollama to load weights.
+    curl -sf -X POST http://localhost:11434/api/generate \
+        -H "Content-Type: application/json" \
+        -d "{\"model\":\"${model}\",\"prompt\":\"hi\",\"stream\":false}" \
+        >/dev/null 2>&1 &
+    local warmup_pid=$!
+
+    while true; do
+        local ready
+        ready="$(curl -sf http://localhost:8000/health 2>/dev/null \
+            | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('model_ready','false'))" 2>/dev/null \
+            || echo "false")"
+        [[ "$ready" == "True" || "$ready" == "true" ]] && printf "\r%70s\r" "" && return 0
+        printf "\r  ${C}${f[$i]}${RST}  ${DIM}Loading model into compute memory...${RST} "
+        i=$(( (i + 1) % 8 ))
+        sleep 0.1
+        ticks=$(( ticks + 1 ))
+        if [[ $ticks -ge $limit ]]; then
+            printf "\r%70s\r" ""
+            kill "$warmup_pid" 2>/dev/null || true
+            return 1
+        fi
+    done
+}
+
 json_field() {
     # json_field <url> <key>
     curl -sf "$1" 2>/dev/null \
@@ -162,18 +194,28 @@ else
 fi
 sleep 0.1
 
-# ── Model / compute ───────────────────────────────────────────────────────────
-COMPUTE="$(json_field http://localhost:8000/health compute)"
+# ── Model warm-up ─────────────────────────────────────────────────────────────
 MODEL_LABEL="$(json_field http://localhost:8000/health model)"
+COMPUTE="$(json_field http://localhost:8000/health compute)"
+
+if [[ "$COMPUTE" == "not_loaded" ]]; then
+    # Model is not in memory — fire a warm-up inference and wait.
+    # This ensures the browser opens to a ready UI, not a "Loading model" spinner.
+    t_warm_start=$SECONDS
+    if wait_model_ready "$MODEL_LABEL" 120; then
+        t_warm=$(( SECONDS - t_warm_start ))
+        COMPUTE="$(json_field http://localhost:8000/health compute)"
+        step "$TICK" "model" "${DIM}${MODEL_LABEL}${RST}  ·  warmed in ${t_warm}s  ·  compute: ${COMPUTE}"
+    else
+        step "$WARN" "model" "${Y}warm-up timed out${RST}  ${DIM}UI will poll until ready${RST}"
+    fi
+else
+    step "$TICK" "model" "${DIM}${MODEL_LABEL}${RST}  ·  already loaded  ·  compute: ${COMPUTE}"
+fi
 
 case "$COMPUTE" in
-    metal)       COMPUTE_TAG="${G}Metal GPU${RST}" ;;
-    cpu)         COMPUTE_TAG="${Y}CPU only  ⚠ slow inference — free RAM and restart Ollama${RST}" ;;
-    not_loaded)  COMPUTE_TAG="${DIM}model not yet loaded into Ollama${RST}" ;;
-    *)           COMPUTE_TAG="${DIM}${COMPUTE}${RST}" ;;
+    cpu) printf "  ${Y}  ⚠ CPU-only — Metal GPU offload failed. Free RAM and restart Ollama for faster inference.${RST}\n" ;;
 esac
-
-step "$DOT" "model" "${DIM}${MODEL_LABEL}${RST}  ·  compute: ${COMPUTE_TAG}"
 printf "\n"
 
 # ═══════════════════════════════════════════════════════════════════════════════
