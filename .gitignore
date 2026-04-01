@@ -29,6 +29,7 @@ data/users/
 *.md
 !README.md        # keep public README
 !requirements.txt  # keep requirements file
+!docs/*.md        # keep all docs/ markdown files
 
 # --- Environment / Keys ---
 .env
