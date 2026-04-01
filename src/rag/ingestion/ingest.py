@@ -41,13 +41,13 @@ def load_docs_from(folder: Path, doc_type: str):
     return docs
 
 
-def _profile_state_path() -> Path:
-    return RAG_DIR / ".profile_index_state.json"
+def _profile_state_path(rag_dir: Path) -> Path:
+    return rag_dir / ".profile_index_state.json"
 
 
-def _profile_fingerprint() -> dict[str, float | int]:
+def _profile_fingerprint(profile_doc_dir: Path) -> dict[str, float | int]:
     fingerprint: dict[str, float | int] = {}
-    for path in sorted(PROFILE_DOC_DIR.glob("*")):
+    for path in sorted(profile_doc_dir.glob("*")):
         if path.suffix.lower() not in {".pdf", ".txt", ".md"}:
             continue
         stat = path.stat()
@@ -56,9 +56,9 @@ def _profile_fingerprint() -> dict[str, float | int]:
     return fingerprint
 
 
-def _profile_changed() -> bool:
-    state_path = _profile_state_path()
-    current = _profile_fingerprint()
+def _profile_changed(profile_doc_dir: Path, rag_dir: Path) -> bool:
+    state_path = _profile_state_path(rag_dir)
+    current = _profile_fingerprint(profile_doc_dir)
     if not state_path.exists():
         return True
     try:
@@ -68,47 +68,66 @@ def _profile_changed() -> bool:
     return previous != current
 
 
-def _save_profile_state() -> None:
-    state_path = _profile_state_path()
-    state_path.write_text(json.dumps(_profile_fingerprint(), indent=2), encoding="utf-8")
+def _save_profile_state(profile_doc_dir: Path, rag_dir: Path) -> None:
+    state_path = _profile_state_path(rag_dir)
+    state_path.write_text(
+        json.dumps(_profile_fingerprint(profile_doc_dir), indent=2), encoding="utf-8"
+    )
 
 
-def _jd_state_path() -> Path:
-    return RAG_DIR / ".jd_index_state.json"
+def _jd_state_path(rag_dir: Path) -> Path:
+    return rag_dir / ".jd_index_state.json"
 
 
 def _jd_text_fingerprint(jd_text: str) -> str:
     return hashlib.sha256(_normalize_jd_text(jd_text).encode("utf-8")).hexdigest()
 
 
-def index_profile_docs() -> int:
-    """Index persistent profile documents (CVs, summaries)."""
-    if not _profile_changed():
+def index_profile_docs(user_data_dir: Path | None = None) -> int:
+    """Index persistent profile documents (CVs, summaries).
+
+    Args:
+        user_data_dir: Per-user data root (e.g. ``data/users/dev_user``).
+                       Defaults to the legacy global paths when None.
+    """
+    profile_doc_dir = (user_data_dir / "profile_docs") if user_data_dir else PROFILE_DOC_DIR
+    rag_dir = user_data_dir if user_data_dir else RAG_DIR
+    db_path = (user_data_dir / "chroma_db") if user_data_dir else None
+
+    if not _profile_changed(profile_doc_dir, rag_dir):
         return 0
 
-    vectordb = get_vectordb()
+    vectordb = get_vectordb(db_path)
     try:
         vectordb.delete(where={"doc_type": "profile"})
     except Exception:
         # Non-fatal: continue to avoid blocking generation on store-specific delete behavior.
         pass
     with timed_block("profile_load_docs"):
-        docs = load_docs_from(PROFILE_DOC_DIR, "profile")
+        docs = load_docs_from(profile_doc_dir, "profile")
     with timed_block("profile_chunk"):
         chunks = SPLITTER.split_documents(docs)
     if chunks:
         with timed_block("profile_embed_add"):
             vectordb.add_documents(chunks)
-    _save_profile_state()
+    _save_profile_state(profile_doc_dir, rag_dir)
     return len(chunks)
 
 
-def index_jd_text(jd_text: str) -> int:
-    """Index the current job description as a temporary doc."""
-    tmp = RAG_DIR / "jd.txt"
+def index_jd_text(jd_text: str, user_data_dir: Path | None = None) -> int:
+    """Index the current job description as a temporary doc.
+
+    Args:
+        jd_text: Raw job description text.
+        user_data_dir: Per-user data root. Defaults to legacy global paths when None.
+    """
+    rag_dir = user_data_dir if user_data_dir else RAG_DIR
+    db_path = (user_data_dir / "chroma_db") if user_data_dir else None
+
+    tmp = rag_dir / "jd.txt"
     jd_norm = _normalize_jd_text(jd_text)
     fp = _jd_text_fingerprint(jd_text)
-    state_path = _jd_state_path()
+    state_path = _jd_state_path(rag_dir)
 
     previous: dict | None = None
     if state_path.exists():
@@ -144,14 +163,14 @@ def index_jd_text(jd_text: str) -> int:
 
     tmp.write_text(jd_norm, encoding="utf-8")
 
-    vectordb = get_vectordb()
+    vectordb = get_vectordb(db_path)
     try:
         vectordb.delete(where={"doc_type": "jd"})
     except Exception:
         pass
 
     with timed_block("jd_load_docs"):
-        docs = load_docs_from(RAG_DIR, "jd")
+        docs = load_docs_from(rag_dir, "jd")
     docs = [d for d in docs if "jd.txt" in d.metadata.get("source", "")]
     with timed_block("jd_chunk"):
         chunks = SPLITTER.split_documents(docs)

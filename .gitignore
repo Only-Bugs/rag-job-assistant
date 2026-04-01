@@ -22,6 +22,7 @@ data/job_rag/chroma_db/
 /data/chroma_db/
 data/job_rag/profile_docs/
 data/job_rag/profile_settings.json
+data/users/
 /**/chroma.sqlite3
 *.pdf
 *.txt

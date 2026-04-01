@@ -14,9 +14,12 @@ from pydantic import BaseModel
 
 from api.sse import format_sse
 from rag.generation.generator import generate_application_package
+from rag.config.settings import get_user_data_dir, DEV_USER_ID
 
 logger = logging.getLogger("api")
 router = APIRouter()
+
+_USER_DATA_DIR = get_user_data_dir(DEV_USER_ID)
 
 # Tasks that carry text content for the client.
 # The pipeline also yields ("_meta", dict) — skipped here; it's internal.
@@ -45,7 +48,7 @@ async def _iter_pipeline(jd_text: str) -> AsyncGenerator[tuple[str, Any], None]:
     def _worker() -> None:
         try:
             for item in generate_application_package(
-                jd_text, save_to_disk=False, progress=None
+                jd_text, save_to_disk=False, progress=None, user_data_dir=_USER_DATA_DIR
             ):
                 loop.call_soon_threadsafe(queue.put_nowait, item)
         except Exception as exc:

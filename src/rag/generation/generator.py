@@ -12,6 +12,8 @@ from datetime import datetime
 from time import perf_counter
 from typing import Any, Callable, Dict, Iterator, Optional
 
+from pathlib import Path
+
 from rag.config.settings import LLM_MAX_TOKENS, OUT_DIR
 from rag.profile import load_profile
 from rag.utils.exceptions import ProfileNotConfiguredError
@@ -31,10 +33,6 @@ from rag.generation.prompts.templates import (
 )
 
 logger = logging.getLogger("rag")
-logger.info(
-    "CURSOR_ACTION: Modifying %s for per-task run_prompt names (parallel straggler identification)",
-    __file__,
-)
 
 
 @timed
@@ -85,6 +83,7 @@ def generate_application_package(
     jd_text: str,
     save_to_disk: bool = False,
     progress: Optional[PipelineProgress] = None,
+    user_data_dir: Path | None = None,
 ) -> Iterator[tuple[str, Any]]:
     """
     Full workflow — generator that yields (task_name, value) tuples:
@@ -96,18 +95,22 @@ def generate_application_package(
     3. Extract skills/keywords + compute alignment.
     4. Build the consolidated context block.
     5. Yield each generation task result as it completes.
+
+    Args:
+        user_data_dir: Per-user data root (e.g. ``data/users/dev_user``).
+                       Falls back to the legacy global paths when None.
     """
-    profile = load_profile()
+    profile = load_profile(user_data_dir)
     if not profile:
         raise ProfileNotConfiguredError(
-            "USER_PROFILE is not set. Use the UI profile settings or edit data/job_rag/profile_settings.json."
+            "USER_PROFILE is not set. Use the UI profile settings or edit the profile JSON."
         )
 
     if progress is not None:
         progress.pipeline_start()
     try:
         yield from _generate_application_package_body(
-            jd_text, save_to_disk, progress, profile
+            jd_text, save_to_disk, progress, profile, user_data_dir
         )
     finally:
         if progress is not None:
@@ -119,16 +122,19 @@ def _generate_application_package_body(
     save_to_disk: bool,
     progress: Optional[PipelineProgress],
     profile: Dict[str, Any],
+    user_data_dir: Path | None = None,
 ) -> Iterator[tuple[str, Any]]:
+    db_path = (user_data_dir / "chroma_db") if user_data_dir else None
+
     with tracked_block("index_profile_docs", progress):
-        index_profile_docs()
+        index_profile_docs(user_data_dir)
     with tracked_block("index_jd_text", progress):
-        index_jd_text(jd_text)
+        index_jd_text(jd_text, user_data_dir)
 
     with tracked_block("retrieve_jd_focus", progress):
-        jd_focus = retrieve("List must-have requirements and responsibilities.", k=6, doc_type="jd")
+        jd_focus = retrieve("List must-have requirements and responsibilities.", k=6, doc_type="jd", db_path=db_path)
     with tracked_block("retrieve_profile_focus", progress):
-        profile_focus = retrieve("Find bullets that prove impact, results, metrics.", k=6, doc_type="profile")
+        profile_focus = retrieve("Find bullets that prove impact, results, metrics.", k=6, doc_type="profile", db_path=db_path)
     with tracked_block("format_retrieved_docs", progress):
         rag_jd = format_docs(jd_focus)
         rag_profile = format_docs(profile_focus)

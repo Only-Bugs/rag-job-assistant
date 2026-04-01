@@ -27,10 +27,6 @@ from rag.config.settings import LLM_MAX_TOKENS, LLM_TEMPERATURE, MODEL_NAME, OLL
 from rag.utils.logging import log_call, log_performance_json
 
 logger = logging.getLogger("rag")
-logger.info(
-    "CURSOR_ACTION: Modifying %s for TTFT/total latency and performance JSON logging",
-    __file__,
-)
 
 LLM_MODEL = os.getenv("LLM_MODEL", MODEL_NAME)
 

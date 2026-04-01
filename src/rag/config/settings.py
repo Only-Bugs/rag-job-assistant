@@ -59,6 +59,30 @@ CHROMA_DB_DIR = RAG_DIR / data_cfg.get("chroma_dir", "chroma_db")
 ensure_dir(CHROMA_DB_DIR)
 
 # ----------------------------------------------------------------------
+# PER-USER DATA DIRECTORIES  (Phase 3a — multi-user prep)
+# ----------------------------------------------------------------------
+DATA_USERS_DIR = DATA_DIR / "users"
+ensure_dir(DATA_USERS_DIR)
+
+DEV_USER_ID = "dev_user"
+
+
+def get_user_data_dir(user_id: str = DEV_USER_ID) -> Path:
+    """Return (and create) the per-user data directory tree.
+
+    Structure:
+        data/users/{user_id}/
+            profile_docs/   — uploaded resume files
+            chroma_db/      — user-scoped vector store
+            profile_settings.json  — written on first profile save
+    """
+    d = DATA_USERS_DIR / user_id
+    ensure_dir(d / "profile_docs")
+    ensure_dir(d / "chroma_db")
+    return d
+
+
+# ----------------------------------------------------------------------
 # RAG SETTINGS
 # ----------------------------------------------------------------------
 rag_cfg = SETTINGS_DATA.get("rag", {})
@@ -97,6 +121,9 @@ __all__ = [
     "RAG_DIR",
     "PROFILE_DOC_DIR",
     "CHROMA_DB_DIR",
+    "DATA_USERS_DIR",
+    "DEV_USER_ID",
+    "get_user_data_dir",
     "CHUNK_SIZE",
     "CHUNK_OVERLAP",
     "TOP_K",

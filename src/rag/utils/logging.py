@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import sys
 from contextlib import contextmanager
 from contextvars import ContextVar
 from datetime import datetime, timezone
@@ -14,10 +15,6 @@ from time import perf_counter
 from typing import Any, Callable, Iterator, Mapping, TypeVar, TypedDict
 
 logger = logging.getLogger("rag")
-logger.info(
-    "CURSOR_ACTION: Modifying %s for PerformanceLog schema, log_performance_json, and JSONL performance log",
-    __file__,
-)
 
 F = TypeVar("F", bound=Callable[..., Any])
 _REQUEST_ID: ContextVar[str] = ContextVar("request_id", default="-")
@@ -47,6 +44,8 @@ def log_performance_json(data: dict[str, Any]) -> None:
     with _performance_json_lock:
         with _PERFORMANCE_LOG_PATH.open("a", encoding="utf-8") as fh:
             fh.write(line)
+
+
 _COLOR = {
     "OK": "\033[92m",
     "WARN": "\033[93m",
@@ -124,21 +123,26 @@ def _format_table_line(tag: str, req_id: str, job: str, duration: str, message: 
 
 def _emit(line: str, tag: str = "OK") -> None:
     """Emit a line to terminal and append plain text to runtime log file."""
-    plain_tag = f"[{tag}]"
-    color = _COLOR.get(tag, _COLOR["OK"])
-    if line.startswith(plain_tag):
-        neutral = line[len(plain_tag) :]
-        print(f"{color}{plain_tag}{_COLOR['reset']}{neutral}")
-    else:
-        print(line)
     _LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
     with _LOG_PATH.open("a", encoding="utf-8") as fh:
         fh.write(f"{line}\n")
+    if sys.stdout.isatty():
+        plain_tag = f"[{tag}]"
+        color = _COLOR.get(tag, _COLOR["OK"])
+        if line.startswith(plain_tag):
+            neutral = line[len(plain_tag) :]
+            print(f"{color}{plain_tag}{_COLOR['reset']}{neutral}")
+        else:
+            print(line)
 
 
 @contextmanager
 def _live_timer(job: str) -> Iterator[None]:
-    """Display an in-place elapsed timer while a job is active."""
+    """Display an in-place elapsed timer while a job is active (terminal only)."""
+    if not sys.stdout.isatty():
+        yield
+        return
+
     request_id = get_request_id()
     start = perf_counter()
     stop_event = threading.Event()

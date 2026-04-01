@@ -91,34 +91,54 @@ DEFAULT_PROFILE: Dict[str, Any] = {
 }
 
 
-def _ensure_profile_file() -> None:
-    if PROFILE_STORE_PATH.exists():
+def _resolve_profile_path(user_data_dir: Path | None) -> Path:
+    """Return the profile JSON path for a given user directory (or the legacy global)."""
+    return (user_data_dir / "profile_settings.json") if user_data_dir else PROFILE_STORE_PATH
+
+
+def _ensure_profile_file(path: Path) -> None:
+    if path.exists():
         return
-    ensure_dir(PROFILE_STORE_PATH.parent)
-    with PROFILE_STORE_PATH.open("w", encoding="utf-8") as fh:
+    ensure_dir(path.parent)
+    with path.open("w", encoding="utf-8") as fh:
         json.dump(DEFAULT_PROFILE, fh, indent=2)
 
 
-def load_profile() -> Dict[str, Any]:
-    _ensure_profile_file()
+def load_profile(user_data_dir: Path | None = None) -> Dict[str, Any]:
+    """Load the active profile JSON.
+
+    Args:
+        user_data_dir: Per-user data root. Falls back to the legacy global path when None.
+    """
+    path = _resolve_profile_path(user_data_dir)
+    _ensure_profile_file(path)
     try:
-        with PROFILE_STORE_PATH.open("r", encoding="utf-8") as fh:
+        with path.open("r", encoding="utf-8") as fh:
             profile = json.load(fh)
     except json.JSONDecodeError:
         profile = deepcopy(DEFAULT_PROFILE)
-        save_profile(profile)
+        save_profile(profile, user_data_dir)
     return profile
 
 
-def save_profile(profile: Dict[str, Any]) -> None:
-    ensure_dir(PROFILE_STORE_PATH.parent)
-    with PROFILE_STORE_PATH.open("w", encoding="utf-8") as fh:
+def save_profile(profile: Dict[str, Any], user_data_dir: Path | None = None) -> None:
+    """Persist the profile JSON.
+
+    Args:
+        profile: Profile dict to save.
+        user_data_dir: Per-user data root. Falls back to the legacy global path when None.
+    """
+    path = _resolve_profile_path(user_data_dir)
+    ensure_dir(path.parent)
+    with path.open("w", encoding="utf-8") as fh:
         json.dump(profile, fh, indent=2)
 
 
-def reset_profile() -> Dict[str, Any]:
-    ensure_dir(PROFILE_STORE_PATH.parent)
-    with PROFILE_STORE_PATH.open("w", encoding="utf-8") as fh:
+def reset_profile(user_data_dir: Path | None = None) -> Dict[str, Any]:
+    """Overwrite the profile with the built-in defaults and return it."""
+    path = _resolve_profile_path(user_data_dir)
+    ensure_dir(path.parent)
+    with path.open("w", encoding="utf-8") as fh:
         json.dump(DEFAULT_PROFILE, fh, indent=2)
     return deepcopy(DEFAULT_PROFILE)
 

@@ -5,14 +5,28 @@ Utilities for querying and formatting snippets from Chroma.
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Optional
 
 from rag.vectorstore.chroma_instance import get_vectordb
 
 
-def retrieve(query: str, k: int = 6, doc_type: Optional[str] = None):
-    """Retrieve top-k documents for a query, optionally filtered by type."""
-    vectordb = get_vectordb()
+def retrieve(
+    query: str,
+    k: int = 6,
+    doc_type: Optional[str] = None,
+    db_path: Path | None = None,
+):
+    """Retrieve top-k documents for a query, optionally filtered by type.
+
+    Args:
+        query: Similarity search query string.
+        k: Number of documents to return after filtering.
+        doc_type: If set, filter results to this ``doc_type`` metadata value.
+        db_path: Path to the Chroma persist directory. Defaults to the global
+                 CHROMA_DB_DIR when None (backward-compatible).
+    """
+    vectordb = get_vectordb(db_path)
     docs = vectordb.similarity_search(query, k=24)
     if doc_type:
         docs = [d for d in docs if d.metadata.get("doc_type") == doc_type]
