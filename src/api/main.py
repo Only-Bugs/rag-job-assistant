@@ -14,10 +14,13 @@ import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.sessions import SessionMiddleware
 
 # ---------------------------------------------------------------------------
 # File-based log handler — routes rag/api Python logger output to logs/app.log
@@ -46,6 +49,7 @@ if str(_SRC_DIR) not in sys.path:
 # ---------------------------------------------------------------------------
 from rag.config.settings import MODEL_NAME  # noqa: E402
 
+from api.auth import router as auth_router  # noqa: E402
 from api.routes.export import router as export_router  # noqa: E402
 from api.routes.generate import router as generate_router  # noqa: E402
 from api.routes.health import router as health_router  # noqa: E402
@@ -100,7 +104,11 @@ async def lifespan(app: FastAPI):
 # ---------------------------------------------------------------------------
 app = FastAPI(title="RJA API", lifespan=lifespan)
 
-# CORS — open for Phase 1; lock down to specific origins in Phase 3
+# Session middleware (required for OAuth state storage)
+_SESSION_SECRET = os.getenv("SESSION_SECRET", os.getenv("JWT_SECRET", "dev-session-secret"))
+app.add_middleware(SessionMiddleware, secret_key=_SESSION_SECRET)
+
+# CORS — open for local dev; lock down to specific origins before public deploy
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -108,6 +116,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth_router)
 app.include_router(health_router)
 app.include_router(generate_router)
 app.include_router(profile_router)

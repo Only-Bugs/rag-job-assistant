@@ -74,6 +74,30 @@
 
     .nav-link:hover { color: var(--text); }
 
+    /* User pill */
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .user-pill .user-name {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .user-pill a {
+      font-size: 12px;
+      color: var(--muted);
+      text-decoration: none;
+      padding: 3px 8px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .user-pill a:hover { color: var(--text); border-color: var(--muted); }
+
     /* Status pill */
     #status-pill {
       font-size: 12px;
@@ -349,7 +373,13 @@
       <div class="logo">RJ<span>A</span></div>
       <a class="nav-link" href="/settings">Settings</a>
     </div>
-    <div id="status-pill" class="ready">Ready</div>
+    <div style="display:flex;align-items:center;gap:16px;">
+      <div id="user-pill" class="user-pill" style="display:none;">
+        <span class="user-name" id="user-name"></span>
+        <a href="/auth/logout">Sign out</a>
+      </div>
+      <div id="status-pill" class="ready">Ready</div>
+    </div>
   </header>
 
   <!-- Profile bar -->
@@ -442,6 +472,23 @@
   }
 
   loadProfile();
+
+  // ── Load user info ────────────────────────────────────────────────
+  async function loadUser() {
+    try {
+      const res = await fetch('/auth/me');
+      if (!res.ok) return;
+      const data = await res.json();
+      const name = data.name || data.email || '';
+      // In dev mode the name is "Dev User" — suppress the pill to keep UI clean
+      if (name && name !== 'Dev User') {
+        document.getElementById('user-name').textContent = name;
+        document.getElementById('user-pill').style.display = 'flex';
+      }
+    } catch (_) { /* auth not configured */ }
+  }
+
+  loadUser();
 
   // ── Tab switching ─────────────────────────────────────────────────
   function activateTab(name) {

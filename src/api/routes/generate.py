@@ -8,18 +8,18 @@ import logging
 import threading
 from typing import Any, AsyncGenerator
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
+from pathlib import Path
 from pydantic import BaseModel
 
+from api.auth import get_current_user
 from api.sse import format_sse
 from rag.generation.generator import generate_application_package
-from rag.config.settings import get_user_data_dir, DEV_USER_ID
+from rag.config.settings import get_user_data_dir
 
 logger = logging.getLogger("api")
 router = APIRouter()
-
-_USER_DATA_DIR = get_user_data_dir(DEV_USER_ID)
 
 # Tasks that carry text content for the client.
 # The pipeline also yields ("_meta", dict) — skipped here; it's internal.
@@ -31,7 +31,7 @@ class GenerateRequest(BaseModel):
     profile_id: str | None = None  # reserved for Phase 2 multi-profile support
 
 
-async def _iter_pipeline(jd_text: str) -> AsyncGenerator[tuple[str, Any], None]:
+async def _iter_pipeline(jd_text: str, user_data_dir: Path) -> AsyncGenerator[tuple[str, Any], None]:
     """Bridge the synchronous RAG generator to an async generator.
 
     ``generate_application_package`` blocks the calling thread on each Ollama
@@ -48,7 +48,7 @@ async def _iter_pipeline(jd_text: str) -> AsyncGenerator[tuple[str, Any], None]:
     def _worker() -> None:
         try:
             for item in generate_application_package(
-                jd_text, save_to_disk=False, progress=None, user_data_dir=_USER_DATA_DIR
+                jd_text, save_to_disk=False, progress=None, user_data_dir=user_data_dir
             ):
                 loop.call_soon_threadsafe(queue.put_nowait, item)
         except Exception as exc:
@@ -69,7 +69,10 @@ async def _iter_pipeline(jd_text: str) -> AsyncGenerator[tuple[str, Any], None]:
 
 
 @router.post("/generate")
-async def generate(request: GenerateRequest) -> StreamingResponse:
+async def generate(
+    request: GenerateRequest,
+    user: dict = Depends(get_current_user),
+) -> StreamingResponse:
     """Stream generation results as server-sent events.
 
     Event types emitted:
@@ -78,11 +81,12 @@ async def generate(request: GenerateRequest) -> StreamingResponse:
     - ``error``   — ``{"message": <str>}`` on any exception
     """
     jd_text = request.job_description.strip()
+    user_data_dir = get_user_data_dir(user["user_id"])
 
     async def event_stream():
         yield format_sse("status", "starting")
         try:
-            async for task_name, result in _iter_pipeline(jd_text):
+            async for task_name, result in _iter_pipeline(jd_text, user_data_dir):
                 if task_name not in _TEXT_TASKS:
                     continue
                 logger.info("task complete: %s (%d chars)", task_name, len(result))

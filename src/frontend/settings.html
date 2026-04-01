@@ -69,6 +69,29 @@
 
     .nav-link:hover { color: var(--text); }
 
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .user-pill .user-name {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .user-pill a {
+      font-size: 12px;
+      color: var(--muted);
+      text-decoration: none;
+      padding: 3px 8px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .user-pill a:hover { color: var(--text); border-color: var(--muted); }
+
     /* ── Page heading ────────────────────────────────────────────── */
     h1 {
       font-size: 20px;
@@ -205,6 +228,10 @@
       <div class="logo">RJ<span>A</span></div>
       <a class="nav-link" href="/">← Back</a>
     </div>
+    <div id="user-pill" class="user-pill" style="display:none;">
+      <span class="user-name" id="user-name"></span>
+      <a href="/auth/logout">Sign out</a>
+    </div>
   </header>
 
   <h1>Profile Settings</h1>
@@ -307,6 +334,20 @@
   const form     = document.getElementById('profile-form');
   const saveBtn  = document.getElementById('save-btn');
   const feedback = document.getElementById('save-feedback');
+
+  // ── Load user info ──────────────────────────────────────────────
+  (async () => {
+    try {
+      const res = await fetch('/auth/me');
+      if (!res.ok) return;
+      const data = await res.json();
+      const name = data.name || data.email || '';
+      if (name && name !== 'Dev User') {
+        document.getElementById('user-name').textContent = name;
+        document.getElementById('user-pill').style.display = 'flex';
+      }
+    } catch (_) {}
+  })();
 
   // Fields whose value is a newline-separated list → stored as array
   const LIST_FIELDS = new Set(['links', 'role_keywords', 'skills', 'achievements']);
