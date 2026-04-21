@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ResuMate — Dashboard</title>
+  <link rel="stylesheet" href="/static/shared/styles.css" />
+
+  <style>
+    /* ── Dashboard-specific styles ────────────────────────────────── */
+
+    /* Allow main to scroll */
+    .main { overflow-y: auto; }
+
+    /* ── Stats grid ──────────────────────────────────────────────── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 22px 24px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      box-shadow: var(--shadow-xs);
+      transition: box-shadow var(--duration-slow), transform var(--duration-slow) var(--ease-out);
+      animation: cardReveal 0.5s var(--ease-out) both;
+    }
+
+    .stat-card:nth-child(1) { animation-delay: 0.06s; }
+    .stat-card:nth-child(2) { animation-delay: 0.12s; }
+    .stat-card:nth-child(3) { animation-delay: 0.18s; }
+
+    .stat-card:hover {
+      box-shadow: var(--shadow-sm);
+      transform: translateY(-2px);
+    }
+
+    @keyframes cardReveal {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .stat-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .stat-icon.accent {
+      background: var(--accent-light);
+      color: var(--accent);
+    }
+
+    .stat-icon.green {
+      background: rgba(22, 163, 74, 0.08);
+      color: var(--success);
+    }
+
+    .stat-icon.amber {
+      background: rgba(217, 119, 6, 0.08);
+      color: var(--warning);
+    }
+
+    .stat-value {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      color: var(--text);
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 500;
+      margin-top: 3px;
+    }
+
+    /* Profile ring */
+    .stat-ring-wrap {
+      position: relative;
+      width: 44px;
+      height: 44px;
+      flex-shrink: 0;
+    }
+
+    .stat-ring-wrap svg { transform: rotate(-90deg); }
+
+    .ring-track {
+      fill: none;
+      stroke: var(--border-light);
+      stroke-width: 3;
+    }
+
+    .ring-progress {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 3;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.8s var(--ease-out);
+    }
+
+    .stat-ring-pct {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    /* ── Two-column layout ───────────────────────────────────────── */
+    .dash-columns {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 18px;
+      animation: cardReveal 0.5s var(--ease-out) 0.24s both;
+    }
+
+    /* ── Section headers ─────────────────────────────────────────── */
+    .dash-section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .dash-section-title {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dash-section-title::before {
+      content: '';
+      width: 3px;
+      height: 14px;
+      border-radius: 2px;
+      background: linear-gradient(180deg, var(--accent), #8b7cf7);
+      flex-shrink: 0;
+    }
+
+    .dash-section-link {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent);
+      text-decoration: none;
+      transition: opacity var(--duration);
+    }
+
+    .dash-section-link:hover { opacity: 0.7; }
+
+    /* ── History list ─────────────────────────────────────────────── */
+    .dash-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-xs);
+      overflow: hidden;
+    }
+
+    .dash-panel-inner {
+      padding: 20px 22px;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      border-radius: var(--radius);
+      transition: background var(--duration);
+      cursor: default;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .history-item:last-child { border-bottom: none; }
+
+    .history-item:hover { background: var(--surface-2); }
+
+    .history-item-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: var(--accent-light);
+      color: var(--accent);
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .history-item-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .history-item-text {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.4;
+    }
+
+    .history-item-meta {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .history-edit-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 11px;
+      transition: color var(--duration);
+    }
+    .history-edit-link:hover { color: var(--text); text-decoration: underline; }
+
+    .task-dots {
+      display: inline-flex;
+      gap: 3px;
+    }
+
+    .task-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+    }
+
+    .task-dot.empty { background: var(--border); }
+
+    /* ── Empty states ─────────────────────────────────────────────── */
+    .dash-empty {
+      text-align: center;
+      padding: 32px 20px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .dash-empty a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .dash-empty a:hover { text-decoration: underline; }
+
+    .dash-empty svg {
+      display: block;
+      margin: 0 auto 12px;
+      opacity: 0.3;
+    }
+
+    /* ── Document items ───────────────────────────────────────────── */
+    .dash-doc-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .dash-doc-item {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      transition: background var(--duration);
+    }
+
+    .dash-doc-item:hover { background: var(--surface-2); }
+
+    .dash-doc-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      background: var(--accent-light);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .dash-doc-name {
+      flex: 1;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .dash-doc-type {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      padding: 2px 8px;
+      background: var(--bg-subtle);
+      border-radius: 4px;
+    }
+
+    /* ── Quick actions ─────────────────────────────────────────────── */
+    .quick-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .quick-action {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: var(--radius);
+      text-decoration: none;
+      color: var(--text-2);
+      font-size: 14px;
+      font-weight: 500;
+      transition: background var(--duration), color var(--duration);
+    }
+
+    .quick-action:hover {
+      background: var(--accent-light);
+      color: var(--accent);
+    }
+
+    .quick-action-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--surface-2);
+      border: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: var(--muted);
+      transition: color var(--duration), border-color var(--duration);
+    }
+
+    .quick-action:hover .quick-action-icon {
+      color: var(--accent);
+      border-color: var(--accent-mid);
+    }
+
+    /* ── FAB speed dial ─────────────────────────────────────────── */
+    .fab-wrap {
+      position: fixed;
+      bottom: 32px;
+      right: 36px;
+      z-index: 100;
+      display: flex;
+      flex-direction: column-reverse;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .fab-btn {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), #8b7cf7);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 6px 20px rgba(108, 92, 231, 0.35), 0 2px 6px rgba(108, 92, 231, 0.15);
+      transition: transform 0.25s var(--ease-spring), box-shadow 0.25s;
+      animation: fabPop 0.5s var(--ease-spring) 0.5s both;
+    }
+
+    @keyframes fabPop {
+      from { opacity: 0; transform: scale(0.5) rotate(-90deg); }
+      to   { opacity: 1; transform: scale(1) rotate(0deg); }
+    }
+
+    .fab-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 10px 32px rgba(108, 92, 231, 0.45);
+    }
+    .fab-btn:active { transform: scale(1.02); }
+    .fab-btn svg { transition: transform 0.25s var(--ease-spring); }
+    .fab-wrap.open .fab-btn svg { transform: rotate(45deg); }
+
+    /* Speed-dial items */
+    .fab-actions {
+      display: flex;
+      flex-direction: column-reverse;
+      align-items: center;
+      gap: 10px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(8px);
+      transition: all 0.2s var(--ease-out);
+    }
+    .fab-wrap.open .fab-actions {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .fab-action {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      flex-direction: row-reverse;
+    }
+
+    .fab-action-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--surface);
+      color: var(--accent);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .fab-action:hover .fab-action-btn {
+      background: var(--accent-light);
+      border-color: var(--accent-mid);
+      transform: scale(1.08);
+    }
+
+    .fab-action-label {
+      background: var(--text);
+      color: #fff;
+      font-family: var(--font-body);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 7px;
+      white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    }
+
+    /* ── Right column spacing ─────────────────────────────────────── */
+    .dash-right-col {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* ── Responsive ───────────────────────────────────────────────── */
+    @media (max-width: 960px) {
+      .stats-grid { grid-template-columns: 1fr; }
+      .dash-columns { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 860px) {
+      .fab-wrap { bottom: 24px; right: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <div id="rm-sidebar-slot"></div>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="greeting">
+        <h1 id="greeting-text">Welcome back</h1>
+        <p class="greeting-sub">Here's your overview</p>
+      </div>
+      <div class="topbar-right">
+        <a href="/account" class="topbar-avatar" id="topbar-avatar" title="Account"></a>
+      </div>
+    </div>
+
+    <div class="workspace">
+
+      <!-- Stats Row -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon accent">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="16" height="16" rx="3" />
+              <path d="M8 11l2 2 4-4" />
+            </svg>
+          </div>
+          <div>
+            <div class="stat-value" id="stat-apps">0</div>
+            <div class="stat-label">Applications Generated</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon green">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M13 3H7a3 3 0 00-3 3v10a3 3 0 003 3h8a3 3 0 003-3V8z" />
+              <path d="M13 3v5h5" />
+            </svg>
+          </div>
+          <div>
+            <div class="stat-value" id="stat-docs">0</div>
+            <div class="stat-label">Documents Uploaded</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-ring-wrap" id="stat-profile-ring">
+            <svg width="44" height="44" viewBox="0 0 44 44">
+              <circle class="ring-track" cx="22" cy="22" r="18" />
+              <circle class="ring-progress" cx="22" cy="22" r="18"
+                stroke-dasharray="113.1" stroke-dashoffset="113.1" />
+            </svg>
+            <span class="stat-ring-pct" id="stat-profile">—</span>
+          </div>
+          <div>
+            <div class="stat-value" style="font-size: 22px;" id="stat-profile-label">Profile</div>
+            <div class="stat-label">Completion</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Two-column content -->
+      <div class="dash-columns">
+
+        <!-- Left: Recent Applications -->
+        <div class="dash-panel">
+          <div class="dash-panel-inner">
+            <div class="dash-section-head">
+              <div class="dash-section-title">Recent Applications</div>
+            </div>
+            <div class="history-list" id="history-list"></div>
+            <div class="dash-empty" id="history-empty" style="display:none;">
+              <svg width="44" height="44" viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="1.2">
+                <rect x="8" y="5" width="28" height="34" rx="4" />
+                <path d="M16 16h12M16 22h8M16 28h10" stroke-linecap="round" />
+              </svg>
+              <p>No applications yet.<br><a href="/workspace">Create your first one</a></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right column -->
+        <div class="dash-right-col">
+
+          <!-- Uploaded Documents -->
+          <div class="dash-panel">
+            <div class="dash-panel-inner">
+              <div class="dash-section-head">
+                <div class="dash-section-title">Documents</div>
+                <a href="/settings" class="dash-section-link">Manage</a>
+              </div>
+              <div class="dash-doc-list" id="docs-list"></div>
+              <div class="dash-empty" id="docs-empty" style="display:none;">
+                <svg width="36" height="36" viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1.2">
+                  <path d="M20 5H12a4 4 0 00-4 4v18a4 4 0 004 4h12a4 4 0 004-4V13z" />
+                  <path d="M20 5v8h8" />
+                </svg>
+                <p>No documents uploaded.<br><a href="/settings">Add your resume</a></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="dash-panel">
+            <div class="dash-panel-inner">
+              <div class="dash-section-head">
+                <div class="dash-section-title">Quick Actions</div>
+              </div>
+              <div class="quick-actions">
+                <a href="/settings" class="quick-action">
+                  <div class="quick-action-icon">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                      <path d="M9 2H5a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6z"/><path d="M9 2v4h4"/>
+                      <path d="M8 8v4M6 10h4" />
+                    </svg>
+                  </div>
+                  Upload Resume
+                </a>
+                <a href="/settings" class="quick-action">
+                  <div class="quick-action-icon">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="8" cy="5" r="2.5" />
+                      <path d="M3 14c0-2.76 2.24-5 5-5s5 2.24 5 5" />
+                    </svg>
+                  </div>
+                  Edit Profile
+                </a>
+                <a href="/account" class="quick-action">
+                  <div class="quick-action-icon">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="2" y="3" width="12" height="10" rx="2" />
+                      <path d="M2 6l6 4 6-4" />
+                    </svg>
+                  </div>
+                  Connect Gmail
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAB speed dial -->
+    <div class="fab-wrap" id="fab-wrap">
+      <div class="fab-actions">
+        <a href="/workspace" class="fab-action">
+          <div class="fab-action-btn">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2l6 3.5v7L10 16l-6-3.5v-7z"/><path d="M10 8.5v7.5"/><path d="M4 5.5L10 9l6-3.5"/></svg>
+          </div>
+          <span class="fab-action-label">New Application</span>
+        </a>
+        <a href="/settings" class="fab-action">
+          <div class="fab-action-btn">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14V4"/><path d="M6 8l4-4 4 4"/><path d="M3 16h14"/></svg>
+          </div>
+          <span class="fab-action-label">Upload Resume</span>
+        </a>
+      </div>
+      <button class="fab-btn" id="fab-toggle" title="Actions">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+      </button>
+    </div>
+  </main>
+</div>
+
+<script src="/static/shared/common.js"></script>
+<script>
+  injectSidebar({ activePage: 'dashboard' });
+
+  // ── FAB speed dial ─────────────────────────────────────────────────
+  const fabWrap = document.getElementById('fab-wrap');
+  const fabToggle = document.getElementById('fab-toggle');
+  fabToggle.addEventListener('click', () => fabWrap.classList.toggle('open'));
+  document.addEventListener('click', (e) => {
+    if (!fabWrap.contains(e.target)) fabWrap.classList.remove('open');
+  });
+
+  // ── Greeting ──────────────────────────────────────────────────────
+  const greetEl = document.getElementById('greeting-text');
+  const hour = new Date().getHours();
+  const timeGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  try {
+    const user = JSON.parse(atob(document.cookie.match(/rja_session=([^;]+)/)?.[1]?.split('.')[1] || '{}'));
+    const firstName = (user.name || '').split(' ')[0];
+    greetEl.textContent = firstName ? `${timeGreeting}, ${firstName}` : timeGreeting;
+  } catch (_) { greetEl.textContent = timeGreeting; }
+
+  // ── Stats ─────────────────────────────────────────────────────────
+  const statApps = document.getElementById('stat-apps');
+  const statDocs = document.getElementById('stat-docs');
+  const statProfile = document.getElementById('stat-profile');
+  const statProfileRing = document.getElementById('stat-profile-ring');
+
+  // ── Render history from backend API ────────────────────────────────
+  const historyList = document.getElementById('history-list');
+  const historyEmpty = document.getElementById('history-empty');
+
+  (async () => {
+    let history = [];
+    try {
+      const res = await apiFetch('/api/applications');
+      if (res && res.ok) {
+        const data = await res.json();
+        history = data.applications || [];
+      }
+    } catch (_) {
+      // Fallback to localStorage
+      history = JSON.parse(localStorage.getItem('rm_history') || '[]');
+    }
+
+    statApps.textContent = history.length;
+
+    if (history.length === 0) {
+      historyEmpty.style.display = '';
+    } else {
+      historyEmpty.style.display = 'none';
+      history.slice(0, 8).forEach((item, i) => {
+        const div = document.createElement('div');
+        div.className = 'history-item';
+        const date = new Date(item.created_at ? item.created_at * 1000 : (item.date || 0));
+        const relative = _relativeTime(date);
+        const tasks = item.tasks_completed || [];
+        const allTasks = ['skills', 'cover', 'emails', 'ats'];
+        const appId = item.id;
+
+        let dotsHtml = '<span class="task-dots">';
+        allTasks.forEach(t => {
+          dotsHtml += '<span class="task-dot' + (tasks.includes(t) ? '' : ' empty') + '"></span>';
+        });
+        dotsHtml += '</span>';
+
+        div.innerHTML =
+          '<div class="history-item-num">' + (i + 1) + '</div>' +
+          '<div class="history-item-content">' +
+            '<div class="history-item-text">' + _escapeHtml(item.jd_preview || 'Untitled application') + '</div>' +
+            '<div class="history-item-meta">' + relative + ' &middot; ' + dotsHtml + ' ' + tasks.length + '/4 tasks' +
+              (appId ? ' &middot; <a href="/workspace?edit=' + appId + '" class="history-edit-link">Edit in Workspace</a>' : '') +
+            '</div>' +
+          '</div>';
+        historyList.appendChild(div);
+      });
+    }
+  })();
+
+  function _relativeTime(date) {
+    const now = Date.now();
+    const diff = now - date.getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    if (days === 1) return 'Yesterday';
+    if (days < 7) return `${days}d ago`;
+    return date.toLocaleDateString('en-AU', { month: 'short', day: 'numeric' });
+  }
+
+  function _escapeHtml(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
+  // ── Documents ─────────────────────────────────────────────────────
+  (async () => {
+    try {
+      const res = await apiFetch('/documents');
+      if (!res || !res.ok) return;
+      const data = await res.json();
+      const files = data.documents || data.files || data || [];
+      statDocs.textContent = files.length;
+      const docsList = document.getElementById('docs-list');
+      const docsEmpty = document.getElementById('docs-empty');
+      if (!files.length) {
+        docsEmpty.style.display = '';
+        return;
+      }
+      docsEmpty.style.display = 'none';
+      files.forEach(f => {
+        const name = typeof f === 'string' ? f : (f.filename || f.name || '');
+        if (!name) return;
+        const ext = name.split('.').pop().toUpperCase();
+        const item = document.createElement('div');
+        item.className = 'dash-doc-item';
+        item.innerHTML = `
+          <div class="dash-doc-icon"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 2H5a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6z"/><path d="M9 2v4h4"/></svg></div>
+          <span class="dash-doc-name">${name}</span>
+          <span class="dash-doc-type">${ext}</span>
+        `;
+        docsList.appendChild(item);
+      });
+    } catch (_) {}
+  })();
+
+  // ── Profile completion (uses shared getProfileCompletion()) ───────
+  (async () => {
+    try {
+      const completion = await getProfileCompletion();
+      if (!completion) { statProfile.textContent = '\u2014'; return; }
+      statProfile.textContent = completion.pct + '%';
+      if (statProfileRing) {
+        const circle = statProfileRing.querySelector('.ring-progress');
+        if (circle) {
+          const circumference = 2 * Math.PI * 18;
+          circle.style.strokeDasharray = circumference;
+          circle.style.strokeDashoffset = circumference - (circumference * completion.pct / 100);
+        }
+      }
+    } catch (_) { statProfile.textContent = '\u2014'; }
+  })();
+</script>
+
+</body>
+</html>

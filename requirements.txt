@@ -23,10 +23,11 @@ langchain-huggingface>=0.0.7
 ollama==0.6.0
 
 # Vector store
-chromadb==0.4.22        
+chromadb==0.4.22
 chroma-hnswlib==0.7.3
 onnxruntime==1.18.1
 posthog<3
+protobuf>=3.20.3,<4.0.0  # chromadb 0.4.22 uses MessageFactory.GetPrototype which was removed in protobuf 4+
 
 # Embeddings + NLP
 transformers==4.46.2
@@ -47,9 +48,6 @@ python-dotenv==1.0.1
 pypdf==5.0.1
 PyYAML==6.0.2
 
-# Web / UI (Streamlit app)
-streamlit==1.51.0
-
 # Export / docs
 python-docx==1.2.0
 fpdf==1.7.2
@@ -65,3 +63,7 @@ anyio>=4.0.0
 python-jose[cryptography]>=3.3.0
 python-multipart>=0.0.9
 itsdangerous>=2.1.2
+
+# Testing
+pytest>=8.0.0
+pytest-asyncio>=0.23.0

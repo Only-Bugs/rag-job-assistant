@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ResuMate — Workspace</title>
+  <link rel="stylesheet" href="/static/shared/styles.css" />
+
+  <style>
+    /* ── Workspace overrides ───────────────────────────────────────── */
+    .main { overflow: hidden; }
+
+    /* ── Topbar workspace variant ──────────────────────────────────── */
+    .topbar {
+      padding: 16px 28px 14px;
+      border-bottom: 1px solid var(--border-light);
+      background: var(--surface);
+    }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+    }
+
+    .breadcrumb a {
+      color: var(--muted);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 500;
+      transition: color var(--duration);
+    }
+
+    .breadcrumb a:hover { color: var(--accent); }
+
+    .breadcrumb-sep {
+      color: var(--border);
+      font-size: 11px;
+      user-select: none;
+    }
+
+    .breadcrumb-current {
+      font-weight: 700;
+      color: var(--text);
+      font-family: var(--font-display);
+      letter-spacing: -0.01em;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    /* ── Status pill ──────────────────────────────────────────────── */
+    #status-pill {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 5px 14px;
+      border-radius: 99px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.25s ease;
+    }
+
+    #status-pill.ready {
+      background: var(--bg-subtle);
+      color: var(--muted);
+    }
+
+    #status-pill.running {
+      background: var(--accent-light);
+      color: var(--accent);
+      animation: pillPulse 1.8s ease-in-out infinite;
+    }
+
+    #status-pill.done {
+      background: var(--success-bg);
+      color: var(--success);
+    }
+
+    #status-pill.error {
+      background: var(--error-bg);
+      color: var(--error);
+    }
+
+    @keyframes pillPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.65; }
+    }
+
+    /* ── Split panel layout ───────────────────────────────────────── */
+    .panels {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .panel-left {
+      width: 38%;
+      min-width: 320px;
+      max-width: 520px;
+      background: var(--surface-2);
+      border-right: 1px solid var(--border-light);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel-right {
+      flex: 1;
+      min-width: 0;
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Left panel ───────────────────────────────────────────────── */
+    .panel-header {
+      padding: 22px 24px 16px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      flex-shrink: 0;
+    }
+
+    .panel-header .section-title {
+      margin: 0;
+      padding: 0;
+      border: 0;
+    }
+
+    .panel-header .section-title::before { display: none; }
+
+    .panel-header-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: var(--accent-light);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    #jd-input {
+      flex: 1;
+      width: 100%;
+      border: none;
+      outline: none;
+      resize: none;
+      background: transparent;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 14px;
+      line-height: 1.75;
+      padding: 20px 24px;
+      overflow-y: auto;
+    }
+
+    #jd-input::placeholder { color: #b5b0a8; }
+
+    .panel-footer {
+      padding: 14px 24px;
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      background: var(--surface-2);
+    }
+
+    #char-count {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+    }
+
+    #generate-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 26px;
+      background: linear-gradient(135deg, var(--accent), #7c6ef0);
+      color: #fff;
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      letter-spacing: 0.01em;
+      transition: all var(--duration) var(--ease-out);
+      box-shadow: var(--shadow-xs);
+    }
+
+    #generate-btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-accent);
+    }
+
+    #generate-btn:active:not(:disabled) { transform: translateY(0); }
+    #generate-btn:disabled { opacity: 0.38; cursor: not-allowed; transform: none; }
+
+    /* ── Streaming cursor — inline blinking block at end of text ── */
+    .output-wrap { position: relative; flex: 1; display: flex; flex-direction: column; }
+    .output-wrap .streaming-cursor {
+      display: none;
+      position: absolute;
+      width: 2px; height: 18px;
+      background: var(--accent);
+      border-radius: 1px;
+      animation: cursorBlink 0.9s steps(2) infinite;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .output-wrap.streaming .streaming-cursor { display: block; }
+    @keyframes cursorBlink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    /* ── Spinners ─────────────────────────────────────────────────── */
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.65s linear infinite;
+    }
+
+    .spinner-accent {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--accent-light);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.65s linear infinite;
+    }
+
+    .generating-text {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 48px 24px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--muted);
+    }
+
+    /* ── Tab bar ──────────────────────────────────────────────────── */
+    .tab-bar {
+      display: flex;
+      gap: 0;
+      padding: 0 24px;
+      border-bottom: 1px solid var(--border-light);
+      flex-shrink: 0;
+      background: var(--surface);
+    }
+
+    .tab-btn {
+      padding: 14px 18px 12px;
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      transition: color var(--duration), border-color var(--duration);
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      position: relative;
+      letter-spacing: 0.01em;
+    }
+
+    .tab-btn:hover { color: var(--text-2); }
+
+    .tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .tab-dot {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 1px 6px;
+      border-radius: 99px;
+      background: var(--accent);
+      color: #fff;
+      animation: chipIn 0.3s var(--ease-spring);
+      line-height: 1.4;
+    }
+
+    /* ── Tab panels ───────────────────────────────────────────────── */
+    .tab-panel {
+      display: none;
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+    }
+
+    .tab-panel.active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .output-textarea {
+      flex: 1;
+      width: 100%;
+      border: none;
+      outline: none;
+      resize: none;
+      background: transparent;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 14px;
+      line-height: 1.75;
+      padding: 24px;
+      min-height: 200px;
+    }
+
+    /* ── Empty state ──────────────────────────────────────────────── */
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 32px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .empty-state .empty-icon {
+      width: 88px;
+      height: 88px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, var(--accent-light), rgba(167,139,250,0.12));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 22px;
+    }
+
+    .empty-state .empty-icon svg {
+      color: var(--accent);
+      opacity: 0.85;
+    }
+
+    .empty-state h3 {
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .empty-state p {
+      font-size: 13px;
+      line-height: 1.6;
+      max-width: 300px;
+    }
+
+    /* ── Thinking bar — compact strip below topbar ──────────────── */
+    .thinking-bar {
+      display: none;
+      padding: 6px 28px;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border-light);
+      font-size: 12px;
+      font-family: var(--font-body);
+      color: var(--muted);
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+      overflow: hidden;
+      transition: all 0.25s ease;
+    }
+    .thinking-bar.active { display: flex; }
+    .thinking-bar .thinking-spinner {
+      width: 12px; height: 12px; flex-shrink: 0;
+      border: 1.5px solid var(--accent-light); border-top-color: var(--accent);
+      border-radius: 50%; animation: spin 0.65s linear infinite;
+    }
+    .thinking-bar .thinking-current {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 500;
+      color: var(--text-2);
+    }
+    .thinking-bar .thinking-expand-btn {
+      font-size: 11px;
+      color: var(--accent);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+    .thinking-bar .thinking-expand-btn:hover { background: var(--accent-light); }
+
+    /* Expanded thinking log (dropdown below the bar) */
+    .thinking-log-panel {
+      display: none;
+      padding: 8px 28px 10px;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border-light);
+      font-family: var(--font-mono, 'SF Mono', 'Fira Code', monospace);
+      font-size: 11px;
+      max-height: 140px;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+    .thinking-log-panel.open { display: block; }
+    .thinking-log-panel .t-line {
+      color: var(--muted);
+      padding: 2px 0;
+      opacity: 0.6;
+    }
+    .thinking-log-panel .t-line:last-child { opacity: 1; color: var(--text-2); }
+    .thinking-log-panel .t-line::before {
+      content: '\203A  ';
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    /* ── Download dropdown ────────────────────────────────────────── */
+    .dl-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      margin-left: auto;
+    }
+
+    .dl-trigger {
+      padding: 6px 10px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .dl-trigger:hover:not(:disabled) {
+      color: var(--text);
+      border-color: var(--muted);
+    }
+
+    .dl-trigger:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .dl-dropdown {
+      display: none;
+      position: absolute;
+      top: 100%;
+      right: 0;
+      margin-top: 6px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+      min-width: 180px;
+      z-index: 100;
+      padding: 4px;
+    }
+
+    .dl-dropdown.open { display: block; }
+
+    .dl-dd-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 10px 14px;
+      border: none;
+      background: transparent;
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background var(--duration);
+    }
+
+    .dl-dd-item:hover { background: var(--surface-2); }
+    .dl-dd-item svg { width: 16px; height: 16px; color: var(--muted); flex-shrink: 0; }
+
+    /* ── Email cards (workspace) ─────────────────────────────────── */
+    .email-cards { padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; }
+    .email-card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 20px;
+      background: var(--surface);
+      transition: border-color 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+    }
+    .email-card:hover { border-color: var(--accent-mid); box-shadow: 0 2px 12px rgba(108,92,231,0.06); }
+    .email-card.selected { border-color: var(--accent); background: var(--accent-light); }
+    .email-card-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .email-type-badge {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.06em; padding: 3px 10px; border-radius: 6px;
+      background: var(--accent-light); color: var(--accent);
+    }
+    .email-type-badge.outreach { background: #dbeafe; color: #1d4ed8; }
+    .email-type-badge.followup { background: #fef3c7; color: #92400e; }
+    .email-subject { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+    .email-body-preview {
+      font-size: 13px; color: var(--muted); line-height: 1.55;
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* Action icons row — appears after selecting a card */
+    .email-actions-row {
+      display: flex; align-items: center; gap: 10px;
+      margin-top: 12px; padding-top: 12px;
+      border-top: 1px solid var(--border-light);
+    }
+    .email-action-btn {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: var(--muted);
+    }
+    .email-action-btn svg { width: 16px; height: 16px; }
+    .email-action-btn:hover { transform: translateY(-1px); }
+
+    /* Gmail send */
+    .email-action-btn.action-gmail:hover,
+    .email-action-btn.action-gmail.pressed {
+      border-color: #ea4335; color: #ea4335; background: rgba(234,67,53,0.06);
+    }
+    /* Copy */
+    .email-action-btn.action-copy:hover,
+    .email-action-btn.action-copy.pressed {
+      border-color: var(--accent); color: var(--accent); background: var(--accent-light);
+    }
+    /* Share */
+    .email-action-btn.action-share:hover,
+    .email-action-btn.action-share.pressed {
+      border-color: #16a34a; color: #16a34a; background: rgba(22,163,74,0.06);
+    }
+    .email-action-btn.pressed { transform: scale(0.92); }
+    .email-action-label {
+      font-size: 11px; color: var(--muted); margin-left: auto; font-style: italic;
+    }
+    .email-action-btn[disabled] { opacity: 0.35; cursor: not-allowed; }
+
+    /* ── Responsive ───────────────────────────────────────────────── */
+    @media (max-width: 860px) {
+      .panels { flex-direction: column; }
+      .panel-left {
+        width: 100%;
+        max-width: none;
+        min-width: 0;
+        border-right: none;
+        border-bottom: 1px solid var(--border-light);
+        max-height: 40vh;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <div id="rm-sidebar-slot"></div>
+
+  <main class="main">
+    <!-- Top bar -->
+    <div class="topbar">
+      <div class="breadcrumb">
+        <span class="breadcrumb-current">New Application</span>
+      </div>
+      <div class="topbar-right">
+        <span id="status-pill" class="ready">Ready</span>
+        <a href="/settings" class="topbar-avatar" id="topbar-avatar"></a>
+      </div>
+    </div>
+
+    <!-- Thinking bar (compact strip below topbar) -->
+    <div class="thinking-bar" id="thinking-bar">
+      <span class="thinking-spinner"></span>
+      <span class="thinking-current" id="thinking-current"></span>
+      <button class="thinking-expand-btn" id="thinking-expand">Show more</button>
+    </div>
+    <div class="thinking-log-panel" id="thinking-log-panel"></div>
+
+    <!-- Split panels -->
+    <div class="panels">
+
+      <!-- Left: JD input -->
+      <div class="panel-left">
+        <div class="panel-header">
+          <div class="panel-header-icon">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 2H5a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6z"/><path d="M9 2v4h4"/></svg>
+          </div>
+          <div class="section-title">Job Description</div>
+        </div>
+
+        <textarea id="jd-input" placeholder="Paste the full job description here...&#10;&#10;Include the role title, responsibilities, required qualifications, and any preferred skills for the best results."></textarea>
+
+        <div class="panel-footer">
+          <span id="char-count">0 characters</span>
+          <button id="generate-btn">Generate Application</button>
+        </div>
+      </div>
+
+      <!-- Right: Output tabs -->
+      <div class="panel-right">
+        <div class="tab-bar">
+          <button class="tab-btn active" data-tab="skills">Skills</button>
+          <button class="tab-btn" data-tab="cover">Cover Letter</button>
+          <button class="tab-btn" data-tab="emails">Emails</button>
+          <button class="tab-btn" data-tab="ats">ATS Summary</button>
+
+          <div class="dl-wrap">
+            <button class="dl-trigger" id="dl-trigger" disabled title="Download (available after cover letter)">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 2v8.5"/>
+                <path d="M4.5 7L8 10.5 11.5 7"/>
+                <path d="M2 12.5h12"/>
+              </svg>
+            </button>
+            <div class="dl-dropdown" id="dl-dropdown">
+              <button class="dl-dd-item" id="dl-pdf">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2H5a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6z"/><path d="M9 2v4h4"/><text x="5" y="12" font-size="4.5" fill="currentColor" stroke="none" font-weight="700" font-family="sans-serif">PDF</text></svg>
+                <span>Download as PDF</span>
+              </button>
+              <button class="dl-dd-item" id="dl-docx">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2H5a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6z"/><path d="M9 2v4h4"/><path d="M5.5 10l1.5-3 1.5 3M10 7v3"/></svg>
+                <span>Download as DOCX</span>
+              </button>
+              <button class="dl-dd-item" id="dl-drive" style="display:none">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10l3-6h6l3 6"/><path d="M2 10l3 3h6l3-3"/><path d="M5 13l3-3 3 3"/></svg>
+                <span>Save to Google Drive</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="panel-skills" class="tab-panel active">
+          <div class="empty-state">
+            <div class="empty-icon">
+              <svg width="40" height="40" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="10" y="8" width="44" height="48" rx="4" />
+                <path d="M22 22h20M22 30h14M22 38h18" />
+                <circle cx="46" cy="46" r="12" fill="var(--surface-2)" stroke="var(--border)" stroke-width="1.5" />
+                <path d="M43 46h6M46 43v6" stroke="var(--accent)" stroke-width="1.8" />
+              </svg>
+            </div>
+            <h3>Skills & Keywords</h3>
+            <p>Paste a job description and generate your tailored application package</p>
+          </div>
+        </div>
+
+        <div id="panel-cover" class="tab-panel">
+          <div class="empty-state">
+            <div class="empty-icon">
+              <svg width="40" height="40" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="12" y="6" width="40" height="52" rx="3" />
+                <path d="M22 18h20" />
+                <path d="M22 26h18M22 32h16M22 38h20M22 44h12" />
+                <path d="M38 48l6-6" stroke="var(--accent)" stroke-width="1.8" />
+                <circle cx="46" cy="40" r="4" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.5" />
+              </svg>
+            </div>
+            <h3>Cover Letter</h3>
+            <p>Your tailored cover letter will appear here</p>
+          </div>
+        </div>
+
+        <div id="panel-emails" class="tab-panel">
+          <div class="empty-state">
+            <div class="empty-icon">
+              <svg width="40" height="40" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="8" y="14" width="48" height="36" rx="3" />
+                <path d="M8 18l24 16 24-16" />
+                <path d="M8 46l16-12M56 46L40 34" stroke-dasharray="2 3" />
+                <circle cx="50" cy="18" r="8" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.5" />
+                <path d="M48 18h4M50 16v4" stroke="var(--accent)" stroke-width="1.8" />
+              </svg>
+            </div>
+            <h3>Emails</h3>
+            <p>Application and follow-up emails will appear here</p>
+          </div>
+        </div>
+
+        <div id="panel-ats" class="tab-panel">
+          <div class="empty-state">
+            <div class="empty-icon">
+              <svg width="40" height="40" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="12" y="8" width="40" height="48" rx="3" />
+                <path d="M22 20h8M22 28h20M22 34h16M22 40h18" />
+                <circle cx="18" cy="20" r="2" fill="var(--accent)" stroke="none" />
+                <circle cx="18" cy="28" r="2" fill="var(--accent)" stroke="none" />
+                <circle cx="18" cy="34" r="2" fill="var(--accent)" stroke="none" />
+                <circle cx="18" cy="40" r="2" fill="var(--accent)" stroke="none" />
+                <path d="M40 46l4-4 4 4" stroke="var(--accent)" stroke-width="1.8" />
+                <path d="M44 42v10" stroke="var(--accent)" stroke-width="1.8" />
+              </svg>
+            </div>
+            <h3>ATS Summary</h3>
+            <p>ATS-optimised keyword summary will appear here</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/static/shared/common.js"></script>
+<script>
+  injectSidebar({ activePage: 'workspace' });
+
+  const jdInput = document.getElementById('jd-input');
+  const generateBtn = document.getElementById('generate-btn');
+  const statusPill = document.getElementById('status-pill');
+  const charCount = document.getElementById('char-count');
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const panels = {
+    skills: document.getElementById('panel-skills'),
+    cover: document.getElementById('panel-cover'),
+    emails: document.getElementById('panel-emails'),
+    ats: document.getElementById('panel-ats'),
+  };
+
+  const outputContent = { skills: '', cover: '', emails: '', ats: '' };
+  let _modelReady = true;
+  let _gmailConnected = false;
+
+  // ── Thinking bar state (compact header strip) ────────────────
+  let _thinkingStart = null;
+  let _thinkingLines = [];
+  const _thinkingBar = document.getElementById('thinking-bar');
+  const _thinkingCurrent = document.getElementById('thinking-current');
+  const _thinkingLogPanel = document.getElementById('thinking-log-panel');
+  const _thinkingExpandBtn = document.getElementById('thinking-expand');
+
+  function showThinkingLine(text) {
+    if (!_thinkingStart) _thinkingStart = Date.now();
+
+    // Show the compact bar
+    _thinkingBar.classList.add('active');
+    _thinkingCurrent.textContent = text;
+
+    // Append to the expandable log panel
+    const line = document.createElement('div');
+    line.className = 't-line';
+    line.textContent = text;
+    _thinkingLogPanel.appendChild(line);
+    _thinkingLogPanel.scrollTop = _thinkingLogPanel.scrollHeight;
+    _thinkingLines.push(text);
+  }
+
+  function collapseThinking() {
+    if (!_thinkingStart) return;
+    const elapsed = ((Date.now() - _thinkingStart) / 1000).toFixed(1);
+
+    // Update bar to show elapsed time, hide spinner
+    _thinkingBar.querySelector('.thinking-spinner').style.display = 'none';
+    _thinkingCurrent.textContent = 'Thought for ' + elapsed + 's';
+    _thinkingExpandBtn.textContent = 'Show details';
+
+    // Reset state
+    _thinkingStart = null;
+    _thinkingLines = [];
+  }
+
+  // Toggle expand/collapse of thinking log
+  _thinkingExpandBtn.addEventListener('click', function() {
+    const isOpen = _thinkingLogPanel.classList.toggle('open');
+    _thinkingExpandBtn.textContent = isOpen ? 'Hide' : (_thinkingStart ? 'Show more' : 'Show details');
+  });
+
+  // ── Download dropdown ─────────────────────────────────────────
+  const dlTrigger = document.getElementById('dl-trigger');
+  const dlDropdown = document.getElementById('dl-dropdown');
+  dlTrigger.addEventListener('click', function(e) {
+    e.stopPropagation();
+    dlDropdown.classList.toggle('open');
+  });
+  document.addEventListener('click', function() { dlDropdown.classList.remove('open'); });
+
+  // Check Gmail/Drive status
+  (async () => {
+    try {
+      const res = await apiFetch('/api/gmail/status');
+      if (res && res.ok) {
+        const data = await res.json();
+        _gmailConnected = data.connected;
+      }
+    } catch (_) {}
+    try {
+      const res = await apiFetch('/api/drive/status');
+      if (res && res.ok) {
+        const data = await res.json();
+        if (data.connected) document.getElementById('dl-drive').style.display = '';
+      }
+    } catch (_) {}
+  })();
+
+  // Character count
+  jdInput.addEventListener('input', () => {
+    const len = jdInput.value.length;
+    charCount.textContent = len.toLocaleString() + ' character' + (len !== 1 ? 's' : '');
+  });
+
+  // Tab switching — clears notification dot when user views a tab
+  function activateTab(name) {
+    tabBtns.forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.tab === name);
+      if (btn.dataset.tab === name) {
+        const dot = btn.querySelector('.tab-dot');
+        if (dot) dot.remove();
+      }
+    });
+    Object.entries(panels).forEach(([key, panel]) => panel.classList.toggle('active', key === name));
+  }
+  tabBtns.forEach(btn => btn.addEventListener('click', () => activateTab(btn.dataset.tab)));
+
+  function setStatus(state, text) {
+    statusPill.className = state;
+    statusPill.textContent = text;
+  }
+
+  function markTabDone(name) {
+    const btn = document.querySelector(`.tab-btn[data-tab="${name}"]`);
+    if (!btn) return;
+    // Only show notification dot if this tab is NOT currently active
+    const isActive = btn.classList.contains('active');
+    if (!isActive && !btn.querySelector('.tab-dot')) {
+      const dot = document.createElement('span');
+      dot.className = 'tab-dot';
+      dot.textContent = 'new';
+      dot.setAttribute('aria-hidden', 'true');
+      btn.appendChild(dot);
+    }
+    // Enable download button when cover letter completes
+    if (name === 'cover') {
+      const dlBtn = document.getElementById('dl-trigger');
+      if (dlBtn) { dlBtn.disabled = false; dlBtn.title = 'Download'; }
+    }
+  }
+
+  // Live token streaming — append characters as they arrive
+  const _streamingTas = {};  // track textarea per task during streaming
+  let _activeStreamTask = null;
+
+  function appendToken(name, chunk) {
+    const panel = panels[name];
+    if (!panel) return;
+    // First token for this task: collapse thinking, create textarea + cursor, switch tab
+    if (!_streamingTas[name]) {
+      // Collapse thinking bar on first token of the first task
+      if (_thinkingStart) collapseThinking();
+
+      // Create output-wrap container with textarea + streaming cursor
+      const wrap = document.createElement('div');
+      wrap.className = 'output-wrap streaming';
+      const ta = document.createElement('textarea');
+      ta.className = 'output-textarea';
+      ta.value = '';
+      ta.addEventListener('input', () => { outputContent[name] = ta.value; });
+      const cursor = document.createElement('span');
+      cursor.className = 'streaming-cursor';
+      wrap.appendChild(ta);
+      wrap.appendChild(cursor);
+
+      panel.innerHTML = '';
+      panel.appendChild(wrap);
+      _streamingTas[name] = ta;
+      if (_activeStreamTask !== name) {
+        _activeStreamTask = name;
+        activateTab(name);
+      }
+    }
+    _streamingTas[name].value += chunk;
+    outputContent[name] = _streamingTas[name].value;
+    // Auto-scroll textarea to bottom
+    _streamingTas[name].scrollTop = _streamingTas[name].scrollHeight;
+
+    // Position cursor near end of text
+    const ta = _streamingTas[name];
+    const cursor = ta.parentElement.querySelector('.streaming-cursor');
+    if (cursor) {
+      // Approximate cursor position based on textarea scroll
+      cursor.style.bottom = '24px';
+      cursor.style.right = '28px';
+    }
+  }
+
+  function renderTask(name, content) {
+    const panel = panels[name];
+    if (!panel) return;
+    outputContent[name] = content;
+    // Clean up streaming state + cursor for this task
+    if (_streamingTas[name]) {
+      const wrap = _streamingTas[name].parentElement;
+      if (wrap && wrap.classList.contains('output-wrap')) wrap.classList.remove('streaming');
+    }
+    delete _streamingTas[name];
+    if (name === 'emails') {
+      renderEmailCards(panel, content);
+    } else {
+      const ta = document.createElement('textarea');
+      ta.className = 'output-textarea';
+      ta.value = content;
+      ta.addEventListener('input', () => { outputContent[name] = ta.value; });
+      panel.innerHTML = '';
+      panel.appendChild(ta);
+    }
+    markTabDone(name);
+    activateTab(name);
+  }
+
+  function renderEmailCards(panel, rawContent) {
+    const emails = parseEmails(rawContent);
+    if (!emails.length) {
+      const ta = document.createElement('textarea');
+      ta.className = 'output-textarea';
+      ta.value = rawContent;
+      ta.addEventListener('input', () => { outputContent.emails = ta.value; });
+      panel.innerHTML = '';
+      panel.appendChild(ta);
+      return;
+    }
+    const container = document.createElement('div');
+    container.className = 'email-cards';
+    let selectedCard = null;
+
+    emails.forEach(email => {
+      const card = document.createElement('div');
+      card.className = 'email-card';
+      card.innerHTML =
+        '<div class="email-card-head"><span class="email-type-badge ' + (email.typeClass || '') + '">' + _escapeHtml(email.type) + '</span></div>' +
+        '<div class="email-subject">' + _escapeHtml(email.subject || '(No subject)') + '</div>' +
+        '<div class="email-body-preview">' + _escapeHtml(email.body) + '</div>';
+
+      // Build inline action row (hidden until card is selected)
+      const actions = document.createElement('div');
+      actions.className = 'email-actions-row';
+      actions.style.display = 'none';
+
+      // Gmail button
+      const gmailBtn = document.createElement('button');
+      gmailBtn.className = 'email-action-btn action-gmail';
+      gmailBtn.title = 'Send via Gmail';
+      gmailBtn.innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3.5" width="12" height="9" rx="1.5"/><path d="M2 5l6 4 6-4"/></svg>';
+      if (!_gmailConnected) { gmailBtn.disabled = true; gmailBtn.title = 'Connect Gmail in Settings'; }
+      gmailBtn.addEventListener('click', async function(e) {
+        e.stopPropagation();
+        if (!_gmailConnected) { showToast('Connect Gmail in Settings first', 'error'); return; }
+        const to = prompt('Recipient email address:');
+        if (!to || !to.trim()) return;
+        gmailBtn.classList.add('pressed');
+        try {
+          const res = await apiFetch('/api/gmail/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ to: to.trim(), subject: email.subject, body: email.body }) });
+          if (!res || !res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.detail || 'Send failed'); }
+          showToast('Email sent!');
+        } catch (err) { showToast('Send failed: ' + err.message, 'error'); }
+        finally { setTimeout(() => gmailBtn.classList.remove('pressed'), 300); }
+      });
+
+      // Copy button
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'email-action-btn action-copy';
+      copyBtn.title = 'Copy to clipboard';
+      copyBtn.innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="8" height="8" rx="1.5"/><path d="M3 11V4a1.5 1.5 0 011.5-1.5H11"/></svg>';
+      copyBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        navigator.clipboard.writeText('Subject: ' + email.subject + '\n\n' + email.body).then(() => {
+          copyBtn.classList.add('pressed');
+          showToast('Copied to clipboard');
+          setTimeout(() => copyBtn.classList.remove('pressed'), 300);
+        });
+      });
+
+      // Share button
+      const shareBtn = document.createElement('button');
+      shareBtn.className = 'email-action-btn action-share';
+      shareBtn.title = 'Share';
+      shareBtn.innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4" r="2"/><circle cx="4" cy="8" r="2"/><circle cx="12" cy="12" r="2"/><path d="M5.8 9l4.4 2.2M5.8 7l4.4-2.2"/></svg>';
+      shareBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const shareData = { title: email.type + ' Email', text: 'Subject: ' + email.subject + '\n\n' + email.body };
+        if (navigator.share) {
+          navigator.share(shareData).catch(() => {});
+        } else {
+          navigator.clipboard.writeText(shareData.text).then(() => showToast('Copied to clipboard'));
+        }
+        shareBtn.classList.add('pressed');
+        setTimeout(() => shareBtn.classList.remove('pressed'), 300);
+      });
+
+      const label = document.createElement('span');
+      label.className = 'email-action-label';
+      label.textContent = 'Select an action';
+
+      actions.appendChild(gmailBtn);
+      actions.appendChild(copyBtn);
+      actions.appendChild(shareBtn);
+      actions.appendChild(label);
+      card.appendChild(actions);
+
+      // Card selection toggle
+      card.addEventListener('click', function() {
+        if (selectedCard && selectedCard !== card) {
+          selectedCard.classList.remove('selected');
+          selectedCard.querySelector('.email-actions-row').style.display = 'none';
+        }
+        const isSelected = card.classList.toggle('selected');
+        actions.style.display = isSelected ? 'flex' : 'none';
+        selectedCard = isSelected ? card : null;
+      });
+
+      container.appendChild(card);
+    });
+    panel.innerHTML = '';
+    panel.appendChild(container);
+  }
+
+  function _escapeHtml(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
+
+  // Download helpers
+  async function downloadExport(format) {
+    const btn = format === 'pdf' ? document.getElementById('dl-pdf') : document.getElementById('dl-docx');
+    const origText = btn.querySelector('span').textContent;
+    btn.style.pointerEvents = 'none'; btn.style.opacity = '0.5';
+    btn.querySelector('span').textContent = 'Exporting\u2026';
+    dlDropdown.classList.remove('open');
+    try {
+      const res = await apiFetch(`/export/${format}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content: outputContent }) });
+      if (!res || !res.ok) throw new Error('Export failed');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = `resumate_application.${format}`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+    } catch (err) { showToast(`Export failed: ${err.message}`, 'error'); }
+    finally { btn.style.pointerEvents = ''; btn.style.opacity = ''; btn.querySelector('span').textContent = origText; }
+  }
+  document.getElementById('dl-pdf').addEventListener('click', () => downloadExport('pdf'));
+  document.getElementById('dl-docx').addEventListener('click', () => downloadExport('docx'));
+
+  document.getElementById('dl-drive').addEventListener('click', async () => {
+    const btn = document.getElementById('dl-drive');
+    btn.disabled = true; btn.textContent = 'Uploading...';
+    try {
+      const res = await apiFetch('/export/pdf', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content: outputContent }) });
+      if (!res || !res.ok) throw new Error('Export failed');
+      const blob = await res.blob();
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64 = reader.result.split(',')[1];
+        const driveRes = await apiFetch('/api/drive/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename: 'resumate_application.pdf', content_base64: base64, mime_type: 'application/pdf' }) });
+        if (!driveRes || !driveRes.ok) throw new Error('Drive upload failed');
+        showToast('Saved to Google Drive!');
+      };
+      reader.readAsDataURL(blob);
+    } catch (err) { showToast('Drive upload failed: ' + err.message, 'error'); }
+    finally { btn.disabled = false; btn.textContent = 'Save to Drive'; }
+  });
+
+  // SSE stream consumer
+  async function runGeneration(jdText) {
+    const response = await apiFetch('/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ job_description: jdText }) });
+    if (!response || !response.ok) throw new Error(`HTTP ${response ? response.status : 'failed'}`);
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const frames = buffer.split('\n\n');
+      buffer = frames.pop();
+      for (const frame of frames) {
+        if (!frame.trim()) continue;
+        let eventName = 'message', dataLine = '';
+        for (const line of frame.split('\n')) {
+          if (line.startsWith('event: ')) eventName = line.slice(7).trim();
+          if (line.startsWith('data: ')) dataLine = line.slice(6).trim();
+        }
+        if (eventName === 'progress') {
+          setStatus('running', dataLine);
+          showThinkingLine(dataLine);
+        } else if (eventName === 'status') {
+          if (dataLine === 'done') {
+            setStatus('done', 'Done');
+            // Auto-save to backend + localStorage
+            try {
+              apiFetch('/api/applications', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  jd_text: jdInput.value.trim(),
+                  jd_preview: jdInput.value.trim().slice(0, 120),
+                  content: outputContent,
+                }),
+              }).catch(() => {});  // best-effort
+              // Also keep localStorage for offline/quick access
+              const history = JSON.parse(localStorage.getItem('rm_history') || '[]');
+              history.unshift({ id: Date.now(), date: new Date().toISOString(), jd_preview: jdInput.value.trim().slice(0, 120), tasks_completed: Object.keys(outputContent).filter(k => outputContent[k]) });
+              localStorage.setItem('rm_history', JSON.stringify(history.slice(0, 50)));
+            } catch (_) {}
+          }
+        } else if (eventName === 'token') {
+          const { task, chunk } = JSON.parse(dataLine);
+          appendToken(task, chunk);
+        } else if (eventName === 'task') {
+          const { task, content } = JSON.parse(dataLine);
+          renderTask(task, content);
+        } else if (eventName === 'error') {
+          const { message } = JSON.parse(dataLine);
+          throw new Error(message);
+        }
+      }
+    }
+  }
+
+  // Generate handler
+  generateBtn.addEventListener('click', async () => {
+    if (!_modelReady) return;
+    const jdText = jdInput.value.trim();
+    if (!jdText) { jdInput.focus(); return; }
+    Object.keys(panels).forEach(key => {
+      panels[key].innerHTML = '<div class="generating-text"><span class="spinner-accent"></span> Generating...</div>';
+      outputContent[key] = '';
+      delete _streamingTas[key];
+    });
+    _activeStreamTask = null;
+    _thinkingStart = null;
+    _thinkingLines = [];
+    _thinkingBar.classList.remove('active');
+    _thinkingBar.querySelector('.thinking-spinner').style.display = '';
+    _thinkingLogPanel.classList.remove('open');
+    _thinkingLogPanel.innerHTML = '';
+    _thinkingCurrent.textContent = '';
+    tabBtns.forEach(btn => { const dot = btn.querySelector('.tab-dot'); if (dot) dot.remove(); });
+    dlTrigger.disabled = true;
+    dlTrigger.title = 'Download (available after cover letter)';
+    activateTab('skills');
+    jdInput.disabled = true;
+    generateBtn.disabled = true;
+    generateBtn.innerHTML = '<span class="spinner"></span> Generating...';
+    setStatus('running', 'Generating');
+    try { await runGeneration(jdText); }
+    catch (err) { console.error('Generation error:', err); setStatus('error', 'Error'); showToast(`Generation failed: ${err.message}`, 'error'); }
+    finally { jdInput.disabled = false; generateBtn.disabled = false; generateBtn.textContent = 'Generate Application'; if (statusPill.className === 'running') setStatus('ready', 'Ready'); }
+  });
+
+  // ── Load saved application if ?edit=<id> in URL ───────────────
+  (async () => {
+    const params = new URLSearchParams(window.location.search);
+    const editId = params.get('edit');
+    if (!editId) return;
+    try {
+      const res = await apiFetch('/api/applications/' + encodeURIComponent(editId));
+      if (!res || !res.ok) return;
+      const app = await res.json();
+      // Populate JD
+      if (app.jd_text) {
+        jdInput.value = app.jd_text;
+        charCount.textContent = app.jd_text.length.toLocaleString() + ' characters';
+      }
+      // Populate outputs
+      if (app.content) {
+        Object.entries(app.content).forEach(([name, content]) => {
+          if (!content || !panels[name]) return;
+          outputContent[name] = content;
+          if (name === 'emails') {
+            renderEmailCards(panels[name], content);
+          } else {
+            const ta = document.createElement('textarea');
+            ta.className = 'output-textarea';
+            ta.value = content;
+            ta.addEventListener('input', () => { outputContent[name] = ta.value; });
+            panels[name].innerHTML = '';
+            panels[name].appendChild(ta);
+          }
+        });
+        // Enable download if cover exists
+        if (app.content.cover) {
+          const dlBtn = document.getElementById('dl-trigger');
+          if (dlBtn) { dlBtn.disabled = false; dlBtn.title = 'Download'; }
+        }
+        setStatus('done', 'Loaded');
+        activateTab('skills');
+      }
+    } catch (_) {}
+  })();
+</script>
+
+</body>
+</html>

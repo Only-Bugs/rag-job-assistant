@@ -113,8 +113,8 @@ clear
 printf "\n"
 printf "  ${M}╭──────────────────────────────────────────────────────────╮${RST}\n"
 printf "  ${M}│${RST}                                                          ${M}│${RST}\n"
-printf "  ${M}│${RST}   ${W}${BOLD}R J A${RST}   ${DIM}Resume & Job Application Assistant${RST}           ${M}│${RST}\n"
-printf "  ${M}│${RST}   ${DIM}v0.1  ·  qwen2.5:1.5b  ·  FastAPI  ·  ChromaDB${RST}       ${M}│${RST}\n"
+printf "  ${M}│${RST}   ${W}${BOLD}ResuMate${RST}   ${DIM}Resume & Job Application Assistant${RST}        ${M}│${RST}\n"
+printf "  ${M}│${RST}   ${DIM}v0.2  ·  qwen2.5:1.5b  ·  FastAPI  ·  ChromaDB${RST}          ${M}│${RST}\n"
 printf "  ${M}│${RST}                                                          ${M}│${RST}\n"
 printf "  ${M}╰──────────────────────────────────────────────────────────╯${RST}\n"
 printf "\n"
@@ -178,17 +178,44 @@ else
 fi
 sleep 0.1
 
+# ── Pre-warm: fire model load into compute memory NOW, in parallel with
+# uvicorn startup. FastAPI takes ~18s to start (embedding model import).
+# Starting the Ollama inference simultaneously means those 18s aren't wasted
+# waiting before the model even begins to load from disk.
+# ─────────────────────────────────────────────────────────────────────────────
+_LLM_MODEL="$(python3 -c \
+  "import yaml; print(yaml.safe_load(open('src/resumate/config/model_config.yaml'))['llm']['model_name'])" \
+  2>/dev/null || echo "qwen2.5:1.5b")"
+
+_model_in_ps="$(curl -sf http://localhost:11434/api/ps 2>/dev/null \
+  | python3 -c "import sys,json; ms=json.load(sys.stdin).get('models',[]); print(any('${_LLM_MODEL}' in m.get('name','') for m in ms))" \
+  2>/dev/null || echo "False")"
+
+if [[ "$_model_in_ps" != "True" ]]; then
+  curl -sf -X POST http://localhost:11434/api/generate \
+    -H "Content-Type: application/json" \
+    -d "{\"model\":\"${_LLM_MODEL}\",\"prompt\":\"hi\",\"stream\":false}" \
+    >/dev/null 2>&1 &
+  step "$DOT" "model" "${DIM}${_LLM_MODEL}${RST}  ·  loading into compute (background)…"
+else
+  step "$TICK" "model" "${DIM}${_LLM_MODEL}${RST}  ·  already in compute memory"
+fi
+printf "\n"
+
 # ── FastAPI ───────────────────────────────────────────────────────────────────
 (
     export TOKENIZERS_PARALLELISM=false
-    exec uvicorn src.api.main:app --reload --port 8000
+    export USE_TF=0
+    export USE_JAX=0
+    export PYTHONPATH="$SCRIPT_DIR/src${PYTHONPATH:+:$PYTHONPATH}"
+    exec uvicorn resumate.app:app --reload --reload-dir src --port 8000
 ) >>"$SCRIPT_DIR/logs/uvicorn.log" 2>&1 &
 UVICORN_PID=$!
 
 if wait_and_spin "Starting API server" "http://localhost:8000/health" 20; then
     step "$TICK" "api" "${G}ready${RST}  ${DIM}http://localhost:8000  PID ${UVICORN_PID}${RST}"
 else
-    step "$CROSS" "api" "${R}failed to start${RST}  →  tail -f logs/uvicorn.log"
+    step "$CROSS" "api" "${R}failed to start${RST}  ->  tail -f logs/uvicorn.log"
     printf "\n"
     exit 1
 fi
@@ -199,16 +226,7 @@ MODEL_LABEL="$(json_field http://localhost:8000/health model)"
 COMPUTE="$(json_field http://localhost:8000/health compute)"
 
 if [[ "$COMPUTE" == "not_loaded" ]]; then
-    # Model is not in memory — fire a warm-up inference and wait.
-    # This ensures the browser opens to a ready UI, not a "Loading model" spinner.
-    t_warm_start=$SECONDS
-    if wait_model_ready "$MODEL_LABEL" 120; then
-        t_warm=$(( SECONDS - t_warm_start ))
-        COMPUTE="$(json_field http://localhost:8000/health compute)"
-        step "$TICK" "model" "${DIM}${MODEL_LABEL}${RST}  ·  warmed in ${t_warm}s  ·  compute: ${COMPUTE}"
-    else
-        step "$WARN" "model" "${Y}warm-up timed out${RST}  ${DIM}UI will poll until ready${RST}"
-    fi
+    step "$DOT" "model" "${DIM}${MODEL_LABEL}${RST}  ·  loading in background  ·  ${DIM}UI will show ready state when done${RST}"
 else
     step "$TICK" "model" "${DIM}${MODEL_LABEL}${RST}  ·  already loaded  ·  compute: ${COMPUTE}"
 fi
@@ -224,33 +242,129 @@ printf "\n"
 hr
 printf "\n  ${DIM}RUNNING${RST}\n\n"
 
-OLLAMA_PID_COL="${DIM}(external)${RST}"
-[[ -n "$OLLAMA_PID" ]] && OLLAMA_PID_COL="${DIM}${OLLAMA_PID}${RST}"
-
 # Header
 printf "  ${BOLD}${DIM}%-20s  %-33s  %-10s  %s${RST}\n" "SERVICE" "URL" "PID" "LOG"
 printf "  ${DIM}%-20s  %-33s  %-10s  %s${RST}\n"        "──────────────────" "───────────────────────────────" "──────────" "────────────────────"
 
-# Rows  (no %-Ns on colored strings — pad manually)
+# Rows
 printf "  ${G}${BOLD}ollama${RST}               ${C}http://localhost:11434${RST}            %-10s  ${DIM}logs/ollama.log${RST}\n"  "$( [[ -n "$OLLAMA_PID" ]] && echo "$OLLAMA_PID" || echo "(external)" )"
 printf "  ${G}${BOLD}api${RST}  ${DIM}(FastAPI)${RST}     ${C}http://localhost:8000${RST}             ${DIM}%-10s${RST}  ${DIM}logs/uvicorn.log${RST}\n" "$UVICORN_PID"
-
-printf "\n"
-printf "  ${DIM}%-20s  %s${RST}\n"  "logs/runtime.log"    "pipeline stage timings  (all [OK] rows)"
-printf "  ${DIM}%-20s  %s${RST}\n"  "logs/app.log"        "rag / api Python logger"
-printf "  ${DIM}%-20s  %s${RST}\n"  "logs/uvicorn.log"    "HTTP access log"
-printf "  ${DIM}%-20s  %s${RST}\n"  "logs/ollama.log"     "Ollama server + model runner"
 
 printf "\n"
 hr
 printf "\n"
 printf "  ${C}→${RST}  Opening ${W}http://localhost:8000${RST} in browser\n"
-printf "  ${DIM}   Press Ctrl+C to stop all services${RST}\n"
 printf "\n"
 
 # ── Open browser ──────────────────────────────────────────────────────────────
 sleep 0.4
 open "http://localhost:8000" 2>/dev/null || true
 
-# ── Wait (keep services alive) ────────────────────────────────────────────────
-wait
+# ═══════════════════════════════════════════════════════════════════════════════
+# LIVE LOG MONITOR — tails all logs, labels & colorizes, keeps process alive
+# ═══════════════════════════════════════════════════════════════════════════════
+hr
+printf "\n  ${DIM}LIVE LOGS${RST}  ${DIM}(errors, warnings, requests — Ctrl+C to stop)${RST}\n\n"
+
+# Ensure log files exist so tail doesn't error
+touch "$SCRIPT_DIR/logs/app.log" \
+      "$SCRIPT_DIR/logs/uvicorn.log" \
+      "$SCRIPT_DIR/logs/ollama.log"
+
+# Helper: label & colorize a log stream
+# Usage: label_stream <tag> <color> < stream
+label_stream() {
+  local tag=$1 color=$2
+  while IFS= read -r line; do
+    # Skip empty lines
+    [[ -z "${line// /}" ]] && continue
+
+    # Pick icon based on severity
+    local icon="$DOT"
+    if [[ "$line" == *ERROR* || "$line" == *Error* || "$line" == *error* || "$line" == *Traceback* ]]; then
+      icon="$CROSS"
+    elif [[ "$line" == *WARNING* || "$line" == *Warning* || "$line" == *warn* ]]; then
+      icon="$WARN"
+    fi
+
+    # Timestamp
+    local ts
+    ts="$(date '+%H:%M:%S')"
+
+    printf "  %s ${DIM}%s${RST}  ${color}${BOLD}%-8s${RST}  %s\n" "$icon" "$ts" "$tag" "$line"
+  done
+}
+
+# Tail all logs in parallel, each piped through the labeler.
+# We filter to only show interesting lines (errors, warnings, HTTP requests, task completions).
+(
+  # App log — show errors, warnings, and task completions
+  tail -n 0 -f "$SCRIPT_DIR/logs/app.log" 2>/dev/null \
+    | grep --line-buffered -iE 'error|warning|exception|traceback|task complete|generation|login|logout|model' \
+    | label_stream "app" "$G" &
+
+  # Uvicorn log — show HTTP requests (status codes) and errors
+  tail -n 0 -f "$SCRIPT_DIR/logs/uvicorn.log" 2>/dev/null \
+    | grep --line-buffered -iE 'error|warning|"(POST|GET|DELETE) |[45][0-9]{2}' \
+    | label_stream "http" "$C" &
+
+  # Ollama log — show errors, model load events
+  tail -n 0 -f "$SCRIPT_DIR/logs/ollama.log" 2>/dev/null \
+    | grep --line-buffered -iE 'error|warning|load|unload|metal|gpu|oom|memory' \
+    | label_stream "ollama" "$Y" &
+
+  # Keep the subshell alive — wait for any child
+  wait
+) &
+TAIL_PID=$!
+
+# ── Heartbeat — show the app is alive even when no logs are flowing ──────────
+(
+  # Wait a few seconds after startup for logs to settle, then show periodic pulse
+  sleep 10
+  while true; do
+    # Check services are still running
+    api_ok="$(curl -sf --max-time 2 http://localhost:8000/health >/dev/null 2>&1 && echo "1" || echo "0")"
+    ollama_ok="$(curl -sf --max-time 2 http://localhost:11434 >/dev/null 2>&1 && echo "1" || echo "0")"
+
+    if [[ "$api_ok" == "0" ]]; then
+      printf "\r  ${CROSS} ${DIM}%s${RST}  ${R}${BOLD}%-8s${RST}  API server is down — check logs/uvicorn.log\n" "$(date '+%H:%M:%S')" "health"
+    fi
+    if [[ "$ollama_ok" == "0" ]]; then
+      printf "\r  ${CROSS} ${DIM}%s${RST}  ${R}${BOLD}%-8s${RST}  Ollama is down — check logs/ollama.log\n" "$(date '+%H:%M:%S')" "health"
+    fi
+
+    sleep 30
+  done
+) &
+HEARTBEAT_PID=$!
+
+# ── Override cleanup to also kill the tail + heartbeat ────────────────────────
+cleanup() {
+    # Kill the tail watcher and heartbeat first (suppress errors)
+    kill "$TAIL_PID" 2>/dev/null; wait "$TAIL_PID" 2>/dev/null
+    kill "$HEARTBEAT_PID" 2>/dev/null; wait "$HEARTBEAT_PID" 2>/dev/null
+
+    printf "\n\n"
+    hr
+    printf "\n  ${Y}${BOLD}Shutting down${RST}\n\n"
+    if [[ -n "$UVICORN_PID" ]] && kill -0 "$UVICORN_PID" 2>/dev/null; then
+        kill "$UVICORN_PID" 2>/dev/null
+        step "$TICK" "api" "stopped"
+    fi
+    if [[ -n "$OLLAMA_PID" ]] && kill -0 "$OLLAMA_PID" 2>/dev/null; then
+        kill "$OLLAMA_PID" 2>/dev/null
+        step "$TICK" "ollama" "stopped"
+    fi
+    printf "\n  ${DIM}Goodbye.${RST}\n\n"
+    exit 0
+}
+trap cleanup SIGINT SIGTERM
+
+# ── Block forever — the trap handles Ctrl+C ───────────────────────────────────
+# We can't use `wait` alone because background processes (tail, heartbeat) would
+# keep it from exiting cleanly. Instead, sleep in a loop — the trap interrupts it.
+while true; do
+    sleep 86400 &
+    wait $! 2>/dev/null || break
+done

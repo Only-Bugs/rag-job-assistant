@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ResuMate — Get Started</title>
+  <link rel="stylesheet" href="/static/shared/styles.css" />
+  <style>
+    .wizard { max-width: 580px; margin: 0 auto; }
+
+    /* Steps indicator */
+    .steps {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 40px;
+    }
+
+    .step-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--border);
+      transition: all 0.3s var(--ease-spring);
+    }
+
+    .step-dot.active {
+      background: var(--accent);
+      transform: scale(1.35);
+      box-shadow: 0 0 0 4px var(--accent-light);
+    }
+
+    .step-dot.done { background: var(--success); }
+
+    /* Panels */
+    .panel { display: none; }
+    .panel.active { display: block; animation: fadeIn 0.35s var(--ease-out); }
+
+    /* Drop zone */
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius-xl);
+      padding: 52px 28px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color var(--duration), background var(--duration), transform var(--duration);
+      margin-bottom: 16px;
+    }
+
+    .drop-zone:hover,
+    .drop-zone.dragover {
+      border-color: var(--accent);
+      background: var(--accent-light);
+      transform: scale(1.01);
+    }
+
+    .drop-zone-icon {
+      font-size: 44px;
+      margin-bottom: 14px;
+      display: block;
+      filter: grayscale(0.3);
+    }
+
+    .drop-zone-text { font-size: 14px; color: var(--muted); }
+    .drop-zone-text strong { color: var(--text); font-weight: 600; }
+
+    .file-info {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--success);
+      margin-bottom: 16px;
+      display: none;
+      padding: 8px 12px;
+      background: var(--success-bg);
+      border-radius: var(--radius-sm);
+    }
+
+    /* Review section titles */
+    .review-section {
+      margin-bottom: 24px;
+    }
+
+    .review-section-title {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .review-section-title::before {
+      content: '';
+      width: 3px;
+      height: 12px;
+      border-radius: 2px;
+      background: linear-gradient(180deg, var(--accent), #8b7cf7);
+    }
+
+    /* Done panel */
+    .done-panel { text-align: center; padding: 48px 0; }
+    .done-check {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      background: var(--success-bg);
+      color: var(--success);
+      font-size: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      animation: scaleIn 0.4s var(--ease-spring);
+    }
+
+    @keyframes scaleIn {
+      from { transform: scale(0); }
+      to { transform: scale(1); }
+    }
+
+    .done-panel h2 {
+      font-family: var(--font-display);
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+
+    /* Bottom nav */
+    .wizard-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 28px;
+    }
+
+    .skip-link {
+      font-size: 13px;
+      color: var(--muted);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color var(--duration);
+    }
+
+    .skip-link:hover { color: var(--text); }
+
+    /* Spinner */
+    .spinner {
+      display: inline-block;
+      width: 18px; height: 18px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    #parse-status {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 14px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="shell">
+  <div id="rm-header-slot"></div>
+
+  <h1>Welcome to ResuMate</h1>
+  <p class="page-sub">Upload your resume and we'll extract your profile automatically.</p>
+
+  <div class="wizard">
+
+    <!-- Step dots -->
+    <div class="steps">
+      <div class="step-dot active" data-step="0"></div>
+      <div class="step-dot" data-step="1"></div>
+      <div class="step-dot" data-step="2"></div>
+    </div>
+
+    <!-- Panel 1: Upload -->
+    <div class="panel active" id="panel-upload">
+      <div class="drop-zone" id="drop-zone">
+        <span class="drop-zone-icon">&#128196;</span>
+        <div class="drop-zone-text">
+          <strong>Drop your resume here</strong> or click to browse<br>
+          PDF, DOCX, or TXT
+        </div>
+        <input type="file" id="file-input" accept=".pdf,.docx,.txt,.md" style="display:none" />
+      </div>
+      <div class="file-info" id="file-info"></div>
+      <div id="parse-status"></div>
+
+      <div class="wizard-nav">
+        <a href="/" class="skip-link">Skip for now</a>
+        <button class="btn btn-primary" id="btn-upload" disabled>Extract Profile</button>
+      </div>
+    </div>
+
+    <!-- Panel 2: Review -->
+    <div class="panel" id="panel-review">
+      <div class="review-form">
+
+        <div class="review-section">
+          <div class="review-section-title">Identity</div>
+          <div class="field-row">
+            <div class="field">
+              <label for="r-name">Full name</label>
+              <input type="text" id="r-name" />
+            </div>
+            <div class="field">
+              <label for="r-title">Title</label>
+              <input type="text" id="r-title" />
+            </div>
+          </div>
+        </div>
+
+        <div class="review-section">
+          <div class="review-section-title">Contact</div>
+          <div class="field-row">
+            <div class="field">
+              <label for="r-email">Email</label>
+              <input type="email" id="r-email" />
+            </div>
+            <div class="field">
+              <label for="r-phone">Phone</label>
+              <input type="text" id="r-phone" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="r-location">Location</label>
+            <input type="text" id="r-location" />
+          </div>
+        </div>
+
+        <div class="review-section">
+          <div class="review-section-title">Background</div>
+          <div class="field">
+            <label>Skills</label>
+            <div id="chip-r-skills"></div>
+          </div>
+          <div class="field">
+            <label>Key achievements</label>
+            <div id="chip-r-achievements"></div>
+          </div>
+          <div class="field">
+            <label for="r-pitch">Elevator pitch</label>
+            <textarea id="r-pitch" placeholder="2-3 sentences"></textarea>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="wizard-nav">
+        <button class="btn btn-outline" id="btn-back">Back</button>
+        <button class="btn btn-primary" id="btn-save">Save Profile</button>
+      </div>
+    </div>
+
+    <!-- Panel 3: Done -->
+    <div class="panel" id="panel-done">
+      <div class="done-panel">
+        <div class="done-check">&#10003;</div>
+        <h2>You're all set!</h2>
+        <p class="page-sub" style="margin-bottom:24px;">Your profile has been saved. Start generating tailored applications.</p>
+        <a href="/" class="btn btn-primary">Go to Dashboard</a>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="rm-footer-slot"></div>
+</div>
+
+<script src="/static/shared/common.js"></script>
+<script>
+  injectHeader({ nav: [{ label: 'Home', href: '/' }] });
+  injectFooter();
+
+  const panels = document.querySelectorAll('.panel');
+  const dots = document.querySelectorAll('.step-dot');
+  let currentStep = 0;
+  let selectedFile = null;
+
+  // ── Chip inputs for review panel ──────────────────────────────
+  const chipSkills = new ChipInput(document.getElementById('chip-r-skills'), {
+    placeholder: 'Add skills or edit extracted ones',
+  });
+
+  const chipAchievements = new ChipInput(document.getElementById('chip-r-achievements'), {
+    placeholder: 'Add achievements or edit extracted ones',
+  });
+
+  function goTo(step) {
+    panels.forEach((p, i) => p.classList.toggle('active', i === step));
+    dots.forEach((d, i) => {
+      d.classList.remove('active', 'done');
+      if (i < step) d.classList.add('done');
+      if (i === step) d.classList.add('active');
+    });
+    currentStep = step;
+  }
+
+  // ── File selection ──────────────────────────────────────────
+  const dropZone = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+  const fileInfo = document.getElementById('file-info');
+  const btnUpload = document.getElementById('btn-upload');
+
+  dropZone.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    if (e.dataTransfer.files.length) pickFile(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener('change', () => { if (fileInput.files.length) pickFile(fileInput.files[0]); });
+
+  function pickFile(file) {
+    selectedFile = file;
+    fileInfo.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+    fileInfo.style.display = 'block';
+    btnUpload.disabled = false;
+  }
+
+  // ── Upload + parse ──────────────────────────────────────────
+  const parseStatus = document.getElementById('parse-status');
+
+  btnUpload.addEventListener('click', async () => {
+    if (!selectedFile) return;
+    btnUpload.disabled = true;
+    btnUpload.innerHTML = '<span class="spinner"></span> Extracting...';
+    parseStatus.textContent = 'Uploading and parsing your resume...';
+
+    try {
+      const form = new FormData();
+      form.append('file', selectedFile);
+      const res = await apiFetch('/tools/parse-resume', { method: 'POST', body: form });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      populateReview(data);
+      goTo(1);
+    } catch (err) {
+      parseStatus.textContent = `Error: ${err.message}`;
+      parseStatus.style.color = 'var(--error)';
+    } finally {
+      btnUpload.disabled = false;
+      btnUpload.textContent = 'Extract Profile';
+    }
+  });
+
+  // ── Populate review form ────────────────────────────────────
+  function populateReview(data) {
+    document.getElementById('r-name').value = data.name || '';
+    document.getElementById('r-title').value = data.title || '';
+    document.getElementById('r-email').value = data.email || '';
+    document.getElementById('r-phone').value = data.phone || '';
+    document.getElementById('r-location').value = data.location || '';
+    document.getElementById('r-pitch').value = data.pitch || '';
+    chipSkills.setValues(data.skills || []);
+    chipAchievements.setValues(data.achievements || []);
+  }
+
+  // ── Save profile ────────────────────────────────────────────
+  document.getElementById('btn-back').addEventListener('click', () => goTo(0));
+
+  document.getElementById('btn-save').addEventListener('click', async () => {
+    const btn = document.getElementById('btn-save');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+
+    const profile = {
+      name: document.getElementById('r-name').value.trim(),
+      title: document.getElementById('r-title').value.trim(),
+      email: document.getElementById('r-email').value.trim(),
+      phone: document.getElementById('r-phone').value.trim(),
+      location: document.getElementById('r-location').value.trim(),
+      skills: chipSkills.getValues(),
+      achievements: chipAchievements.getValues(),
+      pitch: document.getElementById('r-pitch').value.trim(),
+    };
+
+    try {
+      const res = await apiFetch('/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(profile),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      if (selectedFile) {
+        const form = new FormData();
+        form.append('file', selectedFile);
+        await apiFetch('/upload', { method: 'POST', body: form });
+      }
+
+      goTo(2);
+    } catch (err) {
+      showToast('Save failed: ' + err.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Save Profile';
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ResuMate — Page Not Found</title>
+  <link rel="stylesheet" href="/static/shared/styles.css" />
+  <style>
+    .not-found {
+      text-align: center;
+      padding: 100px 20px;
+    }
+
+    .not-found-code {
+      font-family: var(--font-display);
+      font-size: 80px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), #8b7cf7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+      margin-bottom: 16px;
+      animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .not-found h2 {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+    }
+
+    .not-found p {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 32px;
+      line-height: 1.5;
+    }
+
+    .not-found .btn { display: inline-flex; }
+  </style>
+</head>
+<body>
+
+<div class="shell">
+  <div id="rm-header-slot"></div>
+
+  <div class="not-found">
+    <div class="not-found-code">404</div>
+    <h2>Page not found</h2>
+    <p>The page you're looking for doesn't exist or has been moved.</p>
+    <a href="/" class="btn btn-primary">Back to Home</a>
+  </div>
+
+  <div id="rm-footer-slot"></div>
+</div>
+
+<script src="/static/shared/common.js"></script>
+<script>
+  injectHeader({ nav: [{ label: 'Home', href: '/' }] });
+  injectFooter();
+</script>
+</body>
+</html>

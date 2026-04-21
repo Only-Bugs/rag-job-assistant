@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ResuMate — Settings</title>
+  <link rel="stylesheet" href="/static/shared/styles.css" />
+
+  <style>
+    .workspace { overflow-y: auto; overflow-x: hidden; }
+
+    @keyframes sIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Shared card ─────────────────────────────────────────────── */
+    .s-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px 28px;
+      margin-bottom: 18px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+      transition: box-shadow 0.25s, border-color 0.25s;
+      animation: sIn 0.4s var(--ease-out) both;
+    }
+    .s-card:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.05); }
+    .s-card:focus-within { border-color: var(--accent-mid); }
+
+    .s-card-title {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .s-card-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── Settings header with profile completion ─────────────────── */
+    .settings-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 24px;
+      animation: sIn 0.4s var(--ease-out) both;
+    }
+    .settings-top h1 {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 3px;
+    }
+    .settings-top p { color: var(--muted); font-size: 13px; }
+
+    /* Profile completion badge */
+    .completion-badge {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      flex-shrink: 0;
+      animation: sIn 0.4s var(--ease-out) 0.1s both;
+    }
+    .completion-ring {
+      position: relative;
+      width: 38px; height: 38px;
+      flex-shrink: 0;
+    }
+    .completion-ring .cr-pct {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-display);
+      font-size: 10px; font-weight: 700; color: var(--text);
+    }
+    .completion-info { font-size: 12px; }
+    .completion-label { font-weight: 600; color: var(--text); }
+    .completion-sub { color: var(--muted); margin-top: 1px; }
+
+    /* ── Accordion tabs ──────────────────────────────────────────── */
+    .settings-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 24px;
+      background: var(--surface-2);
+      padding: 4px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      animation: sIn 0.4s var(--ease-out) 0.06s both;
+    }
+
+    .settings-tab {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 20px;
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      border: none;
+      background: transparent;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .settings-tab:hover { color: var(--text); }
+    .settings-tab.active {
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .settings-tab svg { width: 16px; height: 16px; opacity: 0.5; }
+    .settings-tab.active svg { opacity: 0.8; }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Hero: Resume Documents ──────────────────────────────────── */
+    .docs-section { animation-delay: 0.08s; position: relative; overflow: hidden; }
+    .docs-section::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--accent), #a78bfa, #c4b5fd, #a78bfa, var(--accent));
+      background-size: 200% 100%;
+      animation: gradShift 6s ease infinite;
+    }
+    @keyframes gradShift { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+
+    /* ── Drop zone ───────────────────────────────────────────────── */
+    .docs-drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 28px 20px;
+      text-align: center;
+      cursor: pointer;
+      background: var(--bg);
+      transition: all 0.25s var(--ease-out);
+      margin-bottom: 14px;
+    }
+    .docs-drop-zone:hover {
+      border-color: var(--accent);
+      background: var(--accent-light);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(108,92,231,0.08);
+    }
+    .docs-drop-zone.dragover {
+      border-color: var(--accent);
+      background: var(--accent-light);
+      transform: scale(1.005);
+    }
+    .docs-drop-icon {
+      width: 48px; height: 48px;
+      margin: 0 auto 12px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-light), rgba(167,139,250,0.15));
+      color: var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      transition: transform 0.3s var(--ease-spring);
+    }
+    .docs-drop-zone:hover .docs-drop-icon { transform: translateY(-3px) scale(1.05); }
+    .docs-drop-zone-text { font-size: 13px; color: var(--muted); }
+    .docs-drop-zone-text strong { color: var(--text); font-weight: 600; }
+    .docs-drop-zone-hint { font-size: 11px; color: var(--muted); margin-top: 5px; opacity: 0.6; }
+
+    /* ── Document list ────────────────────────────────────────────── */
+    .docs-list { display: flex; flex-direction: column; gap: 5px; }
+    .doc-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 12px;
+      background: var(--bg);
+      border: 1px solid transparent;
+      border-radius: 10px;
+      font-size: 13px; color: var(--text-2);
+      transition: all 0.2s;
+    }
+    .doc-item:hover { border-color: var(--border); background: var(--surface); }
+    .doc-icon {
+      width: 28px; height: 28px; border-radius: 8px;
+      background: var(--accent-light); color: var(--accent);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .doc-name { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:500; }
+    .doc-type {
+      font-size: 9px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.06em; color: var(--muted);
+      padding: 2px 8px; background: var(--surface-2); border-radius: 4px;
+    }
+    .doc-delete {
+      width: 28px; height: 28px;
+      border: none; background: transparent; color: var(--muted);
+      border-radius: 7px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: all 0.15s;
+    }
+    .doc-item:hover .doc-delete { opacity: 1; }
+    .doc-delete:hover { background: rgba(220,38,38,0.08); color: #dc2626; }
+    .docs-empty { font-size: 13px; color: var(--muted); text-align: center; padding: 16px; }
+    .docs-uploading {
+      font-size: 13px; color: var(--accent); font-weight: 600;
+      text-align: center; padding: 10px;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .docs-uploading::before {
+      content:''; display:inline-block; width:14px; height:14px;
+      border: 2px solid var(--accent-light); border-top-color: var(--accent);
+      border-radius: 50%; animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── 4-Column Profile Grid ───────────────────────────────────── */
+    .profile-card { animation-delay: 0.12s; position: relative; }
+    .profile-card::before {
+      content: '';
+      position: absolute; left: 0; top: 16px; bottom: 16px; width: 3px;
+      border-radius: 0 3px 3px 0;
+      background: linear-gradient(180deg, var(--accent), #a78bfa);
+      opacity: 0.45;
+    }
+
+    .profile-grid {
+      display: grid;
+      grid-template-columns: 110px 1fr 110px 1fr;
+      gap: 0 20px;
+      align-items: center;
+    }
+
+    .pg-label {
+      font-size: 12px; font-weight: 600; color: var(--muted);
+      padding: 14px 0;
+      border-bottom: 1px solid rgba(0,0,0,0.03);
+      letter-spacing: 0.01em;
+    }
+    .pg-value {
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(0,0,0,0.03);
+    }
+
+    .profile-grid input[type="text"],
+    .profile-grid input[type="email"] {
+      width: 100%; padding: 7px 10px;
+      font-size: 13px; font-family: var(--font-body);
+      border: 1px solid transparent; border-radius: 7px;
+      background: transparent; color: var(--text);
+      outline: none; transition: all 0.2s;
+      box-sizing: border-box;
+    }
+    .profile-grid input:hover { background: var(--bg); }
+    .profile-grid input:focus {
+      border-color: var(--accent-mid); background: var(--surface);
+      box-shadow: 0 0 0 3px rgba(108,92,231,0.06);
+    }
+    .profile-grid input::placeholder { color: var(--muted); opacity: 0.45; }
+
+    /* Full-width row spans all 4 columns */
+    .pg-full-label { grid-column: 1 / 3; }
+    .pg-full-value { grid-column: 3 / 5; }
+
+    /* ── Social Links ────────────────────────────────────────────── */
+    .social-section { animation-delay: 0.16s; padding: 20px 28px; }
+
+    .link-icons-row { display: flex; align-items: center; gap: 14px; }
+
+    .link-icon-btn {
+      width: 44px; height: 44px;
+      border-radius: 11px;
+      border: 1.5px solid var(--border);
+      background: var(--bg); color: #b8b0a8;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.25s var(--ease-out);
+      position: relative;
+    }
+    .link-icon-btn svg { width: 21px; height: 21px; transition: transform 0.2s; }
+    .link-icon-btn:hover {
+      border-color: var(--accent-mid); color: var(--accent);
+      background: var(--accent-light); transform: translateY(-2px);
+    }
+    .link-icon-btn.active {
+      border-color: var(--accent); color: var(--accent); background: var(--accent-light);
+    }
+    .link-icon-btn.active::after {
+      content: ''; position: absolute; bottom: -4px; right: -4px;
+      width: 12px; height: 12px; border-radius: 50%;
+      background: #22c55e; border: 2.5px solid var(--surface);
+    }
+    .link-icons-hint { font-size: 11px; color: var(--muted); opacity: 0.5; font-style: italic; }
+
+    /* ── Skills & Background ─────────────────────────────────────── */
+    .background-card { animation-delay: 0.2s; }
+    .bg-field { margin-bottom: 16px; }
+    .bg-field:last-child { margin-bottom: 0; }
+    .bg-field-label { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
+    .bg-field textarea.tall {
+      width: 100%; min-height: 80px;
+      padding: 10px 12px; font-size: 13px; font-family: var(--font-body);
+      border: 1px solid var(--border); border-radius: 10px;
+      background: var(--bg); color: var(--text);
+      outline: none; resize: vertical;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      box-sizing: border-box; line-height: 1.6;
+    }
+    .bg-field textarea.tall:focus {
+      border-color: var(--accent-mid);
+      box-shadow: 0 0 0 3px rgba(108,92,231,0.06);
+    }
+
+    /* ── Link popup ──────────────────────────────────────────────── */
+    .link-popup-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(28,25,23,0.18);
+      backdrop-filter: blur(4px); z-index: 500;
+    }
+    .link-popup-overlay.visible {
+      display: flex; align-items: center; justify-content: center;
+      animation: fadeO 0.15s ease;
+    }
+    @keyframes fadeO { from { opacity:0; } to { opacity:1; } }
+    .link-popup {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 26px; width: 380px; max-width: 90vw;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.12);
+      animation: popIn 0.2s var(--ease-out);
+    }
+    @keyframes popIn { from { opacity:0; transform: translateY(8px) scale(0.97); } to { opacity:1; transform: none; } }
+    .link-popup-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+    .link-popup-header svg { width: 22px; height: 22px; color: var(--accent); }
+    .link-popup-title { font-family: var(--font-display); font-size: 15px; font-weight: 700; }
+    .link-popup input[type="url"] {
+      width: 100%; padding: 10px 14px; font-size: 14px; font-family: var(--font-body);
+      border: 1.5px solid var(--border); border-radius: 10px;
+      background: var(--bg); color: var(--text);
+      outline: none; transition: border-color 0.15s; box-sizing: border-box;
+    }
+    .link-popup input[type="url"]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(108,92,231,0.08); }
+    .link-popup-actions { display: flex; gap: 8px; margin-top: 14px; justify-content: flex-end; }
+    .link-popup-actions button {
+      padding: 9px 18px; font-size: 13px; font-weight: 600; font-family: var(--font-body);
+      border-radius: 9px; cursor: pointer; transition: all 0.15s; border: none;
+    }
+    .link-popup-save { background: var(--accent); color: #fff; }
+    .link-popup-save:hover { opacity: 0.88; }
+    .link-popup-clear { background: transparent; color: var(--muted); border: 1px solid var(--border) !important; }
+    .link-popup-clear:hover { background: var(--bg); color: var(--text); }
+    .link-popup-cancel { background: transparent; color: var(--muted); }
+    .link-popup-cancel:hover { color: var(--text); }
+
+    /* ── Save row ────────────────────────────────────────────────── */
+    .save-row {
+      display: flex; align-items: center; gap: 14px; padding: 4px 0 12px;
+      animation: sIn 0.4s var(--ease-out) 0.28s both;
+    }
+    #save-btn {
+      padding: 11px 36px;
+      background: linear-gradient(135deg, var(--accent), #7c6ef0);
+      color: #fff; font-family: var(--font-display);
+      font-size: 13px; font-weight: 700; letter-spacing: 0.03em;
+      text-transform: uppercase; border: none; border-radius: 10px;
+      cursor: pointer; transition: all 0.2s var(--ease-out);
+      box-shadow: 0 2px 10px rgba(108,92,231,0.2);
+    }
+    #save-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(108,92,231,0.28); }
+    #save-btn:active:not(:disabled) { transform: translateY(0); }
+    #save-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    /* ── Account tab ─────────────────────────────────────────────── */
+    .info-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 0;
+      border-bottom: 1px solid rgba(0,0,0,0.04);
+      font-size: 14px;
+    }
+    .info-row:last-of-type { border-bottom: none; }
+    .info-label { color: var(--muted); font-weight: 500; font-size: 13px; }
+    .info-value { font-weight: 600; color: var(--text); }
+    .info-uid {
+      font-size: 11px; font-family: monospace;
+      color: var(--muted); background: var(--bg);
+      padding: 3px 8px; border-radius: 5px;
+    }
+
+    .danger-zone { border-color: rgba(220,38,38,0.15); }
+    .danger-zone .s-card-title { color: #dc2626; }
+    .danger-text { font-size: 13px; color: var(--muted); margin-bottom: 14px; line-height: 1.6; }
+
+    .btn-sm {
+      padding: 9px 20px; font-size: 13px; font-weight: 600;
+      font-family: var(--font-body); border-radius: 9px;
+      cursor: pointer; transition: all 0.15s; border: none;
+    }
+    .btn-primary-sm { background: var(--accent); color: #fff; }
+    .btn-primary-sm:hover { opacity: 0.88; }
+    .btn-outline-sm { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    .btn-outline-sm:hover { background: var(--bg); }
+    .btn-danger-sm { background: #dc2626; color: #fff; }
+    .btn-danger-sm:hover { background: #b91c1c; }
+
+    /* Confirm overlay */
+    .confirm-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(28,25,23,0.3); backdrop-filter: blur(6px);
+      z-index: 500;
+    }
+    .confirm-overlay.visible { display: flex; align-items: center; justify-content: center; }
+    .confirm-dialog {
+      background: var(--surface); border-radius: 16px;
+      padding: 28px; max-width: 400px; width: 90%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+      animation: popIn 0.2s var(--ease-out);
+    }
+    .confirm-dialog h3 { font-family: var(--font-display); font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+    .confirm-dialog p { font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.6; }
+    .confirm-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+    /* ── Model & Performance card ────────────────────────────────── */
+    .model-grid {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 12px 16px;
+      align-items: center;
+    }
+    .model-grid label {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+    .model-select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      font-family: var(--font-body);
+      font-size: 13px;
+      color: var(--text);
+      cursor: pointer;
+      outline: none;
+      transition: border-color var(--duration);
+    }
+    .model-select:focus { border-color: var(--accent); }
+
+    .range-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .range-wrap input[type="range"] {
+      flex: 1;
+      accent-color: var(--accent);
+      height: 4px;
+    }
+    .range-val {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+      min-width: 32px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .token-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 8px;
+    }
+    .token-item {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .token-item label {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 500;
+      text-transform: capitalize;
+    }
+    .token-item input {
+      width: 100%;
+      padding: 6px 8px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+      background: var(--surface);
+      color: var(--text);
+      outline: none;
+    }
+    .token-item input:focus { border-color: var(--accent); }
+
+    .model-save-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 16px;
+    }
+
+    /* Compute badge */
+    .compute-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .compute-badge.gpu { background: var(--success-bg); color: var(--success); }
+    .compute-badge.cpu { background: #fef3c7; color: #92400e; }
+    .compute-badge.not_loaded { background: var(--surface-2); color: var(--muted); }
+
+    /* Perf table */
+    .perf-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+    }
+    .perf-table th {
+      text-align: left;
+      font-weight: 600;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .perf-table td {
+      padding: 8px;
+      border-bottom: 1px solid var(--border-light);
+      color: var(--text);
+    }
+    .perf-empty {
+      text-align: center;
+      padding: 24px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .perf-summary {
+      display: flex;
+      gap: 20px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+    .perf-stat {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .perf-stat-label { font-size: 11px; color: var(--muted); font-weight: 500; }
+    .perf-stat-value { font-size: 16px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+
+    /* ── Responsive ──────────────────────────────────────────────── */
+    @media (max-width: 780px) {
+      .profile-grid { grid-template-columns: 100px 1fr; }
+      .pg-full-label, .pg-full-value { grid-column: auto; }
+      .settings-top { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <div id="rm-sidebar-slot"></div>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="greeting">
+        <h1 id="greeting-text">Settings</h1>
+        <p class="greeting-sub">Manage your profile and documents</p>
+      </div>
+      <div class="topbar-right">
+        <a href="/settings" class="topbar-avatar" id="topbar-avatar"></a>
+      </div>
+    </div>
+
+    <div class="workspace">
+
+      <!-- Header + completion badge -->
+      <div class="settings-top">
+        <div>
+          <h1>Settings</h1>
+          <p>Manage your profile, documents, and account.</p>
+        </div>
+        <div class="completion-badge" id="completion-badge" style="display:none">
+          <div class="completion-ring">
+            <svg width="38" height="38" viewBox="0 0 38 38">
+              <circle cx="19" cy="19" r="15" fill="none" stroke="var(--border)" stroke-width="3"/>
+              <circle id="cr-fill" cx="19" cy="19" r="15" fill="none" stroke="var(--accent)" stroke-width="3"
+                stroke-dasharray="94.25" stroke-dashoffset="94.25"
+                stroke-linecap="round" transform="rotate(-90 19 19)"
+                style="transition: stroke-dashoffset 0.8s cubic-bezier(0.16,1,0.3,1) 0.3s"/>
+            </svg>
+            <span class="cr-pct" id="cr-pct">0%</span>
+          </div>
+          <div class="completion-info">
+            <div class="completion-label" id="cr-label">Profile</div>
+            <div class="completion-sub" id="cr-sub">loading...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings nav — 3 options -->
+      <div class="settings-tabs">
+        <button class="settings-tab active" data-tab="profile">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h12v12H4z" rx="2"/><path d="M7 8h6M7 11h4"/><circle cx="14" cy="14" r="3" fill="var(--accent-light)" stroke="var(--accent)"/><path d="M13 14h2M14 13v2" stroke="var(--accent)" stroke-width="1.3"/></svg>
+          <span>Profile</span>
+        </button>
+        <button class="settings-tab" data-tab="model">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="14" height="10" rx="2"/><path d="M7 9h2M11 9h2"/><path d="M6 12h8"/><path d="M10 2v3M7 3l3 2 3-2"/></svg>
+          <span>Model</span>
+        </button>
+        <button class="settings-tab" data-tab="account">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7" r="3.5"/><path d="M3 18c0-3.5 3-6 7-6s7 2.5 7 6"/></svg>
+          <span>Account</span>
+        </button>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════════════ -->
+      <!-- TAB: Profile                                               -->
+      <!-- ═══════════════════════════════════════════════════════════ -->
+      <div class="tab-panel active" id="tab-profile">
+        <form id="profile-form" autocomplete="off">
+
+          <!-- Resume Documents hero -->
+          <div class="s-card docs-section">
+            <div class="s-card-title">Resume Documents</div>
+            <div class="docs-drop-zone" id="docs-drop-zone">
+              <div class="docs-drop-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+              </div>
+              <div class="docs-drop-zone-text"><strong>Drop files here</strong> or click to browse</div>
+              <div class="docs-drop-zone-hint">PDF, DOCX, TXT, or MD &middot; Max 10 MB</div>
+              <input type="file" id="docs-file-input" accept=".pdf,.docx,.txt,.md" multiple hidden />
+            </div>
+            <div id="docs-upload-status"></div>
+            <div class="docs-list" id="docs-list"></div>
+          </div>
+
+          <!-- Bio & Details — 4-column grid -->
+          <div class="s-card profile-card">
+            <div class="s-card-title">Bio &amp; Details</div>
+            <div class="profile-grid">
+              <div class="pg-label">Full name</div>
+              <div class="pg-value"><input type="text" id="f-name" name="name" placeholder="Your name" /></div>
+              <div class="pg-label">Title</div>
+              <div class="pg-value"><input type="text" id="f-title" name="title" placeholder="e.g. Software Engineer" /></div>
+
+              <div class="pg-label">Email</div>
+              <div class="pg-value"><input type="email" id="f-email" name="email" placeholder="you@example.com" /></div>
+              <div class="pg-label">Phone</div>
+              <div class="pg-value"><input type="text" id="f-phone" name="phone" placeholder="+61 4xx xxx xxx" /></div>
+
+              <div class="pg-label">Location</div>
+              <div class="pg-value"><input type="text" id="f-location" name="location" placeholder="e.g. Melbourne, AU" /></div>
+              <div class="pg-label">Target role</div>
+              <div class="pg-value"><input type="text" id="f-target-role" name="target_role" placeholder="e.g. Full Stack Developer" /></div>
+
+              <div class="pg-label">Domain focus</div>
+              <div class="pg-value"><div id="dd-domain"></div></div>
+              <div class="pg-label">Persona / tone</div>
+              <div class="pg-value"><div id="dd-tone"></div></div>
+            </div>
+          </div>
+
+          <!-- Social Links -->
+          <div class="s-card social-section">
+            <div class="s-card-title">Social Links</div>
+            <div id="chip-links" style="display:none"></div>
+            <div class="link-icons-row">
+              <button type="button" class="link-icon-btn" id="link-github" title="GitHub profile">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+              </button>
+              <button type="button" class="link-icon-btn" id="link-linkedin" title="LinkedIn profile">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+              </button>
+              <span class="link-icons-hint">click to add</span>
+            </div>
+          </div>
+
+          <!-- Skills & Background -->
+          <div class="s-card background-card">
+            <div class="s-card-title">Skills &amp; Background</div>
+            <div class="bg-field">
+              <div class="bg-field-label">Role keywords</div>
+              <div id="chip-keywords"></div>
+            </div>
+            <div class="bg-field">
+              <div class="bg-field-label">Skills</div>
+              <div id="chip-skills"></div>
+            </div>
+            <div class="bg-field">
+              <div class="bg-field-label">Key achievements</div>
+              <div id="chip-achievements"></div>
+            </div>
+            <div class="bg-field">
+              <div class="bg-field-label">Elevator pitch</div>
+              <textarea id="f-pitch" name="pitch" class="tall" placeholder="2-4 sentences summarising your value proposition"></textarea>
+            </div>
+          </div>
+
+          <div class="save-row">
+            <button type="submit" id="save-btn">Save Profile</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════════════ -->
+      <!-- TAB: Model & Performance                                    -->
+      <!-- ═══════════════════════════════════════════════════════════ -->
+      <div class="tab-panel" id="tab-model">
+
+        <div class="s-card" id="model-card">
+          <div class="s-card-title">Model Settings</div>
+          <div class="model-grid">
+            <label>Model</label>
+            <div>
+              <select class="model-select" id="model-select"><option>Loading...</option></select>
+              <span class="compute-badge not_loaded" id="compute-badge" style="margin-top:6px">--</span>
+            </div>
+
+            <label>Temperature</label>
+            <div class="range-wrap">
+              <input type="range" id="model-temp" min="0" max="1" step="0.05" value="0.15" />
+              <span class="range-val" id="temp-val">0.15</span>
+            </div>
+
+            <label>Max tokens</label>
+            <div class="token-grid">
+              <div class="token-item"><label>Skills</label><input type="number" id="mt-skills" value="400" min="100" max="2000" /></div>
+              <div class="token-item"><label>Cover</label><input type="number" id="mt-cover" value="600" min="100" max="2000" /></div>
+              <div class="token-item"><label>Emails</label><input type="number" id="mt-emails" value="650" min="100" max="2000" /></div>
+              <div class="token-item"><label>ATS</label><input type="number" id="mt-ats" value="250" min="100" max="2000" /></div>
+            </div>
+
+            <label>Context limits</label>
+            <div class="token-grid">
+              <div class="token-item"><label>JD chars</label><input type="number" id="cl-jd" value="2500" min="500" max="8000" /></div>
+              <div class="token-item"><label>JD retrieval</label><input type="number" id="cl-jd-ret" value="1500" min="500" max="5000" /></div>
+              <div class="token-item"><label>Profile retrieval</label><input type="number" id="cl-prof-ret" value="1500" min="500" max="5000" /></div>
+            </div>
+          </div>
+          <div class="model-save-row">
+            <button class="btn btn-primary" id="model-save-btn" style="padding:8px 20px; font-size:13px;">Apply Model Settings</button>
+          </div>
+        </div>
+
+        <div class="s-card" id="perf-card">
+          <div class="s-card-title">Performance Stats</div>
+          <div id="perf-content">
+            <div class="perf-empty">No generation data yet. Run a generation to see stats.</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════════════ -->
+      <!-- TAB: Account                                               -->
+      <!-- ═══════════════════════════════════════════════════════════ -->
+      <div class="tab-panel" id="tab-account">
+
+        <div class="s-card">
+          <div class="s-card-title">Account Info</div>
+          <div class="info-row">
+            <span class="info-label">Name</span>
+            <span class="info-value" id="info-name">-</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Email</span>
+            <span class="info-value" id="info-email">-</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">User ID</span>
+            <span class="info-uid" id="info-uid">-</span>
+          </div>
+          <div class="info-row" style="padding-top:8px">
+            <span></span>
+            <a href="/auth/logout" class="btn-sm btn-outline-sm" style="text-decoration:none">Sign Out</a>
+          </div>
+        </div>
+
+        <div class="s-card">
+          <div class="s-card-title">Your Data</div>
+          <p class="danger-text">Download a copy of your uploaded documents, profile settings, and vector store.</p>
+          <button class="btn-sm btn-primary-sm" id="export-btn">Export My Data</button>
+        </div>
+
+        <div class="s-card danger-zone">
+          <div class="s-card-title">Danger Zone</div>
+          <p class="danger-text">Permanently delete your account and all associated data. This cannot be undone.</p>
+          <button class="btn-sm btn-danger-sm" id="delete-btn">Delete My Account</button>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Link popup -->
+<div class="link-popup-overlay" id="link-popup-overlay">
+  <div class="link-popup">
+    <div class="link-popup-header">
+      <span id="link-popup-icon"></span>
+      <span class="link-popup-title" id="link-popup-title">GitHub</span>
+    </div>
+    <input type="url" id="link-popup-input" placeholder="https://github.com/username" />
+    <div class="link-popup-actions">
+      <button type="button" class="link-popup-cancel" id="link-popup-cancel">Cancel</button>
+      <button type="button" class="link-popup-clear" id="link-popup-clear">Clear</button>
+      <button type="button" class="link-popup-save" id="link-popup-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm delete dialog -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-dialog">
+    <h3>Delete your account?</h3>
+    <p>All your data — uploaded documents, profile settings, and generated content — will be permanently removed. This cannot be undone.</p>
+    <div class="confirm-actions">
+      <button class="btn-sm btn-outline-sm" id="cancel-delete">Cancel</button>
+      <button class="btn-sm btn-danger-sm" id="confirm-delete">Yes, delete everything</button>
+    </div>
+  </div>
+</div>
+
+<script src="/static/shared/common.js"></script>
+<script>
+  injectSidebar({ activePage: 'settings' });
+
+  // ── Accordion tabs ──────────────────────────────────────────────
+  document.querySelectorAll('.settings-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+    });
+  });
+
+  // ── Profile completion badge ────────────────────────────────────
+  (async function initCompletion() {
+    const c = await getProfileCompletion();
+    if (!c) return;
+    const badge = document.getElementById('completion-badge');
+    badge.style.display = '';
+    const circumference = 2 * Math.PI * 15;
+    const offset = circumference * (1 - c.pct / 100);
+    document.getElementById('cr-fill').setAttribute('stroke-dashoffset', offset);
+    document.getElementById('cr-pct').textContent = c.pct + '%';
+    if (c.pct >= 100) {
+      document.getElementById('cr-fill').setAttribute('stroke', '#16a34a');
+      document.getElementById('cr-label').textContent = 'Complete';
+      document.getElementById('cr-sub').textContent = 'all fields filled';
+    } else {
+      document.getElementById('cr-sub').textContent = c.done + ' of ' + c.total + ' fields';
+    }
+  })();
+
+  const form    = document.getElementById('profile-form');
+  const saveBtn = document.getElementById('save-btn');
+
+  // ── Chip inputs ─────────────────────────────────────────────────
+  const chipSkills = new ChipInput(document.getElementById('chip-skills'), {
+    placeholder: 'Add a skill and press Enter',
+  });
+
+  const chipAchievements = new ChipInput(document.getElementById('chip-achievements'), {
+    placeholder: 'Add an achievement and press Enter',
+  });
+
+  const chipLinks = new ChipInput(document.getElementById('chip-links'), {
+    placeholder: 'Add a URL and press Enter',
+    type: 'link',
+  });
+
+  const chipKeywords = new ChipInput(document.getElementById('chip-keywords'), {
+    placeholder: 'Add a keyword and press Enter',
+  });
+
+  // ── Dropdowns ───────────────────────────────────────────────────
+  const ddDomain = new SearchDropdown(document.getElementById('dd-domain'), {
+    placeholder: 'Select or type...',
+    allowCustom: true,
+    options: [
+      'Backend Engineering', 'Frontend Engineering', 'Full Stack',
+      'DevOps / SRE', 'Cloud / Infrastructure', 'Data Engineering',
+      'Machine Learning / AI', 'Mobile Development', 'Security',
+      'Product Management', 'QA / Testing', 'Embedded Systems',
+    ],
+  });
+
+  const ddTone = new SearchDropdown(document.getElementById('dd-tone'), {
+    placeholder: 'Select or type...',
+    allowCustom: true,
+    options: [
+      'Confident & Direct', 'Collaborative & Warm', 'Analytical & Precise',
+      'Creative & Bold', 'Pragmatic & Results-driven', 'Detail-oriented',
+      'Leadership-focused', 'Innovative & Forward-thinking',
+    ],
+  });
+
+  // ── Populate from profile ───────────────────────────────────────
+  const _fieldIds = {
+    name: 'f-name', title: 'f-title', location: 'f-location',
+    email: 'f-email', phone: 'f-phone', target_role: 'f-target-role',
+    pitch: 'f-pitch',
+  };
+
+  function populateForm(data) {
+    for (const [key, id] of Object.entries(_fieldIds)) {
+      const el = document.getElementById(id);
+      if (el && data[key]) el.value = data[key];
+    }
+
+    if (data.skills) chipSkills.setValues(data.skills);
+    if (data.achievements) chipAchievements.setValues(data.achievements);
+    if (data.links) chipLinks.setValues(data.links);
+    if (data.role_keywords) chipKeywords.setValues(data.role_keywords);
+
+    if (data.domain_focus) ddDomain.setValue(data.domain_focus);
+    if (data.persona_tone) ddTone.setValue(data.persona_tone);
+  }
+
+  function collectForm() {
+    const _val = (id) => (document.getElementById(id)?.value || '').trim();
+    return {
+      name: _val('f-name'),
+      title: _val('f-title'),
+      location: _val('f-location'),
+      email: _val('f-email'),
+      phone: _val('f-phone'),
+      target_role: _val('f-target-role'),
+      pitch: _val('f-pitch'),
+      skills: chipSkills.getValues(),
+      achievements: chipAchievements.getValues(),
+      links: chipLinks.getValues(),
+      role_keywords: chipKeywords.getValues(),
+      domain_focus: ddDomain.getValue(),
+      persona_tone: ddTone.getValue(),
+    };
+  }
+
+  // ── Load ────────────────────────────────────────────────────────
+  (async function init() {
+    try {
+      const res = await apiFetch('/profile');
+      if (res && res.ok) populateForm(await res.json());
+    } catch (_) {}
+  })();
+
+  // ── Save ────────────────────────────────────────────────────────
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving...';
+    try {
+      const res = await apiFetch('/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(collectForm()),
+      });
+      if (!res || !res.ok) throw new Error(`HTTP ${res ? res.status : 'failed'}`);
+      showToast('Profile saved successfully');
+    } catch (err) {
+      showToast(`Save failed: ${err.message}`, 'error');
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Save Profile';
+    }
+  });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Resume Documents — upload + list + delete
+  // ═══════════════════════════════════════════════════════════════════
+  const dropZone  = document.getElementById('docs-drop-zone');
+  const fileInput = document.getElementById('docs-file-input');
+  const docsList  = document.getElementById('docs-list');
+  const uploadStatus = document.getElementById('docs-upload-status');
+
+  const _DOC_ICON = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 2H5a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6z"/><path d="M9 2v4h4"/></svg>`;
+  const _TRASH_ICON = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M2.5 4h11"/><path d="M5.5 4V2.5a1 1 0 011-1h3a1 1 0 011 1V4"/><path d="M12.5 4v9a1.5 1.5 0 01-1.5 1.5H5A1.5 1.5 0 013.5 13V4"/></svg>`;
+
+  async function loadDocuments() {
+    try {
+      const res = await apiFetch('/documents');
+      if (!res || !res.ok) return;
+      const data = await res.json();
+      const files = data.documents || data.files || data || [];
+      docsList.innerHTML = '';
+      if (!files.length) {
+        docsList.innerHTML = '<div class="docs-empty">No resume documents uploaded yet.</div>';
+        return;
+      }
+      files.forEach(f => {
+        const name = typeof f === 'string' ? f : (f.filename || f.name || '');
+        if (!name) return;
+        const ext = name.split('.').pop().toUpperCase();
+        const item = document.createElement('div');
+        item.className = 'doc-item';
+        item.innerHTML = `<div class="doc-icon">${_DOC_ICON}</div><span class="doc-name">${name}</span><span class="doc-type">${ext}</span><button type="button" class="doc-delete" title="Delete">${_TRASH_ICON}</button>`;
+        item.querySelector('.doc-delete').addEventListener('click', () => deleteDocument(name));
+        docsList.appendChild(item);
+      });
+    } catch (_) {}
+  }
+
+  async function deleteDocument(filename) {
+    if (!confirm('Delete "' + filename + '"? The document index will be rebuilt.')) return;
+    try {
+      const res = await apiFetch('/documents/' + encodeURIComponent(filename), { method: 'DELETE' });
+      if (!res || !res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || 'Delete failed');
+      }
+      showToast('Deleted ' + filename);
+      loadDocuments();
+    } catch (err) {
+      showToast('Delete failed: ' + err.message, 'error');
+    }
+  }
+
+  async function uploadFiles(files) {
+    if (!files || !files.length) return;
+    uploadStatus.innerHTML = '<div class="docs-uploading">Uploading...</div>';
+
+    for (const file of files) {
+      try {
+        const form = new FormData();
+        form.append('file', file);
+        const res = await apiFetch('/upload', { method: 'POST', body: form });
+        if (!res || !res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || `Upload failed (${res.status})`);
+        }
+      } catch (err) {
+        showToast(`Upload failed: ${err.message}`, 'error');
+        uploadStatus.innerHTML = '';
+        return;
+      }
+    }
+
+    // Re-index after all uploads
+    uploadStatus.innerHTML = '<div class="docs-uploading">Indexing documents...</div>';
+    try {
+      await apiFetch('/ingest', { method: 'POST' });
+      showToast('Documents uploaded and indexed');
+    } catch (_) {
+      showToast('Uploaded but indexing failed', 'error');
+    }
+    uploadStatus.innerHTML = '';
+    loadDocuments();
+  }
+
+  // Click to browse
+  dropZone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', () => { uploadFiles(fileInput.files); fileInput.value = ''; });
+
+  // Drag and drop
+  dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    uploadFiles(e.dataTransfer.files);
+  });
+
+  // Load on init
+  loadDocuments();
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Account tab — info, export, delete
+  // ═══════════════════════════════════════════════════════════════════
+  (async () => {
+    try {
+      const res = await apiFetch('/auth/me');
+      if (!res || !res.ok) return;
+      const u = await res.json();
+      document.getElementById('info-name').textContent = u.name || '-';
+      document.getElementById('info-email').textContent = u.email || '-';
+      document.getElementById('info-uid').textContent = u.user_id || '-';
+    } catch (_) {}
+  })();
+
+  document.getElementById('export-btn').addEventListener('click', async () => {
+    const btn = document.getElementById('export-btn');
+    btn.disabled = true; btn.textContent = 'Exporting...';
+    try {
+      const res = await apiFetch('/auth/export-data');
+      if (!res || !res.ok) throw new Error('Export failed');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'resumate_data_export.zip';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+      showToast('Data exported successfully');
+    } catch (err) { showToast('Export failed: ' + err.message, 'error'); }
+    finally { btn.disabled = false; btn.textContent = 'Export My Data'; }
+  });
+
+  const confirmOverlay = document.getElementById('confirm-overlay');
+  document.getElementById('delete-btn').addEventListener('click', () => confirmOverlay.classList.add('visible'));
+  document.getElementById('cancel-delete').addEventListener('click', () => confirmOverlay.classList.remove('visible'));
+  confirmOverlay.addEventListener('click', (e) => { if (e.target === confirmOverlay) confirmOverlay.classList.remove('visible'); });
+  document.getElementById('confirm-delete').addEventListener('click', async () => {
+    const btn = document.getElementById('confirm-delete');
+    btn.disabled = true; btn.textContent = 'Deleting...';
+    try {
+      const res = await apiFetch('/auth/account', { method: 'DELETE' });
+      if (!res || !res.ok) throw new Error('Failed');
+      window.location.href = '/login';
+    } catch (err) {
+      showToast('Delete failed: ' + err.message, 'error');
+      btn.disabled = false; btn.textContent = 'Yes, delete everything';
+    }
+  });
+</script>
+
+<!-- Bridge: sync GitHub/LinkedIn icon buttons with the hidden chipLinks -->
+<script>
+(function() {
+  const ghBtn = document.getElementById('link-github');
+  const liBtn = document.getElementById('link-linkedin');
+  const overlay = document.getElementById('link-popup-overlay');
+  const popupIcon = document.getElementById('link-popup-icon');
+  const popupTitle = document.getElementById('link-popup-title');
+  const popupInput = document.getElementById('link-popup-input');
+  const popupSave = document.getElementById('link-popup-save');
+  const popupClear = document.getElementById('link-popup-clear');
+  const popupCancel = document.getElementById('link-popup-cancel');
+
+  const _GH_SVG = `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>`;
+  const _LI_SVG = `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>`;
+
+  let _activeLink = null; // 'github' | 'linkedin'
+  let _ghUrl = '';
+  let _liUrl = '';
+
+  function _isGithub(url) { return /github\.com/i.test(url); }
+  function _isLinkedin(url) { return /linkedin\.com/i.test(url); }
+
+  function syncFromChip() {
+    const urls = chipLinks.getValues();
+    _ghUrl = '';
+    _liUrl = '';
+    urls.forEach(u => {
+      if (_isGithub(u)) _ghUrl = u;
+      else if (_isLinkedin(u)) _liUrl = u;
+    });
+    ghBtn.classList.toggle('active', !!_ghUrl);
+    liBtn.classList.toggle('active', !!_liUrl);
+  }
+
+  function syncToChip() {
+    const urls = [];
+    if (_ghUrl) urls.push(_ghUrl);
+    if (_liUrl) urls.push(_liUrl);
+    chipLinks.setValues(urls);
+  }
+
+  function openPopup(platform) {
+    _activeLink = platform;
+    popupTitle.textContent = platform === 'github' ? 'GitHub Profile' : 'LinkedIn Profile';
+    popupIcon.innerHTML = platform === 'github' ? _GH_SVG : _LI_SVG;
+    popupInput.value = platform === 'github' ? _ghUrl : _liUrl;
+    popupInput.placeholder = platform === 'github'
+      ? 'https://github.com/username'
+      : 'https://linkedin.com/in/username';
+    overlay.classList.add('visible');
+    setTimeout(() => popupInput.focus(), 100);
+  }
+
+  function closePopup() {
+    overlay.classList.remove('visible');
+    _activeLink = null;
+  }
+
+  ghBtn.addEventListener('click', () => openPopup('github'));
+  liBtn.addEventListener('click', () => openPopup('linkedin'));
+
+  popupSave.addEventListener('click', () => {
+    const val = popupInput.value.trim();
+    if (_activeLink === 'github') _ghUrl = val;
+    else _liUrl = val;
+    syncToChip();
+    syncFromChip();
+    closePopup();
+  });
+
+  popupClear.addEventListener('click', () => {
+    if (_activeLink === 'github') _ghUrl = '';
+    else _liUrl = '';
+    syncToChip();
+    syncFromChip();
+    closePopup();
+  });
+
+  popupCancel.addEventListener('click', closePopup);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) closePopup(); });
+
+  popupInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); popupSave.click(); }
+    if (e.key === 'Escape') closePopup();
+  });
+
+  // Initial sync after profile loads — wait a tick for populateForm to run
+  setTimeout(syncFromChip, 500);
+
+  // Re-sync whenever the form populates (observe chip-links for child changes)
+  const obs = new MutationObserver(() => syncFromChip());
+  const chipEl = document.getElementById('chip-links');
+  if (chipEl) obs.observe(chipEl, { childList: true, subtree: true });
+})();
+</script>
+
+<!-- Model settings + performance stats -->
+<script>
+(function() {
+  const modelSelect = document.getElementById('model-select');
+  const tempSlider = document.getElementById('model-temp');
+  const tempVal = document.getElementById('temp-val');
+  const computeBadge = document.getElementById('compute-badge');
+  const perfContent = document.getElementById('perf-content');
+  const modelSaveBtn = document.getElementById('model-save-btn');
+
+  // Temperature slider live update
+  tempSlider.addEventListener('input', () => { tempVal.textContent = tempSlider.value; });
+
+  // Load installed models
+  async function loadModels() {
+    try {
+      const res = await apiFetch('/api/models');
+      if (!res || !res.ok) return;
+      const data = await res.json();
+      modelSelect.innerHTML = '';
+      data.models.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.name;
+        opt.textContent = m.name + ' (' + m.size_gb + 'GB' + (m.quantization ? ', ' + m.quantization : '') + ')';
+        if (m.is_current) opt.selected = true;
+        modelSelect.appendChild(opt);
+      });
+      // Show compute badge for current model
+      const current = data.models.find(m => m.is_current);
+      if (current) {
+        computeBadge.textContent = current.compute === 'gpu' ? 'GPU' : current.compute === 'cpu' ? 'CPU' : 'Not loaded';
+        computeBadge.className = 'compute-badge ' + current.compute;
+      }
+    } catch (_) {}
+  }
+
+  // Load current config values
+  async function loadConfig() {
+    try {
+      const res = await apiFetch('/api/models/config');
+      if (!res || !res.ok) return;
+      const cfg = await res.json();
+      tempSlider.value = cfg.temperature || 0.15;
+      tempVal.textContent = tempSlider.value;
+      if (cfg.max_tokens) {
+        if (cfg.max_tokens.skills) document.getElementById('mt-skills').value = cfg.max_tokens.skills;
+        if (cfg.max_tokens.cover) document.getElementById('mt-cover').value = cfg.max_tokens.cover;
+        if (cfg.max_tokens.emails) document.getElementById('mt-emails').value = cfg.max_tokens.emails;
+        if (cfg.max_tokens.ats) document.getElementById('mt-ats').value = cfg.max_tokens.ats;
+      }
+      if (cfg.context_limits) {
+        if (cfg.context_limits.jd_chars) document.getElementById('cl-jd').value = cfg.context_limits.jd_chars;
+        if (cfg.context_limits.retrieved_jd_chars) document.getElementById('cl-jd-ret').value = cfg.context_limits.retrieved_jd_chars;
+        if (cfg.context_limits.retrieved_profile_chars) document.getElementById('cl-prof-ret').value = cfg.context_limits.retrieved_profile_chars;
+      }
+    } catch (_) {}
+  }
+
+  // Load performance stats
+  async function loadStats() {
+    try {
+      const res = await apiFetch('/api/stats');
+      if (!res || !res.ok) return;
+      const data = await res.json();
+      if (!data.runs || data.runs.length === 0) return;
+
+      let html = '<table class="perf-table"><thead><tr><th>Run</th><th>Skills</th><th>Cover</th><th>Emails</th><th>ATS</th><th>Total</th></tr></thead><tbody>';
+      data.runs.forEach((run, i) => {
+        html += '<tr>';
+        html += '<td>#' + (i + 1) + '</td>';
+        run.tasks.forEach(t => {
+          html += '<td>' + (t.total_ms / 1000).toFixed(1) + 's</td>';
+        });
+        html += '<td><strong>' + (run.total_ms / 1000).toFixed(1) + 's</strong></td>';
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+
+      if (data.summary) {
+        html += '<div class="perf-summary">';
+        html += '<div class="perf-stat"><span class="perf-stat-label">Avg total</span><span class="perf-stat-value">' + (data.summary.avg_total_ms / 1000).toFixed(1) + 's</span></div>';
+        html += '<div class="perf-stat"><span class="perf-stat-label">Best</span><span class="perf-stat-value">' + (data.summary.best_total_ms / 1000).toFixed(1) + 's</span></div>';
+        html += '<div class="perf-stat"><span class="perf-stat-label">Worst</span><span class="perf-stat-value">' + (data.summary.worst_total_ms / 1000).toFixed(1) + 's</span></div>';
+        html += '<div class="perf-stat"><span class="perf-stat-label">Avg TTFT</span><span class="perf-stat-value">' + (data.summary.avg_ttft_ms / 1000).toFixed(1) + 's</span></div>';
+        html += '</div>';
+      }
+
+      perfContent.innerHTML = html;
+    } catch (_) {}
+  }
+
+  // Save model settings
+  modelSaveBtn.addEventListener('click', async () => {
+    modelSaveBtn.disabled = true;
+    modelSaveBtn.textContent = 'Applying...';
+    try {
+      const res = await apiFetch('/api/models/select', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model_name: modelSelect.value,
+          temperature: parseFloat(tempSlider.value),
+          max_tokens: {
+            skills: parseInt(document.getElementById('mt-skills').value),
+            cover: parseInt(document.getElementById('mt-cover').value),
+            emails: parseInt(document.getElementById('mt-emails').value),
+            ats: parseInt(document.getElementById('mt-ats').value),
+            default: 512,
+          },
+          context_limits: {
+            jd_chars: parseInt(document.getElementById('cl-jd').value),
+            retrieved_jd_chars: parseInt(document.getElementById('cl-jd-ret').value),
+            retrieved_profile_chars: parseInt(document.getElementById('cl-prof-ret').value),
+          },
+        }),
+      });
+      if (!res || !res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || 'Failed');
+      }
+      showToast('Model settings applied');
+      loadModels();
+    } catch (err) {
+      showToast('Failed: ' + err.message, 'error');
+    } finally {
+      modelSaveBtn.disabled = false;
+      modelSaveBtn.textContent = 'Apply Model Settings';
+    }
+  });
+
+  // Init
+  loadModels();
+  loadConfig();
+  loadStats();
+})();
+</script>
+
+</body>
+</html>

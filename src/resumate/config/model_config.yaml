@@ -1,0 +1,20 @@
+# For faster runs, use a smaller/quantised Ollama tag; set OLLAMA_KEEP_ALIVE=24h on the server process to keep weights loaded.
+# Previous model: qwen2.5:1.5b (rollback by changing model_name below)
+llm:
+  model_name: qwen2.5:1.5b
+  host: http://localhost:11434
+  temperature: 0.15
+  parallel_workers: 4
+  max_tokens:
+    skills: 400
+    cover: 600
+    emails: 650
+    ats: 250
+    default: 512
+runtime:
+  context_limits:
+    jd_chars: 2500
+    retrieved_jd_chars: 1500
+    retrieved_profile_chars: 1500
+embeddings:
+  model_name: all-MiniLM-L6-v2

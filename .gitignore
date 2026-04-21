@@ -34,6 +34,8 @@ data/users/
 # --- Environment / Keys ---
 .env
 *.env
+data/.jwt_secret
+data/auth/
 
 # --- Logs / temp ---
 *.log
