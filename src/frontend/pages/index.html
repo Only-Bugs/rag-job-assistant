@@ -386,14 +386,18 @@
     /* ── FAB speed dial ─────────────────────────────────────────── */
     .fab-wrap {
       position: fixed;
-      bottom: 32px;
-      right: 36px;
+      bottom: max(32px, env(safe-area-inset-bottom));
+      right: max(36px, env(safe-area-inset-right));
       z-index: 100;
       display: flex;
       flex-direction: column-reverse;
-      align-items: center;
+      /* flex-end keeps the 58px button pinned to the right edge even when
+         the wider .fab-actions panel expands the wrap's width. */
+      align-items: flex-end;
       gap: 12px;
+      pointer-events: none;
     }
+    .fab-wrap > * { pointer-events: auto; }
 
     .fab-btn {
       width: 58px;

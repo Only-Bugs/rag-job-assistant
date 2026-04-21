@@ -867,6 +867,10 @@ h2 {
   padding: 22px 36px 14px;
   flex-shrink: 0;
   animation: fadeIn 0.45s var(--ease-out) 0.06s both;
+  /* fadeIn applies a transform, creating a stacking context that traps the
+     avatar dropdown. Raise the whole topbar above page-content contexts. */
+  position: relative;
+  z-index: 1000;
 }
 
 .greeting h1 {
