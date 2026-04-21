@@ -212,19 +212,32 @@
     #generate-btn:active:not(:disabled) { transform: translateY(0); }
     #generate-btn:disabled { opacity: 0.38; cursor: not-allowed; transform: none; }
 
-    /* ── Streaming cursor — inline blinking block at end of text ── */
-    .output-wrap { position: relative; flex: 1; display: flex; flex-direction: column; }
-    .output-wrap .streaming-cursor {
-      display: none;
-      position: absolute;
-      width: 2px; height: 18px;
+    /* ── Streaming output — <pre> that grows inline with a blinking caret ── */
+    .output-wrap { position: relative; flex: 1; display: flex; flex-direction: column; min-height: 0; }
+    .output-streaming {
+      flex: 1;
+      margin: 0;
+      padding: 24px;
+      background: transparent;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 14px;
+      line-height: 1.75;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      overflow-y: auto;
+      min-height: 200px;
+    }
+    .streaming-caret {
+      display: inline-block;
+      width: 2px;
+      height: 1.05em;
       background: var(--accent);
+      vertical-align: text-bottom;
+      margin-left: 1px;
       border-radius: 1px;
       animation: cursorBlink 0.9s steps(2) infinite;
-      pointer-events: none;
-      z-index: 1;
     }
-    .output-wrap.streaming .streaming-cursor { display: block; }
     @keyframes cursorBlink {
       0%, 100% { opacity: 1; }
       50% { opacity: 0; }
@@ -298,16 +311,15 @@
     }
 
     .tab-dot {
-      font-size: 9px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      padding: 1px 6px;
-      border-radius: 99px;
-      background: var(--accent);
-      color: #fff;
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #16a34a;
+      box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.15);
       animation: chipIn 0.3s var(--ease-spring);
-      line-height: 1.4;
+      vertical-align: middle;
+      margin-left: 2px;
     }
 
     /* ── Tab panels ───────────────────────────────────────────────── */
@@ -380,60 +392,70 @@
       max-width: 300px;
     }
 
-    /* ── Thinking bar — compact strip below topbar ──────────────── */
+    /* ── Thinking pill — lives in the topbar-right ──────────────── */
     .thinking-bar {
       display: none;
-      padding: 6px 28px;
-      background: var(--surface-2);
-      border-bottom: 1px solid var(--border-light);
-      font-size: 12px;
-      font-family: var(--font-body);
-      color: var(--muted);
       align-items: center;
-      gap: 10px;
-      flex-shrink: 0;
+      gap: 8px;
+      padding: 5px 14px;
+      border-radius: 99px;
+      background: var(--accent-light);
+      color: var(--accent);
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      max-width: 360px;
       overflow: hidden;
-      transition: all 0.25s ease;
+      animation: pillPulse 1.8s ease-in-out infinite;
     }
-    .thinking-bar.active { display: flex; }
+    .thinking-bar.active { display: inline-flex; }
     .thinking-bar .thinking-spinner {
-      width: 12px; height: 12px; flex-shrink: 0;
-      border: 1.5px solid var(--accent-light); border-top-color: var(--accent);
+      width: 10px; height: 10px; flex-shrink: 0;
+      border: 1.5px solid rgba(255,255,255,0.5); border-top-color: var(--accent);
       border-radius: 50%; animation: spin 0.65s linear infinite;
     }
     .thinking-bar .thinking-current {
-      flex: 1;
+      min-width: 0;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      font-weight: 500;
-      color: var(--text-2);
     }
     .thinking-bar .thinking-expand-btn {
-      font-size: 11px;
+      font-size: 10px;
       color: var(--accent);
-      background: none;
+      background: rgba(255,255,255,0.35);
       border: none;
       cursor: pointer;
-      font-weight: 600;
+      font-weight: 700;
       padding: 2px 8px;
-      border-radius: 4px;
+      border-radius: 99px;
       transition: background 0.15s;
       flex-shrink: 0;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
-    .thinking-bar .thinking-expand-btn:hover { background: var(--accent-light); }
+    .thinking-bar .thinking-expand-btn:hover { background: #fff; }
 
-    /* Expanded thinking log (dropdown below the bar) */
+    /* Expanded thinking log — absolute dropdown below topbar */
     .thinking-log-panel {
       display: none;
-      padding: 8px 28px 10px;
-      background: var(--surface-2);
-      border-bottom: 1px solid var(--border-light);
+      position: absolute;
+      top: calc(100% + 4px);
+      right: 28px;
+      width: 420px;
+      max-width: calc(100vw - 40px);
+      padding: 10px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.04);
       font-family: var(--font-mono, 'SF Mono', 'Fira Code', monospace);
       font-size: 11px;
-      max-height: 140px;
+      max-height: 220px;
       overflow-y: auto;
-      flex-shrink: 0;
+      z-index: 1001;
     }
     .thinking-log-panel.open { display: block; }
     .thinking-log-panel .t-line {
@@ -607,23 +629,22 @@
 
   <main class="main">
     <!-- Top bar -->
-    <div class="topbar">
+    <div class="topbar" style="position: relative;">
       <div class="breadcrumb">
         <span class="breadcrumb-current">New Application</span>
       </div>
       <div class="topbar-right">
+        <!-- Thinking pill (replaces the strip that used to sit below topbar) -->
+        <span class="thinking-bar" id="thinking-bar">
+          <span class="thinking-spinner"></span>
+          <span class="thinking-current" id="thinking-current"></span>
+          <button class="thinking-expand-btn" id="thinking-expand">More</button>
+        </span>
         <span id="status-pill" class="ready">Ready</span>
         <a href="/settings" class="topbar-avatar" id="topbar-avatar"></a>
       </div>
+      <div class="thinking-log-panel" id="thinking-log-panel"></div>
     </div>
-
-    <!-- Thinking bar (compact strip below topbar) -->
-    <div class="thinking-bar" id="thinking-bar">
-      <span class="thinking-spinner"></span>
-      <span class="thinking-current" id="thinking-current"></span>
-      <button class="thinking-expand-btn" id="thinking-expand">Show more</button>
-    </div>
-    <div class="thinking-log-panel" id="thinking-log-panel"></div>
 
     <!-- Split panels -->
     <div class="panels">
@@ -800,7 +821,7 @@
     // Update bar to show elapsed time, hide spinner
     _thinkingBar.querySelector('.thinking-spinner').style.display = 'none';
     _thinkingCurrent.textContent = 'Thought for ' + elapsed + 's';
-    _thinkingExpandBtn.textContent = 'Show details';
+    _thinkingExpandBtn.textContent = 'Log';
 
     // Reset state
     _thinkingStart = null;
@@ -810,7 +831,7 @@
   // Toggle expand/collapse of thinking log
   _thinkingExpandBtn.addEventListener('click', function() {
     const isOpen = _thinkingLogPanel.classList.toggle('open');
-    _thinkingExpandBtn.textContent = isOpen ? 'Hide' : (_thinkingStart ? 'Show more' : 'Show details');
+    _thinkingExpandBtn.textContent = isOpen ? 'Hide' : (_thinkingStart ? 'More' : 'Log');
   });
 
   // ── Download dropdown ─────────────────────────────────────────
@@ -867,13 +888,13 @@
   function markTabDone(name) {
     const btn = document.querySelector(`.tab-btn[data-tab="${name}"]`);
     if (!btn) return;
-    // Only show notification dot if this tab is NOT currently active
-    const isActive = btn.classList.contains('active');
-    if (!isActive && !btn.querySelector('.tab-dot')) {
+    // Always show unread dot on completion; click clears it via activateTab.
+    // The dot on the currently-active tab still signals "just finished" — user
+    // can click anywhere on the tab to dismiss.
+    if (!btn.querySelector('.tab-dot')) {
       const dot = document.createElement('span');
       dot.className = 'tab-dot';
-      dot.textContent = 'new';
-      dot.setAttribute('aria-hidden', 'true');
+      dot.setAttribute('aria-label', 'new output');
       btn.appendChild(dot);
     }
     // Enable download button when cover letter completes
@@ -884,61 +905,52 @@
   }
 
   // Live token streaming — append characters as they arrive
-  const _streamingTas = {};  // track textarea per task during streaming
+  // Per-task streaming state: pre element, text node, caret. Using a <pre>
+  // instead of a textarea lets the caret sit inline at the true insertion
+  // point — textareas don't let you render DOM inside them.
+  const _streamingTas = {};   // name → { textNode, preEl, caret, buffer }
   let _activeStreamTask = null;
 
   function appendToken(name, chunk) {
     const panel = panels[name];
     if (!panel) return;
-    // First token for this task: collapse thinking, create textarea + cursor, switch tab
     if (!_streamingTas[name]) {
-      // Collapse thinking bar on first token of the first task
       if (_thinkingStart) collapseThinking();
 
-      // Create output-wrap container with textarea + streaming cursor
       const wrap = document.createElement('div');
       wrap.className = 'output-wrap streaming';
-      const ta = document.createElement('textarea');
-      ta.className = 'output-textarea';
-      ta.value = '';
-      ta.addEventListener('input', () => { outputContent[name] = ta.value; });
-      const cursor = document.createElement('span');
-      cursor.className = 'streaming-cursor';
-      wrap.appendChild(ta);
-      wrap.appendChild(cursor);
+      const pre = document.createElement('pre');
+      pre.className = 'output-streaming';
+      const textNode = document.createTextNode('');
+      const caret = document.createElement('span');
+      caret.className = 'streaming-caret';
+      caret.setAttribute('aria-hidden', 'true');
+      pre.appendChild(textNode);
+      pre.appendChild(caret);
+      wrap.appendChild(pre);
 
       panel.innerHTML = '';
       panel.appendChild(wrap);
-      _streamingTas[name] = ta;
+      _streamingTas[name] = { textNode, preEl: pre, caret, buffer: '' };
+
       if (_activeStreamTask !== name) {
         _activeStreamTask = name;
         activateTab(name);
       }
     }
-    _streamingTas[name].value += chunk;
-    outputContent[name] = _streamingTas[name].value;
-    // Auto-scroll textarea to bottom
-    _streamingTas[name].scrollTop = _streamingTas[name].scrollHeight;
-
-    // Position cursor near end of text
-    const ta = _streamingTas[name];
-    const cursor = ta.parentElement.querySelector('.streaming-cursor');
-    if (cursor) {
-      // Approximate cursor position based on textarea scroll
-      cursor.style.bottom = '24px';
-      cursor.style.right = '28px';
-    }
+    const s = _streamingTas[name];
+    s.buffer += chunk;
+    s.textNode.nodeValue = s.buffer;
+    outputContent[name] = s.buffer;
+    // Auto-scroll to keep the caret in view.
+    s.preEl.scrollTop = s.preEl.scrollHeight;
   }
 
   function renderTask(name, content) {
     const panel = panels[name];
     if (!panel) return;
     outputContent[name] = content;
-    // Clean up streaming state + cursor for this task
-    if (_streamingTas[name]) {
-      const wrap = _streamingTas[name].parentElement;
-      if (wrap && wrap.classList.contains('output-wrap')) wrap.classList.remove('streaming');
-    }
+    // Tear down streaming DOM (caret dies with it — no stale blink).
     delete _streamingTas[name];
     if (name === 'emails') {
       renderEmailCards(panel, content);
