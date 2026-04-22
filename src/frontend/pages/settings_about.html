@@ -42,6 +42,8 @@
         <div class="kv"><span class="kv-label">Version</span><span class="kv-value" id="about-version">—</span></div>
         <div class="kv"><span class="kv-label">Backend</span><span class="kv-value">FastAPI</span></div>
         <div class="kv"><span class="kv-label">LLM runtime</span><span class="kv-value">Ollama (local)</span></div>
+        <div class="kv"><span class="kv-label">Active model</span><span class="kv-value" id="about-model">—</span></div>
+        <div class="kv"><span class="kv-label">Compute</span><span class="kv-value" id="about-compute">—</span></div>
       </div>
 
       <div class="section-card">
@@ -69,8 +71,20 @@
   injectSidebar({ activePage: 'settings' });
   injectSettingsNav('about');
 
-  // Placeholder version — wire to /api/version later if it exists.
   document.getElementById('about-version').textContent = 'dev';
+
+  (async () => {
+    try {
+      const res = await fetch('/health');
+      if (!res.ok) return;
+      const d = await res.json();
+      document.getElementById('about-model').textContent = d.model || '—';
+      document.getElementById('about-compute').textContent =
+        d.compute === 'metal' ? 'Metal (GPU)' :
+        d.compute === 'cpu'    ? 'CPU' :
+        d.compute === 'not_loaded' ? 'Not loaded' : (d.compute || '—');
+    } catch (_) { /* best-effort */ }
+  })();
 </script>
 
 </body>
