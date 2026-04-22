@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ResuMate — About</title>
+  <link rel="stylesheet" href="/static/shared/styles.css" />
+  <style>
+    .page-header { margin-bottom: 28px; }
+    .page-header h1 {
+      font-family: var(--font-display);
+      font-size: 24px; font-weight: 800; letter-spacing: -0.03em;
+      margin-bottom: 4px;
+    }
+    .page-header p { color: var(--muted); font-size: 14px; }
+
+    .kv { display: flex; justify-content: space-between; padding: 10px 0;
+      border-bottom: 1px solid var(--border-light); font-size: 14px; }
+    .kv:last-of-type { border: none; }
+    .kv-label { color: var(--muted); font-weight: 500; font-size: 13px; }
+    .kv-value { font-weight: 600; font-variant-numeric: tabular-nums; }
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <div id="rm-sidebar-slot"></div>
+
+  <main class="main">
+    <div class="topbar"></div>
+
+    <div id="settings-nav-slot"></div>
+
+    <div class="workspace">
+      <div class="page-header">
+        <h1>About</h1>
+        <p>Build info, feedback, and general shortcuts.</p>
+      </div>
+
+      <div class="section-card">
+        <h2>Build</h2>
+        <div class="kv"><span class="kv-label">Version</span><span class="kv-value" id="about-version">—</span></div>
+        <div class="kv"><span class="kv-label">Backend</span><span class="kv-value">FastAPI</span></div>
+        <div class="kv"><span class="kv-label">LLM runtime</span><span class="kv-value">Ollama (local)</span></div>
+      </div>
+
+      <div class="section-card">
+        <h2>Feedback</h2>
+        <p style="color: var(--muted); font-size: 13px; margin-bottom: 12px;">
+          Report a bug or suggest an improvement.
+        </p>
+        <div class="btn-row">
+          <a class="btn btn-primary" href="mailto:snehagopalappa1607@gmail.com?subject=ResuMate%20feedback">Send feedback</a>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <h2>Shortcuts</h2>
+        <div class="kv"><span class="kv-label">Theme</span><span class="kv-value">Coming soon</span></div>
+        <div class="kv"><span class="kv-label">Keyboard shortcuts</span><span class="kv-value">Coming soon</span></div>
+        <div class="kv"><span class="kv-label">Reset local data</span><span class="kv-value">Coming soon</span></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/static/shared/common.js"></script>
+<script>
+  injectSidebar({ activePage: 'settings' });
+  injectSettingsNav('about');
+
+  // Placeholder version — wire to /api/version later if it exists.
+  document.getElementById('about-version').textContent = 'dev';
+</script>
+
+</body>
+</html>

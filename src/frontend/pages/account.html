@@ -117,6 +117,8 @@
   <main class="main">
     <div class="topbar"></div>
 
+    <div id="settings-nav-slot"></div>
+
     <div class="workspace">
       <div class="account-header">
         <h1>Account</h1>
@@ -178,7 +180,8 @@
 
 <script src="/static/shared/common.js"></script>
 <script>
-  injectSidebar({ activePage: 'account' });
+  injectSidebar({ activePage: 'settings' });
+  injectSettingsNav('account');
 
   const infoName  = document.getElementById('info-name');
   const infoEmail = document.getElementById('info-email');

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ResuMate — Model</title>
+  <link rel="stylesheet" href="/static/shared/styles.css" />
+  <style>
+    .page-header { margin-bottom: 28px; }
+    .page-header h1 {
+      font-family: var(--font-display);
+      font-size: 24px; font-weight: 800; letter-spacing: -0.03em;
+      margin-bottom: 4px;
+    }
+    .page-header p { color: var(--muted); font-size: 14px; }
+
+    .model-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 0; border-bottom: 1px solid var(--border-light);
+    }
+    .model-row:last-of-type { border-bottom: none; }
+    .model-name { font-weight: 600; }
+    .model-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .model-badge {
+      font-size: 11px; font-weight: 600; padding: 2px 8px;
+      border-radius: 999px; background: var(--accent-light); color: var(--accent);
+    }
+
+    .field-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px;
+    }
+    .field-grid label {
+      display: block; font-size: 13px; font-weight: 600;
+      color: var(--muted); margin-bottom: 6px;
+    }
+    .field-grid input[type="number"],
+    .field-grid input[type="range"] {
+      width: 100%;
+    }
+
+    .perf-table {
+      width: 100%; border-collapse: collapse; font-size: 13px;
+    }
+    .perf-table th, .perf-table td {
+      text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border-light);
+    }
+    .perf-table th { color: var(--muted); font-weight: 600; font-size: 12px; }
+    .perf-table td { font-variant-numeric: tabular-nums; }
+
+    .muted-note { color: var(--muted); font-size: 13px; }
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <div id="rm-sidebar-slot"></div>
+
+  <main class="main">
+    <div class="topbar"></div>
+
+    <div id="settings-nav-slot"></div>
+
+    <div class="workspace">
+      <div class="page-header">
+        <h1>Model</h1>
+        <p>Switch local Ollama models, tune generation, and view recent performance.</p>
+      </div>
+
+      <div class="section-card">
+        <h2>Available models</h2>
+        <p class="muted-note">List sourced from <code>ollama list</code>. Swap is blocked during an active generation.</p>
+        <div id="model-list" style="margin-top: 12px;">
+          <div class="muted-note">Loading…</div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <h2>Tunables</h2>
+        <p class="muted-note">Per-model overrides persisted to <code>model_config.yaml</code>.</p>
+        <div class="field-grid" style="margin-top: 16px;">
+          <div>
+            <label for="f-temp">Temperature</label>
+            <input type="number" id="f-temp" step="0.05" min="0" max="2" />
+          </div>
+          <div>
+            <label for="f-maxtok">Max tokens</label>
+            <input type="number" id="f-maxtok" step="32" min="64" />
+          </div>
+          <div>
+            <label for="f-topp">top_p</label>
+            <input type="number" id="f-topp" step="0.05" min="0" max="1" />
+          </div>
+          <div>
+            <label for="f-numctx">num_ctx</label>
+            <input type="number" id="f-numctx" step="256" min="512" />
+          </div>
+        </div>
+        <div class="btn-row" style="margin-top: 16px;">
+          <button class="btn btn-primary" id="save-tunables">Save tunables</button>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <h2>Recent performance</h2>
+        <p class="muted-note">Last few runs from <code>logs/performance.json</code>.</p>
+        <table class="perf-table" style="margin-top: 12px;">
+          <thead>
+            <tr>
+              <th>When</th><th>Model</th><th>Task</th><th>TTFT (s)</th><th>Total (s)</th>
+            </tr>
+          </thead>
+          <tbody id="perf-rows">
+            <tr><td colspan="5" class="muted-note">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/static/shared/common.js"></script>
+<script>
+  injectSidebar({ activePage: 'settings' });
+  injectSettingsNav('model');
+</script>
+
+</body>
+</html>

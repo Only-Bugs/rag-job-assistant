@@ -68,8 +68,7 @@ function injectHeader(opts = {}) {
       <div class="rm-user-menu" id="rm-user-menu" style="display:none;">
         <button class="rm-avatar" id="rm-avatar-btn" title="Account"></button>
         <div class="rm-dropdown" id="rm-dropdown">
-          <a href="/settings">Profile Settings</a>
-          <a href="/account">Account</a>
+          <a href="/settings">Settings</a>
           <div class="rm-divider"></div>
           <a href="/auth/logout">Sign Out</a>
         </div>
@@ -448,8 +447,7 @@ function injectSidebar(opts = {}) {
   const navItems = [
     { key: 'dashboard', label: 'Dashboard', href: '/' },
     { key: 'workspace', label: 'Workspace', href: '/workspace' },
-    { key: 'settings', label: 'Settings', href: '/settings' },
-    { key: 'account', label: 'Account', href: '/account' },
+    { key: 'settings',  label: 'Settings',  href: '/settings' },
   ];
 
   const navHtml = navItems.map(n =>
@@ -568,6 +566,27 @@ async function initProfileWidget() {
   }
 }
 
+// ── Settings sub-nav injector ────────────────────────────────────
+// Injects a horizontal tab bar into #settings-nav-slot, highlighting `active`.
+// Call from each /settings/* page: injectSettingsNav('profile'|'account'|'model'|'about').
+function injectSettingsNav(active) {
+  const slot = document.getElementById('settings-nav-slot');
+  if (!slot) return;
+  const tabs = [
+    { key: 'profile', label: 'Profile', href: '/settings/profile' },
+    { key: 'account', label: 'Account', href: '/settings/account' },
+    { key: 'model',   label: 'Model',   href: '/settings/model'   },
+    { key: 'about',   label: 'About',   href: '/settings/about'   },
+  ];
+  slot.innerHTML = `
+    <nav class="settings-subnav" aria-label="Settings sections">
+      ${tabs.map(t =>
+        `<a class="settings-subnav-item${t.key === active ? ' active' : ''}" href="${t.href}">${t.label}</a>`
+      ).join('')}
+    </nav>
+  `;
+}
+
 // ── Topbar user init (greeting + avatar + dropdown) ─────────────
 const _TOPBAR_DROPDOWN_ICONS = {
   settings: `<svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="9" cy="9" r="2.5"/><path d="M14.7 11.1a1.2 1.2 0 00.24 1.32l.04.04a1.45 1.45 0 11-2.06 2.06l-.04-.04a1.2 1.2 0 00-1.32-.24 1.2 1.2 0 00-.73 1.1v.11a1.45 1.45 0 11-2.9 0v-.06a1.2 1.2 0 00-.79-1.1 1.2 1.2 0 00-1.32.24l-.04.04a1.45 1.45 0 11-2.06-2.06l.04-.04a1.2 1.2 0 00.24-1.32 1.2 1.2 0 00-1.1-.73h-.11a1.45 1.45 0 110-2.9h.06a1.2 1.2 0 001.1-.79 1.2 1.2 0 00-.24-1.32l-.04-.04A1.45 1.45 0 115.42 3.3l.04.04a1.2 1.2 0 001.32.24h.06a1.2 1.2 0 00.73-1.1v-.11a1.45 1.45 0 012.9 0v.06a1.2 1.2 0 00.73 1.1 1.2 1.2 0 001.32-.24l.04-.04a1.45 1.45 0 112.06 2.06l-.04.04a1.2 1.2 0 00-.24 1.32v.06a1.2 1.2 0 001.1.73h.11a1.45 1.45 0 010 2.9h-.06a1.2 1.2 0 00-1.1.73z"/></svg>`,
@@ -617,7 +636,6 @@ async function initTopbar() {
     </div>
     <div class="topbar-dd-divider"></div>
     <a href="/settings" class="topbar-dd-item">${_TOPBAR_DROPDOWN_ICONS.settings}<span>Settings</span></a>
-    <a href="/account" class="topbar-dd-item">${_TOPBAR_DROPDOWN_ICONS.account}<span>Account</span></a>
     <div class="topbar-dd-divider"></div>
     <a href="/auth/logout" class="topbar-dd-item topbar-dd-danger">${_TOPBAR_DROPDOWN_ICONS.logout}<span>Sign Out</span></a>
   `;
