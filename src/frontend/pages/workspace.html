@@ -597,40 +597,70 @@
     .dl-dd-item:hover { background: var(--surface-2); }
     .dl-dd-item svg { width: 16px; height: 16px; color: var(--muted); flex-shrink: 0; }
 
-    /* ── Email cards (workspace) ─────────────────────────────────── */
-    .email-cards { padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; }
-    .email-card {
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 18px 20px;
-      background: var(--surface);
-      transition: border-color 0.2s, box-shadow 0.2s;
-      cursor: pointer;
+    /* ── Emails: type switcher + compose card ──────────────────────── */
+    .email-host { padding: 20px 24px 28px; }
+    .email-view { display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 760px; margin: 0 auto; }
+    .email-switch {
+      display: inline-flex; align-self: flex-start; gap: 4px; padding: 4px;
+      background: var(--bg-subtle); border-radius: 999px;
     }
-    .email-card:hover { border-color: var(--accent-mid); box-shadow: 0 2px 12px rgba(108,92,231,0.06); }
-    .email-card.selected { border-color: var(--accent); background: var(--accent-light); }
-    .email-card-head {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 8px;
+    .email-seg {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 7px 14px; border: none; border-radius: 999px; background: transparent;
+      font-family: var(--font-display); font-size: 12.5px; font-weight: 600; color: var(--muted);
+      cursor: pointer; transition: background .15s, color .15s, box-shadow .15s, opacity .15s;
     }
-    .email-type-badge {
-      font-size: 11px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.06em; padding: 3px 10px; border-radius: 6px;
-      background: var(--accent-light); color: var(--accent);
+    .email-seg:hover { color: var(--text); }
+    .email-seg.active {
+      background: var(--surface); color: var(--text);
+      box-shadow: 0 1px 3px rgba(0,0,0,.08), 0 0 0 1px var(--border-light);
     }
-    .email-type-badge.outreach { background: #dbeafe; color: #1d4ed8; }
-    .email-type-badge.followup { background: #fef3c7; color: #92400e; }
-    .email-subject { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
-    .email-body-preview {
-      font-size: 13.5px; color: var(--text); line-height: 1.65;
-      white-space: pre-wrap; word-wrap: break-word;
+    .email-seg:focus-visible { outline: 2px solid var(--accent-mid); outline-offset: 2px; }
+    .email-seg .seg-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+    .email-seg.outreach .seg-dot { background: #1d4ed8; }
+    .email-seg.followup .seg-dot { background: #b45309; }
+    .email-seg.pending { opacity: .45; }
+    .email-seg.writing .seg-dot { animation: skPulse 1s ease-in-out infinite; }
+
+    .email-compose {
+      border: 1px solid var(--border); border-radius: 12px; background: var(--surface);
+      overflow: hidden; transition: border-color .15s, box-shadow .15s;
     }
-    .email-subject-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-right: 6px; }
-    .email-card { cursor: default; }
-    .email-card.skeleton .sk-line { height: 11px; border-radius: 6px; background: var(--bg-subtle); margin: 10px 0; animation: skPulse 1.4s ease-in-out infinite; }
-    .email-card.skeleton .sk-line.short { width: 40%; }
-    .email-card.skeleton .sk-line.mid { width: 70%; }
-    @keyframes skPulse { 0%,100% { opacity: 1; } 50% { opacity: .45; } }
+    .email-compose:focus-within { border-color: var(--accent-mid); box-shadow: 0 0 0 3px var(--accent-light); }
+    .email-compose-subject {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 18px; border-bottom: 1px solid var(--border-light);
+    }
+    .email-compose-subject label {
+      font-family: var(--font-display); font-size: 11px; font-weight: 700;
+      letter-spacing: .06em; text-transform: uppercase; color: var(--muted); flex-shrink: 0;
+    }
+    .email-subject-input {
+      flex: 1; min-width: 0; border: none; outline: none; background: transparent; padding: 2px 0;
+      font-family: var(--font-body); font-size: 14.5px; font-weight: 600; color: var(--text);
+    }
+    .email-body-input {
+      display: block; width: 100%; min-height: 220px; padding: 16px 18px;
+      border: none; outline: none; resize: none; overflow: hidden; background: transparent;
+      font-family: var(--font-body); font-size: 14.5px; line-height: 1.7; color: var(--text);
+    }
+    .email-subject-input[readonly], .email-body-input[readonly] { cursor: default; }
+    .email-subject-input::placeholder, .email-body-input::placeholder { color: var(--muted); font-weight: 400; }
+    .email-compose-foot {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px 10px 18px; border-top: 1px solid var(--border-light); background: var(--surface-2);
+    }
+    .email-words { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+    .email-ph-chip {
+      font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 99px;
+      background: #fff4e0; color: #b45309;
+    }
+    .email-ph-chip:empty { display: none; }
+    .email-writing { display: none; font-size: 12px; font-weight: 600; color: var(--accent); }
+    .email-compose.is-writing .email-writing { display: inline; }
+    .email-foot-actions { margin-left: auto; display: flex; gap: 8px; }
+    .email-compose.is-writing .email-foot-actions { opacity: .4; pointer-events: none; }
+    @keyframes skPulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
 
     /* ── Rendered markdown output ──────────────────────────────── */
     .output-panel { display: flex; flex-direction: column; flex: 1; min-height: 0; }
@@ -652,17 +682,11 @@
     .md-view li { margin-bottom: 8px; }
     .md-view strong { font-weight: 700; }
     .md-view code { font-family: var(--font-mono); font-size: 12.5px; background: var(--bg-subtle); padding: 1px 5px; border-radius: 4px; }
-    .md-view mark.md-ph, .email-body-preview mark.md-ph {
+    .md-view mark.md-ph {
       background: #fff4e0; color: #b45309; border-radius: 4px; padding: 0 3px; font-weight: 600;
     }
     .md-view hr { border: none; border-top: 1px solid var(--border-light); margin: 16px 0; }
 
-    /* Action icons row — appears after selecting a card */
-    .email-actions-row {
-      display: flex; align-items: center; gap: 10px;
-      margin-top: 12px; padding-top: 12px;
-      border-top: 1px solid var(--border-light);
-    }
     .email-action-btn {
       width: 36px; height: 36px;
       border-radius: 10px;
@@ -881,6 +905,7 @@
   };
 
   const outputContent = { skills: '', cover: '', emails: '', ats: '' };
+  let _emailState = null;   // Emails tab state — see fillEmailCards()
   let _modelReady = true;
   let _gmailConnected = false;
 
@@ -986,7 +1011,10 @@
       }
     });
     Object.entries(panels).forEach(([key, panel]) => panel.classList.toggle('active', key === name));
+    // The email body auto-grows to its content, which can't be measured while hidden.
+    if (name === 'emails' && _emailState) _autosize(_emailState.els.body);
   }
+  window.addEventListener('resize', () => { if (_emailState) _autosize(_emailState.els.body); });
   tabBtns.forEach(btn => btn.addEventListener('click', () => activateTab(btn.dataset.tab)));
 
   let _doneDecayTimer = null;
@@ -1040,7 +1068,7 @@
       setStatus('running', 'Writing ' + TASK_LABEL[name] + '…');
       const view = document.createElement('div');
       if (name === 'emails') {
-        view.className = 'email-cards';
+        view.className = 'email-host';
       } else {
         view.className = 'md-view';
       }
@@ -1144,73 +1172,170 @@
     return b;
   }
 
-  // Always renders three fixed cards (Application / Cold Outreach / Follow-up).
-  // Cards not yet streamed show a skeleton; the last streamed card has no actions
-  // until generation completes (final === true).
-  function fillEmailCards(container, raw, streaming) {
-    const emails = parseEmails(raw);
-    container.innerHTML = '';
-    _EMAIL_SLOTS.forEach((slot, i) => {
-      const email = emails.find(e => e.index === i + 1);
-      const card = document.createElement('div');
-      if (!email) {
-        if (!streaming) return;
-        card.className = 'email-card skeleton';
-        card.innerHTML =
-          '<div class="email-card-head"><span class="email-type-badge ' + slot.typeClass + '">' + slot.type + '</span></div>' +
-          '<div class="sk-line mid"></div><div class="sk-line"></div><div class="sk-line"></div><div class="sk-line short"></div>';
-        container.appendChild(card);
-        return;
-      }
-      card.className = 'email-card';
-      card.innerHTML =
-        '<div class="email-card-head"><span class="email-type-badge ' + slot.typeClass + '">' + slot.type + '</span></div>' +
-        '<div class="email-subject"><span class="email-subject-label">Subject</span>' + _escapeHtml(email.subject || '…') + '</div>' +
-        '<div class="email-body-preview">' + _escapeHtml(email.body).replace(/\[([^\]\n]{2,40})\]/g, '<mark class="md-ph">[$1]</mark>') + '</div>';
-      const isLive = streaming && email === emails[emails.length - 1];
-      if (!streaming) {
-        const actions = document.createElement('div');
-        actions.className = 'email-actions-row';
-        const gmailBtn = _emailActionBtn('action-gmail', 'Send via Gmail', _ICON_GMAIL, async (btn) => {
-          if (!_gmailConnected) { showToast('Connect Gmail in Settings first', 'error'); return; }
-          const to = prompt('Recipient email address:');
-          if (!to || !to.trim()) return;
-          try {
-            const res = await apiFetch('/api/gmail/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ to: to.trim(), subject: email.subject, body: email.body }) });
-            if (!res || !res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.detail || 'Send failed'); }
-            showToast('Email sent!');
-          } catch (err) { showToast('Send failed: ' + err.message, 'error'); }
-        });
-        if (!_gmailConnected) { gmailBtn.disabled = true; gmailBtn.title = 'Connect Gmail in Settings'; }
-        const copyBtn = _emailActionBtn('action-copy', 'Copy subject + body', _ICON_COPY, () => {
-          navigator.clipboard.writeText('Subject: ' + email.subject + '\n\n' + email.body).then(() => showToast('Copied to clipboard'));
-        });
-        const shareBtn = _emailActionBtn('action-share', 'Share', _ICON_SHARE, () => {
-          const data = { title: slot.type + ' Email', text: 'Subject: ' + email.subject + '\n\n' + email.body };
-          if (navigator.share) navigator.share(data).catch(() => {});
-          else navigator.clipboard.writeText(data.text).then(() => showToast('Copied to clipboard'));
-        });
-        actions.appendChild(gmailBtn); actions.appendChild(copyBtn); actions.appendChild(shareBtn);
-        card.appendChild(actions);
-      } else if (isLive) {
-        card.querySelector('.email-body-preview').insertAdjacentHTML('beforeend', '<span class="streaming-caret" aria-hidden="true"></span>');
-      }
-      container.appendChild(card);
+  // ── Emails: switcher + one compose card ───────────────────────
+  // State-backed so edits survive switching; outputContent.emails is kept in
+  // sync via serializeEmails() for export / save.
+  const _PH_RE = /\[[^\]\n]{2,40}\]/g;
+
+  function _buildEmailView(host) {
+    host.innerHTML = '';
+    const view = document.createElement('div');
+    view.className = 'email-view';
+
+    const sw = document.createElement('div');
+    sw.className = 'email-switch';
+    sw.setAttribute('role', 'tablist');
+    sw.setAttribute('aria-label', 'Email type');
+    const segs = _EMAIL_SLOTS.map((slot, i) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'email-seg ' + slot.typeClass;
+      b.setAttribute('role', 'tab');
+      b.innerHTML = '<span class="seg-dot"></span><span>' + slot.type + '</span>';
+      b.addEventListener('click', () => { _emailState.pinned = true; _selectEmail(i); });
+      sw.appendChild(b);
+      return b;
     });
+    sw.addEventListener('keydown', (e) => {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      e.preventDefault();
+      const n = _EMAIL_SLOTS.length;
+      const next = (_emailState.active + (e.key === 'ArrowRight' ? 1 : n - 1)) % n;
+      _emailState.pinned = true;
+      _selectEmail(next);
+      segs[next].focus();
+    });
+
+    const card = document.createElement('div');
+    card.className = 'email-compose';
+    card.innerHTML =
+      '<div class="email-compose-subject"><label for="email-subject-input">Subject</label>' +
+      '<input id="email-subject-input" class="email-subject-input" type="text" autocomplete="off"></div>' +
+      '<textarea class="email-body-input" rows="1" aria-label="Email body"></textarea>' +
+      '<div class="email-compose-foot"><span class="email-words"></span><span class="email-ph-chip"></span>' +
+      '<span class="email-writing">Writing…</span><div class="email-foot-actions"></div></div>';
+    const subject = card.querySelector('.email-subject-input');
+    const body = card.querySelector('.email-body-input');
+    const actions = card.querySelector('.email-foot-actions');
+
+    const current = () => _emailState.emails[_emailState.active] || { subject: '', body: '' };
+    const gmailBtn = _emailActionBtn('action-gmail', 'Send via Gmail', _ICON_GMAIL, async () => {
+      if (!_gmailConnected) { showToast('Connect Gmail in Settings first', 'error'); return; }
+      const to = prompt('Recipient email address:');
+      if (!to || !to.trim()) return;
+      const email = current();
+      try {
+        const res = await apiFetch('/api/gmail/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ to: to.trim(), subject: email.subject, body: email.body }) });
+        if (!res || !res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.detail || 'Send failed'); }
+        showToast('Email sent!');
+      } catch (err) { showToast('Send failed: ' + err.message, 'error'); }
+    });
+    if (!_gmailConnected) { gmailBtn.disabled = true; gmailBtn.title = 'Connect Gmail in Settings'; }
+    const copyBtn = _emailActionBtn('action-copy', 'Copy subject + body', _ICON_COPY, () => {
+      const email = current();
+      navigator.clipboard.writeText('Subject: ' + email.subject + '\n\n' + email.body).then(() => showToast('Copied to clipboard'));
+    });
+    const shareBtn = _emailActionBtn('action-share', 'Share', _ICON_SHARE, () => {
+      const email = current();
+      const data = { title: _EMAIL_SLOTS[_emailState.active].type + ' Email', text: 'Subject: ' + email.subject + '\n\n' + email.body };
+      if (navigator.share) navigator.share(data).catch(() => {});
+      else navigator.clipboard.writeText(data.text).then(() => showToast('Copied to clipboard'));
+    });
+    actions.appendChild(copyBtn); actions.appendChild(gmailBtn); actions.appendChild(shareBtn);
+
+    const onEdit = (field, el) => {
+      if (_emailState.streaming) return;
+      const i = _emailState.active;
+      if (!_emailState.emails[i]) _emailState.emails[i] = { index: i + 1, subject: '', body: '' };
+      _emailState.emails[i][field] = el.value;
+      outputContent.emails = serializeEmails(_emailState.emails);
+      _updateEmailMeta();
+    };
+    subject.addEventListener('input', () => onEdit('subject', subject));
+    body.addEventListener('input', () => { _autosize(body); onEdit('body', body); });
+
+    view.appendChild(sw);
+    view.appendChild(card);
+    host.appendChild(view);
+    return { segs, card, subject, body, words: card.querySelector('.email-words'), ph: card.querySelector('.email-ph-chip') };
+  }
+
+  function _autosize(el) {
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
+  }
+
+  function _latestEmailIndex() {
+    for (let i = _emailState.emails.length - 1; i >= 0; i--) if (_emailState.emails[i]) return i;
+    return -1;
+  }
+
+  function _updateEmailMeta() {
+    const { els, emails, active } = _emailState;
+    const email = emails[active];
+    const text = email ? email.body : '';
+    const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+    els.words.textContent = words + ' word' + (words === 1 ? '' : 's');
+    const ph = ((email ? email.subject + '\n' + email.body : '').match(_PH_RE) || []).length;
+    els.ph.textContent = ph ? ph + ' placeholder' + (ph === 1 ? '' : 's') + ' to fill' : '';
+  }
+
+  function _selectEmail(i) {
+    _emailState.active = i;
+    _renderEmailState();
+  }
+
+  function _renderEmailState() {
+    const { els, emails, active, streaming } = _emailState;
+    const latest = _latestEmailIndex();
+    els.segs.forEach((seg, i) => {
+      seg.classList.toggle('active', i === active);
+      seg.setAttribute('aria-selected', i === active ? 'true' : 'false');
+      seg.tabIndex = i === active ? 0 : -1;
+      seg.classList.toggle('pending', streaming && !emails[i]);
+      seg.classList.toggle('writing', streaming && i === latest);
+    });
+    const email = emails[active];
+    els.subject.readOnly = streaming;
+    els.body.readOnly = streaming;
+    els.subject.placeholder = streaming ? 'Waiting…' : 'Add a subject';
+    els.body.placeholder = streaming ? 'Not written yet…' : 'Nothing was generated for this email — write your own.';
+    // Never clobber what the user is typing.
+    if (document.activeElement !== els.subject) els.subject.value = email ? email.subject : '';
+    if (document.activeElement !== els.body) els.body.value = email ? email.body : '';
+    els.card.classList.toggle('is-writing', streaming && active === latest);
+    _autosize(els.body);
+    _updateEmailMeta();
+  }
+
+  // Called with streaming=true on every animation frame while tokens arrive,
+  // and with streaming=false once the emails task completes.
+  function fillEmailCards(host, raw, streaming) {
+    const parsed = parseEmails(raw);
+    if (!_emailState || _emailState.host !== host) {
+      const keepActive = _emailState && _emailState.pinned ? _emailState.active : 0;
+      _emailState = { host, emails: [], active: keepActive, pinned: false, streaming, els: _buildEmailView(host) };
+    }
+    _emailState.streaming = streaming;
+    _emailState.emails = _EMAIL_SLOTS.map((_, i) => parsed.find(e => e.index === i + 1) || null);
+    if (streaming && !_emailState.pinned) {
+      const latest = _latestEmailIndex();
+      if (latest >= 0) _emailState.active = latest;
+    }
+    _renderEmailState();
   }
 
   function renderEmailCards(panel, rawContent) {
-    const emails = parseEmails(rawContent);
-    if (!emails.length) {
+    if (!parseEmails(rawContent).length) {
       // Model ignored the delimiter format — fall back to the generic panel.
       renderOutputPanel('emails', rawContent, true);
       return;
     }
-    const container = document.createElement('div');
-    container.className = 'email-cards';
-    fillEmailCards(container, rawContent, false);
+    const host = document.createElement('div');
+    host.className = 'email-host';
     panel.innerHTML = '';
-    panel.appendChild(container);
+    panel.appendChild(host);
+    fillEmailCards(host, rawContent, false);
   }
 
   function _escapeHtml(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
@@ -1363,6 +1488,7 @@
       delete _streamingTas[key];
     });
     _activeStreamTask = null;
+    _emailState = null;
     startRun();
     tabBtns.forEach(btn => { const dot = btn.querySelector('.tab-dot'); if (dot) dot.remove(); });
     dlPdf.disabled = true;

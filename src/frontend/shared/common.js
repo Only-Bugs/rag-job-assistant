@@ -744,6 +744,16 @@ function parseEmails(raw) {
   return emails;
 }
 
+// Inverse of parseEmails — keeps the raw text (export / auto-save source of
+// truth) in sync when emails are edited in the workspace.
+function serializeEmails(emails) {
+  const types = { 1: 'Application', 2: 'Cold Outreach', 3: 'Follow-up' };
+  return emails
+    .filter(e => e && (e.subject || e.body))
+    .map(e => `=== Email ${e.index}: ${types[e.index] || 'Email'} ===\nSubject: ${e.subject}\nBody:\n${e.body}`)
+    .join('\n\n');
+}
+
 // ═══════════════════════════════════════════════════════════════════
 // Minimal markdown renderer (headings, bold, bullets, numbered lists, rules)
 // Escapes HTML first, so model output can never inject markup.
