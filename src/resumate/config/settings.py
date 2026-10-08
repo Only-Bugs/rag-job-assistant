@@ -107,6 +107,19 @@ LLM_MAX_TOKENS = llm_cfg.get(
     {"skills": 450, "cover": 650, "emails": 700, "ats": 280, "default": 512},
 )
 
+# Per-task Ollama options (temperature, top_p, repeat_penalty, num_predict).
+# Anything not set here falls back to LLM_TEMPERATURE / LLM_MAX_TOKENS.
+LLM_TASK_OPTIONS: dict = llm_cfg.get("tasks", {}) or {}
+
+
+def task_options(task: str) -> dict:
+    """Ollama `options` for one task, with config fallbacks applied."""
+    opts = dict(LLM_TASK_OPTIONS.get(task, {}))
+    opts.setdefault("temperature", LLM_TEMPERATURE)
+    opts.setdefault("num_predict", int(LLM_MAX_TOKENS.get(task, LLM_MAX_TOKENS.get("default", 512))))
+    return opts
+
+
 runtime_cfg = MODEL_DATA.get("runtime", {})
 context_limits_cfg = runtime_cfg.get("context_limits", {})
 JD_CHAR_LIMIT = int(context_limits_cfg.get("jd_chars", 3500))
@@ -134,6 +147,8 @@ __all__ = [
     "LLM_TEMPERATURE",
     "LLM_PARALLEL_WORKERS",
     "LLM_MAX_TOKENS",
+    "LLM_TASK_OPTIONS",
+    "task_options",
     "JD_CHAR_LIMIT",
     "RETRIEVED_JD_CHAR_LIMIT",
     "RETRIEVED_PROFILE_CHAR_LIMIT",

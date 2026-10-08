@@ -57,6 +57,15 @@ HARD_SKILL_LEXICON = {
     "W&B","Ray","Dask","LLM","Prompt Engineering","Reranking","Guardrails",
     "Retrieval","Chunking","CI/CD","GCP","AWS","Azure","Kubernetes","GPU",
     "CUDA","ROS2","Gazebo","PDDL","Fast Downward","PlanSys2","OpenCV",
+    # Web / backend / data — the original lexicon was ML-only, so full-stack JDs
+    # produced almost no hard-skill matches.
+    "JavaScript","TypeScript","React","React Native","Node.js","Express.js","Next.js",
+    "Vue.js","Angular","HTML","CSS","Tailwind CSS","Material UI","PHP","WordPress",
+    "Java","SQL","PostgreSQL","MySQL","MariaDB","MongoDB","Redis","DynamoDB","SQLite",
+    "SOAP","XML","JSON","Microservices","Terraform","Lambda","API Gateway","S3","EC2",
+    "CloudWatch","RDS","ECS","EKS","SQS","SNS","Git","GitHub Actions","Jenkins","Linux","Kafka","ElectronJS","JWT",
+    "OWASP","Jest","Cypress","Playwright","Embeddings","pgvector","Power BI","Tableau",
+    "Excel","Spark","Airflow","dbt","Snowflake","BigQuery",
 }
 
 SOFT_SKILL_LEXICON = {

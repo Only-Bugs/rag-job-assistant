@@ -34,7 +34,7 @@ def retrieve(
 
 def format_docs(docs) -> str:
     """Return a numbered snippet list for prompt context."""
-    return "\n\n".join(f"[{i+1}] {d.page_content}" for i, d in enumerate(docs, 1))
+    return "\n\n".join(f"[{i}] {d.page_content}" for i, d in enumerate(docs, 1))
 
 
 def cite_sources(docs) -> str:

@@ -9,6 +9,14 @@ llm:
     emails: 750
     ats: 250
     default: 512
+  # Per-task decoding. Factual tasks run cooler; prose a little warmer.
+  # num_ctx is fixed in models/llm.py (changing it per call reloads the model).
+  tasks:
+    cover:        { temperature: 0.4, top_p: 0.9, repeat_penalty: 1.1, num_predict: 450 }
+    emails:       { temperature: 0.4, top_p: 0.9, repeat_penalty: 1.1, num_predict: 750 }
+    skills:       { temperature: 0.2, top_p: 0.9, repeat_penalty: 1.1, num_predict: 600 }
+    ats:          { temperature: 0.2, top_p: 0.9, repeat_penalty: 1.1, num_predict: 250 }
+    resume_parse: { temperature: 0.0, num_predict: 1024 }
 runtime:
   context_limits:
     jd_chars: 2000

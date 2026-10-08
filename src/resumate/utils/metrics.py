@@ -21,4 +21,11 @@ def metric_keys(text: str) -> set[str]:
     return {metric_key(m.group(0)) for m in METRIC_RE.finditer(text)}
 
 
-__all__ = ["METRIC_RE", "metric_key", "metric_keys"]
+def is_grounded(token: str, grounded: set[str]) -> bool:
+    """True if a number token is backed by `grounded` keys. A bare number is
+    backed by the same number with a "+" ("over 12,000" vs "12,000+")."""
+    k = metric_key(token)
+    return k in grounded or (k.isdigit() and k + "+" in grounded)
+
+
+__all__ = ["METRIC_RE", "metric_key", "metric_keys", "is_grounded"]
