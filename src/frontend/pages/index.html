@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ResuMate — Dashboard</title>
-  <link rel="stylesheet" href="/static/shared/styles.css" />
+  <link rel="stylesheet" href="/static/shared/styles.css?v=1791504000" />
 
   <style>
     /* ── Dashboard-specific styles ────────────────────────────────── */
@@ -498,8 +498,37 @@
       .dash-columns { grid-template-columns: 1fr; }
     }
 
-    @media (max-width: 860px) {
+    @media (max-width: 960px) and (min-width: 481px) {
       .fab-wrap { bottom: 24px; right: 24px; }
+    }
+
+    /* Mobile: bottom-centre, panel expands upward with full-width labels. */
+    @media (max-width: 480px) {
+      .fab-wrap {
+        bottom: 16px;
+        right: 16px;
+        left: 16px;
+        align-items: stretch;
+      }
+      .fab-wrap .fab-btn { align-self: flex-end; }
+      .fab-actions { align-items: stretch; }
+      .fab-action { justify-content: flex-start; flex-direction: row; }
+      .fab-action-label { flex: 1; text-align: left; }
+    }
+
+    /* Backdrop dim while the FAB is open. */
+    .fab-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0);
+      pointer-events: none;
+      transition: background 0.2s var(--ease-out);
+      z-index: 99;
+    }
+    .fab-wrap.open ~ .fab-backdrop,
+    .fab-backdrop.open {
+      background: rgba(0,0,0,0.06);
+      pointer-events: auto;
     }
   </style>
 </head>
@@ -612,32 +641,114 @@
     <!-- FAB speed dial -->
     <div class="fab-wrap" id="fab-wrap">
       <div class="fab-actions">
-        <a href="/workspace" class="fab-action">
+        <a href="/workspace" class="fab-action" data-fab-action="new">
           <div class="fab-action-btn">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2l6 3.5v7L10 16l-6-3.5v-7z"/><path d="M10 8.5v7.5"/><path d="M4 5.5L10 9l6-3.5"/></svg>
           </div>
           <span class="fab-action-label">New Application</span>
         </a>
+        <a href="/workspace#paste" class="fab-action" data-fab-action="paste">
+          <div class="fab-action-btn">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="10" height="14" rx="1.5"/><path d="M8 3V2.5A1 1 0 0 1 9 1.5h2a1 1 0 0 1 1 1V3"/><path d="M8 9h4M8 12h4"/></svg>
+          </div>
+          <span class="fab-action-label">Paste JD</span>
+        </a>
+        <a href="/onboarding" class="fab-action" data-fab-action="import">
+          <div class="fab-action-btn">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13V3"/><path d="M6 7l4-4 4 4"/><path d="M4 15v2a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-2"/></svg>
+          </div>
+          <span class="fab-action-label">Import Resume</span>
+        </a>
+        <a href="#reindex" class="fab-action" data-fab-action="reindex">
+          <div class="fab-action-btn">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10a7 7 0 0 1 12-4.9"/><path d="M17 10a7 7 0 0 1-12 4.9"/><path d="M15 3v3h-3"/><path d="M5 17v-3h3"/></svg>
+          </div>
+          <span class="fab-action-label">Reindex Profile</span>
+        </a>
+        <a href="#health" class="fab-action" data-fab-action="health">
+          <div class="fab-action-btn">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0z"/><path d="M10 6v4l2.5 2.5"/></svg>
+          </div>
+          <span class="fab-action-label">Health Check</span>
+        </a>
       </div>
-      <button class="fab-btn" id="fab-toggle" title="Actions">
+      <button class="fab-btn" id="fab-toggle" title="Actions" aria-expanded="false">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
           <path d="M12 5v14M5 12h14" />
         </svg>
       </button>
     </div>
+    <div class="fab-backdrop" id="fab-backdrop" aria-hidden="true"></div>
   </main>
 </div>
 
-<script src="/static/shared/common.js"></script>
+<script src="/static/shared/common.js?v=1791504000"></script>
 <script>
   injectSidebar({ activePage: 'dashboard' });
 
   // ── FAB speed dial ─────────────────────────────────────────────────
   const fabWrap = document.getElementById('fab-wrap');
   const fabToggle = document.getElementById('fab-toggle');
-  fabToggle.addEventListener('click', () => fabWrap.classList.toggle('open'));
+  const fabBackdrop = document.getElementById('fab-backdrop');
+
+  function setFabOpen(open) {
+    fabWrap.classList.toggle('open', open);
+    fabBackdrop.classList.toggle('open', open);
+    fabToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+
+  fabToggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    setFabOpen(!fabWrap.classList.contains('open'));
+  });
+  fabBackdrop.addEventListener('click', () => setFabOpen(false));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') setFabOpen(false);
+  });
   document.addEventListener('click', (e) => {
-    if (!fabWrap.contains(e.target)) fabWrap.classList.remove('open');
+    if (!fabWrap.contains(e.target)) setFabOpen(false);
+  });
+
+  // Wire action buttons that do work in-page (not just navigation).
+  document.querySelectorAll('[data-fab-action]').forEach((el) => {
+    el.addEventListener('click', async (e) => {
+      const action = el.dataset.fabAction;
+      if (action === 'reindex') {
+        e.preventDefault();
+        setFabOpen(false);
+        showToast('Reindexing profile…', 'info', 2000);
+        try {
+          const res = await apiFetch('/profile/reindex', { method: 'POST' });
+          if (!res || !res.ok) throw new Error('request failed');
+          const data = await res.json();
+          showToast(
+            `Reindexed ${data.chunks} chunks from ${data.files.length} files · ${data.duration_ms}ms`,
+            'success',
+            4000
+          );
+        } catch (err) {
+          showToast(`Reindex failed: ${err.message || err}`, 'error', 4000);
+        }
+      } else if (action === 'health') {
+        e.preventDefault();
+        setFabOpen(false);
+        try {
+          const res = await apiFetch('/health');
+          const data = await res.json();
+          const parts = [
+            data.status === 'ok' ? 'API ok' : 'API down',
+            `model ${data.model || '—'}`,
+            `compute ${data.compute || '—'}`,
+            data.model_ready ? 'ready' : 'loading',
+          ];
+          showToast(parts.join(' · '), data.status === 'ok' ? 'success' : 'error', 4000);
+        } catch (err) {
+          showToast(`Health check failed: ${err.message || err}`, 'error', 4000);
+        }
+      } else {
+        setFabOpen(false);
+      }
+    });
   });
 
   // ── Greeting ──────────────────────────────────────────────────────

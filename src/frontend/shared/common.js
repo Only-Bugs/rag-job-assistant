@@ -436,8 +436,8 @@ const _SIDEBAR_NAV_ICONS = {
   logout: `<svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 15H4.5a1.5 1.5 0 01-1.5-1.5v-9A1.5 1.5 0 014.5 3h2"/><path d="M12 12.5l3-3.5-3-3.5"/><line x1="7" y1="9" x2="15" y2="9"/></svg>`,
 };
 
-const _SIDEBAR_PIN_ICON = `<svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4L7 9l4 5"/></svg>`;
-const _SIDEBAR_UNPIN_ICON = `<svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4l4 5-4 5"/></svg>`;
+const _SIDEBAR_PIN_ICON = `<svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3.5" width="13" height="11" rx="2"/><line x1="7.5" y1="3.5" x2="7.5" y2="14.5"/></svg>`;
+const _SIDEBAR_UNPIN_ICON = _SIDEBAR_PIN_ICON;
 
 function injectSidebar(opts = {}) {
   const target = document.getElementById('rm-sidebar-slot');
@@ -451,7 +451,7 @@ function injectSidebar(opts = {}) {
   ];
 
   const navHtml = navItems.map(n =>
-    `<a href="${n.href}" class="sb-nav-item${active === n.key ? ' active' : ''}">${_SIDEBAR_NAV_ICONS[n.key]}<span>${n.label}</span></a>`
+    `<a href="${n.href}" class="sb-nav-item${active === n.key ? ' active' : ''}" data-tooltip="${n.label}">${_SIDEBAR_NAV_ICONS[n.key]}<span>${n.label}</span></a>`
   ).join('');
 
   target.outerHTML = `
@@ -463,6 +463,26 @@ function injectSidebar(opts = {}) {
       <div class="sb-section-label">Menu</div>
       <nav class="sb-nav">${navHtml}</nav>
       <div class="sb-spacer"></div>
+      <div class="sb-profile" id="sb-profile">
+        <button class="sb-profile-card" id="sb-profile-toggle" aria-expanded="false" aria-controls="sb-profile-menu" data-tooltip="Account">
+          <span class="sb-profile-avatar" id="sb-profile-avatar">${_AVATAR_FALLBACK_SVG}</span>
+          <span class="sb-profile-text">
+            <span class="sb-profile-name" id="sb-profile-name">Account</span>
+            <span class="sb-profile-email" id="sb-profile-email">—</span>
+          </span>
+          <svg class="sb-profile-caret" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l4 4 4-4"/></svg>
+        </button>
+        <div class="sb-profile-menu" id="sb-profile-menu">
+          <a href="/settings" class="sb-profile-item">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4"/></svg>
+            <span>Settings</span>
+          </a>
+          <button type="button" class="sb-profile-item danger" id="sb-logout">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 4V2.5A1.5 1.5 0 0 0 8.5 1h-5A1.5 1.5 0 0 0 2 2.5v11A1.5 1.5 0 0 0 3.5 15h5A1.5 1.5 0 0 0 10 13.5V12"/><path d="M13 8H6M11 5l3 3-3 3"/></svg>
+            <span>Logout</span>
+          </button>
+        </div>
+      </div>
     </aside>
   `;
 
@@ -505,7 +525,52 @@ function injectSidebar(opts = {}) {
   document.documentElement.classList.add('app-page');
   document.body.classList.add('app-page');
 
-  // Load topbar avatar + dropdown
+  // ── Sidebar profile block ───────────────────────────────────────
+  const profileToggle = document.getElementById('sb-profile-toggle');
+  const profileMenu = document.getElementById('sb-profile-menu');
+  const logoutBtn = document.getElementById('sb-logout');
+  if (profileToggle && profileMenu) {
+    profileToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const open = profileMenu.classList.toggle('open');
+      profileToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    document.addEventListener('click', (e) => {
+      if (!profileMenu.contains(e.target) && e.target !== profileToggle) {
+        profileMenu.classList.remove('open');
+        profileToggle.setAttribute('aria-expanded', 'false');
+      }
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        profileMenu.classList.remove('open');
+        profileToggle.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', async () => {
+      try { await fetch('/auth/logout', { method: 'POST' }); } catch (_) {}
+      window.location = '/login';
+    });
+  }
+
+  // Populate sidebar profile data.
+  loadUser().then((user) => {
+    if (!user) return;
+    const nameEl   = document.getElementById('sb-profile-name');
+    const emailEl  = document.getElementById('sb-profile-email');
+    const avatarEl = document.getElementById('sb-profile-avatar');
+    if (nameEl  && user.name)  nameEl.textContent  = user.name;
+    if (emailEl && user.email) emailEl.textContent = user.email;
+    if (avatarEl) {
+      const initials = (user.name || user.email || '?')
+        .split(/\s+/).slice(0, 2).map(s => s[0]).join('').toUpperCase();
+      _setAvatar(avatarEl, user.picture, initials);
+    }
+  });
+
+  // Load topbar avatar + dropdown (still used on pages that have a topbar avatar)
   initTopbar();
 }
 
@@ -656,23 +721,70 @@ async function initTopbar() {
 // ═══════════════════════════════════════════════════════════════════
 
 function parseEmails(raw) {
-  const types = { 1: 'Application', 2: 'Outreach', 3: 'Follow-up' };
-  const blocks = raw.split(/===\s*Email\s*(\d+)\s*===/i).slice(1);
+  const types = { 1: 'Application', 2: 'Cold Outreach', 3: 'Follow-up' };
+  const blocks = raw.split(/\**={2,}\s*Email\s*(\d+)\s*(?::[^=\n]*)?={2,}\**/i).slice(1);
+  const clean = (t) => t.replace(/\*\*/g, '').trim();
   const emails = [];
   for (let i = 0; i < blocks.length; i += 2) {
     const num = parseInt(blocks[i]);
     const text = (blocks[i + 1] || '').trim();
-    const subjectMatch = text.match(/^Subject:\s*(.+)/im);
-    const bodyMatch = text.match(/Body:\s*\n?([\s\S]*)/im);
+    const subjectMatch = text.match(/^\W*Subject:\W*\s*(.+)/im);
+    // Body is everything after "Body:", or — when the model omits that label —
+    // everything after the Subject line.
+    const bodyMatch = text.match(/Body:\**\s*\n?([\s\S]*)/im)
+      || (subjectMatch ? [null, text.slice(subjectMatch.index + subjectMatch[0].length)] : null);
     emails.push({
       index: num,
       type: types[num] || `Email ${num}`,
       typeClass: num === 2 ? 'outreach' : num === 3 ? 'followup' : '',
-      subject: subjectMatch ? subjectMatch[1].trim() : '',
-      body: bodyMatch ? bodyMatch[1].trim() : text,
+      subject: subjectMatch ? clean(subjectMatch[1]) : '',
+      body: clean(bodyMatch ? bodyMatch[1] : text),
     });
   }
   return emails;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Minimal markdown renderer (headings, bold, bullets, numbered lists, rules)
+// Escapes HTML first, so model output can never inject markup.
+// ═══════════════════════════════════════════════════════════════════
+function renderMarkdown(raw) {
+  const esc = (t) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const inline = (t) => esc(t)
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    // [add metric], [Company Name] … → highlighted fill-in fields
+    .replace(/\[([^\]\n]{2,40})\]/g, '<mark class="md-ph">[$1]</mark>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>');
+  const out = [];
+  let list = null;      // 'ul' | 'ol'
+  let para = [];
+  const flushPara = () => { if (para.length) { out.push('<p>' + para.join('<br>') + '</p>'); para = []; } };
+  const closeList = () => { if (list) { out.push('</' + list + '>'); list = null; } };
+  for (const line of String(raw || '').split('\n')) {
+    const t = line.trim();
+    let m;
+    if (!t) { flushPara(); closeList(); continue; }
+    if (/^(-{3,}|─{3,}|={3,})$/.test(t)) { flushPara(); closeList(); out.push('<hr>'); continue; }
+    if ((m = t.match(/^(#{1,4})\s+(.*)$/))) {
+      flushPara(); closeList();
+      const lvl = Math.min(m[1].length + 1, 4);
+      out.push('<h' + lvl + '>' + inline(m[2]) + '</h' + lvl + '>'); continue;
+    }
+    if ((m = t.match(/^[-*•]\s+(.*)$/))) {
+      flushPara();
+      if (list !== 'ul') { closeList(); out.push('<ul>'); list = 'ul'; }
+      out.push('<li>' + inline(m[1]) + '</li>'); continue;
+    }
+    if ((m = t.match(/^\d+[.)]\s+(.*)$/))) {
+      flushPara();
+      if (list !== 'ol') { closeList(); out.push('<ol>'); list = 'ol'; }
+      out.push('<li>' + inline(m[1]) + '</li>'); continue;
+    }
+    closeList();
+    para.push(inline(t));
+  }
+  flushPara(); closeList();
+  return out.join('');
 }
 
 // ── Auto-init ───────────────────────────────────────────────────

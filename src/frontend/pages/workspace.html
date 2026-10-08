@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ResuMate — Workspace</title>
-  <link rel="stylesheet" href="/static/shared/styles.css" />
+  <link rel="stylesheet" href="/static/shared/styles.css?v=1791504000" />
 
   <style>
     /* ── Workspace overrides ───────────────────────────────────────── */
@@ -56,18 +56,53 @@
     }
 
     /* ── Status pill ──────────────────────────────────────────────── */
+    .status-wrap { position: relative; margin-left: auto; align-self: center; display: flex; }
     #status-pill {
+      border: none;
+      cursor: default;
+      max-width: 340px;
       font-family: var(--font-display);
       font-size: 11px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.06em;
-      padding: 5px 14px;
+      padding: 5px 12px 5px 10px;
       border-radius: 99px;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      transition: all 0.25s ease;
+      gap: 7px;
+      transition: background 0.25s ease, color 0.25s ease;
+    }
+    #status-pill #status-pill-label {
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #status-pill .pill-time {
+      font-variant-numeric: tabular-nums;
+      opacity: 0.75;
+      flex-shrink: 0;
+    }
+    #status-pill .pill-time:empty { display: none; }
+    #status-pill .pill-chev {
+      display: none;
+      flex-shrink: 0;
+      margin-left: -2px;
+      transition: transform 0.2s ease;
+    }
+    #status-pill.has-log { cursor: pointer; }
+    #status-pill.has-log .pill-chev { display: block; }
+    #status-pill.has-log:hover { filter: brightness(0.97); }
+    #status-pill[aria-expanded="true"] .pill-chev { transform: rotate(180deg); }
+    #status-pill:focus-visible { outline: 2px solid var(--accent-mid); outline-offset: 2px; }
+    #status-pill .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 0 0 currentColor;
+      flex-shrink: 0;
     }
 
     #status-pill.ready {
@@ -76,9 +111,11 @@
     }
 
     #status-pill.running {
-      background: var(--accent-light);
-      color: var(--accent);
-      animation: pillPulse 1.8s ease-in-out infinite;
+      background: #fff4e0;
+      color: #b45309;
+    }
+    #status-pill.running .dot {
+      animation: dotPulse 1.4s ease-in-out infinite;
     }
 
     #status-pill.done {
@@ -91,10 +128,77 @@
       color: var(--error);
     }
 
-    @keyframes pillPulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.65; }
+    @keyframes dotPulse {
+      0%, 100% { box-shadow: 0 0 0 0 currentColor; opacity: 1; }
+      50%      { box-shadow: 0 0 0 4px rgba(180, 83, 9, 0.15); opacity: 0.75; }
     }
+
+    /* ── More menu (⋯) ─────────────────────────────────────────────── */
+    .more-menu { position: relative; display: flex; align-items: center; align-self: center; margin-left: 10px; }
+    .more-btn {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+    .more-btn:hover {
+      background: var(--bg-subtle);
+      border-color: var(--accent-mid);
+    }
+    .more-dropdown {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      min-width: 220px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
+      padding: 6px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-4px);
+      transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
+      z-index: 50;
+    }
+    .more-dropdown.open {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+    .more-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 8px 10px;
+      border: none;
+      background: none;
+      border-radius: 7px;
+      font-family: var(--font-body);
+      font-size: 13px;
+      color: var(--text);
+      text-align: left;
+      cursor: pointer;
+    }
+    .more-item:hover:not(:disabled) { background: var(--bg-subtle); }
+    .more-item:disabled { color: var(--muted); cursor: not-allowed; opacity: 0.6; }
+    .more-item svg { flex-shrink: 0; color: var(--muted); }
+    .more-item.danger { color: #b91c1c; }
+    .more-item.danger svg { color: #b91c1c; }
+    .more-divider {
+      height: 1px;
+      background: var(--border-light);
+      margin: 5px 4px;
+    }
+    .more-item[data-action="stop"] { display: none; }
+    body.is-generating .more-item[data-action="stop"] { display: flex; }
 
     /* ── Split panel layout ───────────────────────────────────────── */
     .panels {
@@ -278,6 +382,7 @@
     /* ── Tab bar ──────────────────────────────────────────────────── */
     .tab-bar {
       display: flex;
+      align-items: center;
       gap: 0;
       padding: 0 24px;
       border-bottom: 1px solid var(--border-light);
@@ -392,59 +497,13 @@
       max-width: 300px;
     }
 
-    /* ── Thinking pill — lives in the topbar-right ──────────────── */
-    .thinking-bar {
-      display: none;
-      align-items: center;
-      gap: 8px;
-      padding: 5px 14px;
-      border-radius: 99px;
-      background: var(--accent-light);
-      color: var(--accent);
-      font-family: var(--font-display);
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      max-width: 360px;
-      overflow: hidden;
-      animation: pillPulse 1.8s ease-in-out infinite;
-    }
-    .thinking-bar.active { display: inline-flex; }
-    .thinking-bar .thinking-spinner {
-      width: 10px; height: 10px; flex-shrink: 0;
-      border: 1.5px solid rgba(255,255,255,0.5); border-top-color: var(--accent);
-      border-radius: 50%; animation: spin 0.65s linear infinite;
-    }
-    .thinking-bar .thinking-current {
-      min-width: 0;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .thinking-bar .thinking-expand-btn {
-      font-size: 10px;
-      color: var(--accent);
-      background: rgba(255,255,255,0.35);
-      border: none;
-      cursor: pointer;
-      font-weight: 700;
-      padding: 2px 8px;
-      border-radius: 99px;
-      transition: background 0.15s;
-      flex-shrink: 0;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-    .thinking-bar .thinking-expand-btn:hover { background: #fff; }
-
-    /* Expanded thinking log — absolute dropdown below topbar */
+    /* Run log — dropdown under the status pill */
     .thinking-log-panel {
       display: none;
       position: absolute;
-      top: calc(100% + 4px);
-      right: 28px;
-      width: 420px;
+      top: calc(100% + 8px);
+      right: 0;
+      width: 380px;
       max-width: calc(100vw - 40px);
       padding: 10px 14px;
       background: var(--surface);
@@ -563,10 +622,40 @@
     .email-type-badge.followup { background: #fef3c7; color: #92400e; }
     .email-subject { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
     .email-body-preview {
-      font-size: 13px; color: var(--muted); line-height: 1.55;
-      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
-      overflow: hidden;
+      font-size: 13.5px; color: var(--text); line-height: 1.65;
+      white-space: pre-wrap; word-wrap: break-word;
     }
+    .email-subject-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-right: 6px; }
+    .email-card { cursor: default; }
+    .email-card.skeleton .sk-line { height: 11px; border-radius: 6px; background: var(--bg-subtle); margin: 10px 0; animation: skPulse 1.4s ease-in-out infinite; }
+    .email-card.skeleton .sk-line.short { width: 40%; }
+    .email-card.skeleton .sk-line.mid { width: 70%; }
+    @keyframes skPulse { 0%,100% { opacity: 1; } 50% { opacity: .45; } }
+
+    /* ── Rendered markdown output ──────────────────────────────── */
+    .output-panel { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+    .output-toolbar { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 24px 0; }
+    .output-tool-btn {
+      font-family: var(--font-display); font-size: 12px; font-weight: 600;
+      padding: 5px 12px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--surface); color: var(--text); cursor: pointer;
+      transition: background .15s, border-color .15s;
+    }
+    .output-tool-btn:hover { background: var(--bg-subtle); border-color: var(--accent-mid); }
+    .md-view { padding: 16px 28px 28px; overflow-y: auto; flex: 1; font-size: 14.5px; line-height: 1.7; color: var(--text); }
+    .md-view h2, .md-view h3, .md-view h4 { font-family: var(--font-display); margin: 22px 0 8px; line-height: 1.3; }
+    .md-view h2 { font-size: 17px; padding-bottom: 6px; border-bottom: 1px solid var(--border-light); }
+    .md-view h3 { font-size: 15px; }
+    .md-view h2:first-child, .md-view h3:first-child { margin-top: 4px; }
+    .md-view p { margin: 0 0 12px; }
+    .md-view ul, .md-view ol { margin: 0 0 14px; padding-left: 22px; }
+    .md-view li { margin-bottom: 8px; }
+    .md-view strong { font-weight: 700; }
+    .md-view code { font-family: var(--font-mono); font-size: 12.5px; background: var(--bg-subtle); padding: 1px 5px; border-radius: 4px; }
+    .md-view mark.md-ph, .email-body-preview mark.md-ph {
+      background: #fff4e0; color: #b45309; border-radius: 4px; padding: 0 3px; font-weight: 600;
+    }
+    .md-view hr { border: none; border-top: 1px solid var(--border-light); margin: 16px 0; }
 
     /* Action icons row — appears after selecting a card */
     .email-actions-row {
@@ -633,17 +722,6 @@
       <div class="breadcrumb">
         <span class="breadcrumb-current">New Application</span>
       </div>
-      <div class="topbar-right">
-        <!-- Thinking pill (replaces the strip that used to sit below topbar) -->
-        <span class="thinking-bar" id="thinking-bar">
-          <span class="thinking-spinner"></span>
-          <span class="thinking-current" id="thinking-current"></span>
-          <button class="thinking-expand-btn" id="thinking-expand">More</button>
-        </span>
-        <span id="status-pill" class="ready">Ready</span>
-        <a href="/settings" class="topbar-avatar" id="topbar-avatar"></a>
-      </div>
-      <div class="thinking-log-panel" id="thinking-log-panel"></div>
     </div>
 
     <!-- Split panels -->
@@ -669,52 +747,53 @@
       <!-- Right: Output tabs -->
       <div class="panel-right">
         <div class="tab-bar">
-          <button class="tab-btn active" data-tab="skills">Skills</button>
-          <button class="tab-btn" data-tab="cover">Cover Letter</button>
+          <button class="tab-btn active" data-tab="cover">Cover Letter</button>
           <button class="tab-btn" data-tab="emails">Emails</button>
+          <button class="tab-btn" data-tab="skills">Skills</button>
           <button class="tab-btn" data-tab="ats">ATS Summary</button>
 
-          <div class="dl-wrap">
-            <button class="dl-trigger" id="dl-trigger" disabled title="Download (available after cover letter)">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M8 2v8.5"/>
-                <path d="M4.5 7L8 10.5 11.5 7"/>
-                <path d="M2 12.5h12"/>
+          <div class="status-wrap">
+            <button type="button" id="status-pill" class="ready" aria-haspopup="true" aria-expanded="false" title="Generation status">
+              <span class="dot"></span>
+              <span id="status-pill-label">Idle</span>
+              <span class="pill-time" id="pill-time"></span>
+              <svg class="pill-chev" width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5L6 7.5 9 4.5"/></svg>
+            </button>
+            <div class="thinking-log-panel" id="thinking-log-panel" role="log" aria-label="Generation log"></div>
+          </div>
+
+          <!-- ⋯ more menu -->
+          <div class="more-menu" id="more-menu">
+            <button type="button" class="more-btn" id="more-btn" aria-label="More actions" aria-haspopup="true" aria-expanded="false">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <circle cx="5"  cy="12" r="1"/>
+                <circle cx="12" cy="12" r="1"/>
+                <circle cx="19" cy="12" r="1"/>
               </svg>
             </button>
-            <div class="dl-dropdown" id="dl-dropdown">
-              <button class="dl-dd-item" id="dl-pdf">
-                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2H5a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6z"/><path d="M9 2v4h4"/><text x="5" y="12" font-size="4.5" fill="currentColor" stroke="none" font-weight="700" font-family="sans-serif">PDF</text></svg>
-                <span>Download as PDF</span>
+            <div class="more-dropdown" id="more-dropdown" role="menu">
+              <button class="more-item" data-action="download-pdf" disabled role="menuitem">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v8.5"/><path d="M4.5 7L8 10.5 11.5 7"/><path d="M2 12.5h12"/></svg>
+                Download as PDF
               </button>
-              <button class="dl-dd-item" id="dl-docx">
-                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2H5a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6z"/><path d="M9 2v4h4"/><path d="M5.5 10l1.5-3 1.5 3M10 7v3"/></svg>
-                <span>Download as DOCX</span>
+              <button class="more-item" data-action="download-docx" disabled role="menuitem">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v8.5"/><path d="M4.5 7L8 10.5 11.5 7"/><path d="M2 12.5h12"/></svg>
+                Download as DOCX
               </button>
-              <button class="dl-dd-item" id="dl-drive" style="display:none">
-                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10l3-6h6l3 6"/><path d="M2 10l3 3h6l3-3"/><path d="M5 13l3-3 3 3"/></svg>
-                <span>Save to Google Drive</span>
+              <div class="more-divider"></div>
+              <button class="more-item" data-action="reindex" role="menuitem">
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10a7 7 0 0 1 12-4.9"/><path d="M17 10a7 7 0 0 1-12 4.9"/><path d="M15 3v3h-3"/><path d="M5 17v-3h3"/></svg>
+                Reindex profile
+              </button>
+              <button class="more-item danger" data-action="stop" role="menuitem">
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="10" height="10" rx="1.5"/></svg>
+                Stop generating
               </button>
             </div>
           </div>
         </div>
 
-        <div id="panel-skills" class="tab-panel active">
-          <div class="empty-state">
-            <div class="empty-icon">
-              <svg width="40" height="40" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="10" y="8" width="44" height="48" rx="4" />
-                <path d="M22 22h20M22 30h14M22 38h18" />
-                <circle cx="46" cy="46" r="12" fill="var(--surface-2)" stroke="var(--border)" stroke-width="1.5" />
-                <path d="M43 46h6M46 43v6" stroke="var(--accent)" stroke-width="1.8" />
-              </svg>
-            </div>
-            <h3>Skills & Keywords</h3>
-            <p>Paste a job description and generate your tailored application package</p>
-          </div>
-        </div>
-
-        <div id="panel-cover" class="tab-panel">
+        <div id="panel-cover" class="tab-panel active">
           <div class="empty-state">
             <div class="empty-icon">
               <svg width="40" height="40" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
@@ -746,6 +825,21 @@
           </div>
         </div>
 
+        <div id="panel-skills" class="tab-panel">
+          <div class="empty-state">
+            <div class="empty-icon">
+              <svg width="40" height="40" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="10" y="8" width="44" height="48" rx="4" />
+                <path d="M22 22h20M22 30h14M22 38h18" />
+                <circle cx="46" cy="46" r="12" fill="var(--surface-2)" stroke="var(--border)" stroke-width="1.5" />
+                <path d="M43 46h6M46 43v6" stroke="var(--accent)" stroke-width="1.8" />
+              </svg>
+            </div>
+            <h3>Skills & Keywords</h3>
+            <p>Paste a job description and generate your tailored application package</p>
+          </div>
+        </div>
+
         <div id="panel-ats" class="tab-panel">
           <div class="empty-state">
             <div class="empty-icon">
@@ -770,7 +864,7 @@
   </main>
 </div>
 
-<script src="/static/shared/common.js"></script>
+<script src="/static/shared/common.js?v=1791504000"></script>
 <script>
   injectSidebar({ activePage: 'workspace' });
 
@@ -791,72 +885,87 @@
   let _gmailConnected = false;
 
   // ── Thinking bar state (compact header strip) ────────────────
-  let _thinkingStart = null;
-  let _thinkingLines = [];
-  const _thinkingBar = document.getElementById('thinking-bar');
-  const _thinkingCurrent = document.getElementById('thinking-current');
-  const _thinkingLogPanel = document.getElementById('thinking-log-panel');
-  const _thinkingExpandBtn = document.getElementById('thinking-expand');
+  // ── Status pill + run log ─────────────────────────────────────
+  // One pill reports everything: idle, pipeline progress, which task is
+  // writing, elapsed time, and (on click) the step-by-step run log.
+  const _runLog = document.getElementById('thinking-log-panel');
+  const _pillTime = document.getElementById('pill-time');
+  const TASK_LABEL = { cover: 'cover letter', emails: 'emails', skills: 'skills', ats: 'ATS summary' };
+  let _runStart = null;
+  let _runTimer = null;
 
-  function showThinkingLine(text) {
-    if (!_thinkingStart) _thinkingStart = Date.now();
+  function _fmtElapsed() {
+    return _runStart ? ((Date.now() - _runStart) / 1000).toFixed(1) + 's' : '';
+  }
 
-    // Show the compact bar
-    _thinkingBar.classList.add('active');
-    _thinkingCurrent.textContent = text;
-
-    // Append to the expandable log panel
+  function logLine(text) {
     const line = document.createElement('div');
     line.className = 't-line';
-    line.textContent = text;
-    _thinkingLogPanel.appendChild(line);
-    _thinkingLogPanel.scrollTop = _thinkingLogPanel.scrollHeight;
-    _thinkingLines.push(text);
+    line.textContent = _runStart ? text + '  ·  ' + _fmtElapsed() : text;
+    _runLog.appendChild(line);
+    _runLog.scrollTop = _runLog.scrollHeight;
+    statusPill.classList.add('has-log');
   }
 
-  function collapseThinking() {
-    if (!_thinkingStart) return;
-    const elapsed = ((Date.now() - _thinkingStart) / 1000).toFixed(1);
-
-    // Update bar to show elapsed time, hide spinner
-    _thinkingBar.querySelector('.thinking-spinner').style.display = 'none';
-    _thinkingCurrent.textContent = 'Thought for ' + elapsed + 's';
-    _thinkingExpandBtn.textContent = 'Log';
-
-    // Reset state
-    _thinkingStart = null;
-    _thinkingLines = [];
+  function startRun() {
+    _runLog.innerHTML = '';
+    openRunLog(false);
+    statusPill.classList.remove('has-log');
+    _runStart = Date.now();
+    clearInterval(_runTimer);
+    _runTimer = setInterval(() => { _pillTime.textContent = _fmtElapsed(); }, 100);
   }
 
-  // Toggle expand/collapse of thinking log
-  _thinkingExpandBtn.addEventListener('click', function() {
-    const isOpen = _thinkingLogPanel.classList.toggle('open');
-    _thinkingExpandBtn.textContent = isOpen ? 'Hide' : (_thinkingStart ? 'More' : 'Log');
-  });
+  function endRun() {
+    clearInterval(_runTimer);
+    _runTimer = null;
+    _pillTime.textContent = _fmtElapsed();
+    _runStart = null;
+  }
 
-  // ── Download dropdown ─────────────────────────────────────────
-  const dlTrigger = document.getElementById('dl-trigger');
-  const dlDropdown = document.getElementById('dl-dropdown');
-  dlTrigger.addEventListener('click', function(e) {
+  function openRunLog(open) {
+    _runLog.classList.toggle('open', open);
+    statusPill.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  statusPill.addEventListener('click', (e) => {
     e.stopPropagation();
-    dlDropdown.classList.toggle('open');
+    if (!statusPill.classList.contains('has-log')) return;
+    openRunLog(!_runLog.classList.contains('open'));
   });
-  document.addEventListener('click', function() { dlDropdown.classList.remove('open'); });
+  document.addEventListener('click', (e) => {
+    if (!_runLog.contains(e.target)) openRunLog(false);
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') openRunLog(false); });
 
-  // Check Gmail/Drive status
+  // ── More menu (⋯) ─────────────────────────────────────────────
+  const moreBtn = document.getElementById('more-btn');
+  const moreDropdown = document.getElementById('more-dropdown');
+  const mItem = (action) => moreDropdown.querySelector(`[data-action="${action}"]`);
+  const dlPdf  = mItem('download-pdf');
+  const dlDocx = mItem('download-docx');
+
+  function openMore(open) {
+    moreDropdown.classList.toggle('open', open);
+    moreBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  moreBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openMore(!moreDropdown.classList.contains('open'));
+  });
+  document.addEventListener('click', (e) => {
+    if (!moreDropdown.contains(e.target) && e.target !== moreBtn) openMore(false);
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') openMore(false);
+  });
+
+  // Gmail status (drive save removed with the old dropdown; revisit in Sprint C)
   (async () => {
     try {
       const res = await apiFetch('/api/gmail/status');
       if (res && res.ok) {
         const data = await res.json();
         _gmailConnected = data.connected;
-      }
-    } catch (_) {}
-    try {
-      const res = await apiFetch('/api/drive/status');
-      if (res && res.ok) {
-        const data = await res.json();
-        if (data.connected) document.getElementById('dl-drive').style.display = '';
       }
     } catch (_) {}
   })();
@@ -880,10 +989,22 @@
   }
   tabBtns.forEach(btn => btn.addEventListener('click', () => activateTab(btn.dataset.tab)));
 
+  let _doneDecayTimer = null;
+  const statusLabel = document.getElementById('status-pill-label');
+  const _PILL_STATES = ['ready', 'running', 'done', 'error'];
   function setStatus(state, text) {
-    statusPill.className = state;
-    statusPill.textContent = text;
+    if (_doneDecayTimer) { clearTimeout(_doneDecayTimer); _doneDecayTimer = null; }
+    statusPill.classList.remove(..._PILL_STATES);
+    statusPill.classList.add(state);
+    statusLabel.textContent = text;
+    statusPill.title = text;
+    if (state === 'ready') _pillTime.textContent = '';
+    // Green-dot decay: after "done", settle back to idle after 3s.
+    if (state === 'done') {
+      _doneDecayTimer = setTimeout(() => setStatus('ready', 'Idle'), 3000);
+    }
   }
+  const isRunning = () => statusPill.classList.contains('running');
 
   function markTabDone(name) {
     const btn = document.querySelector(`.tab-btn[data-tab="${name}"]`);
@@ -897,10 +1018,10 @@
       dot.setAttribute('aria-label', 'new output');
       btn.appendChild(dot);
     }
-    // Enable download button when cover letter completes
+    // Enable download items when cover letter completes
     if (name === 'cover') {
-      const dlBtn = document.getElementById('dl-trigger');
-      if (dlBtn) { dlBtn.disabled = false; dlBtn.title = 'Download'; }
+      if (dlPdf)  dlPdf.disabled  = false;
+      if (dlDocx) dlDocx.disabled = false;
     }
   }
 
@@ -908,31 +1029,24 @@
   // Per-task streaming state: pre element, text node, caret. Using a <pre>
   // instead of a textarea lets the caret sit inline at the true insertion
   // point — textareas don't let you render DOM inside them.
-  const _streamingTas = {};   // name → { textNode, preEl, caret, buffer }
+  const _streamingTas = {};   // name → { view, buffer, raf }
   let _activeStreamTask = null;
 
   function appendToken(name, chunk) {
     const panel = panels[name];
     if (!panel) return;
     if (!_streamingTas[name]) {
-      if (_thinkingStart) collapseThinking();
-
-      const wrap = document.createElement('div');
-      wrap.className = 'output-wrap streaming';
-      const pre = document.createElement('pre');
-      pre.className = 'output-streaming';
-      const textNode = document.createTextNode('');
-      const caret = document.createElement('span');
-      caret.className = 'streaming-caret';
-      caret.setAttribute('aria-hidden', 'true');
-      pre.appendChild(textNode);
-      pre.appendChild(caret);
-      wrap.appendChild(pre);
-
+      logLine('Writing ' + TASK_LABEL[name]);
+      setStatus('running', 'Writing ' + TASK_LABEL[name] + '…');
+      const view = document.createElement('div');
+      if (name === 'emails') {
+        view.className = 'email-cards';
+      } else {
+        view.className = 'md-view';
+      }
       panel.innerHTML = '';
-      panel.appendChild(wrap);
-      _streamingTas[name] = { textNode, preEl: pre, caret, buffer: '' };
-
+      panel.appendChild(view);
+      _streamingTas[name] = { view, buffer: '', raf: 0 };
       if (_activeStreamTask !== name) {
         _activeStreamTask = name;
         activateTab(name);
@@ -940,134 +1054,161 @@
     }
     const s = _streamingTas[name];
     s.buffer += chunk;
-    s.textNode.nodeValue = s.buffer;
     outputContent[name] = s.buffer;
-    // Auto-scroll to keep the caret in view.
-    s.preEl.scrollTop = s.preEl.scrollHeight;
+    if (s.raf) return;
+    s.raf = requestAnimationFrame(() => {
+      s.raf = 0;
+      if (name === 'emails') {
+        fillEmailCards(s.view, s.buffer, true);
+      } else {
+        s.view.innerHTML = renderMarkdown(s.buffer) + '<span class="streaming-caret" aria-hidden="true"></span>';
+        s.view.scrollTop = s.view.scrollHeight;
+      }
+    });
   }
 
   function renderTask(name, content) {
     const panel = panels[name];
     if (!panel) return;
     outputContent[name] = content;
-    // Tear down streaming DOM (caret dies with it — no stale blink).
+    const st = _streamingTas[name];
+    if (st && st.raf) cancelAnimationFrame(st.raf);
     delete _streamingTas[name];
-    if (name === 'emails') {
-      renderEmailCards(panel, content);
-    } else {
-      const ta = document.createElement('textarea');
-      ta.className = 'output-textarea';
-      ta.value = content;
-      ta.addEventListener('input', () => { outputContent[name] = ta.value; });
-      panel.innerHTML = '';
-      panel.appendChild(ta);
-    }
+    renderOutputPanel(name, content);
     markTabDone(name);
     activateTab(name);
+  }
+
+  // Rendered view + Edit toggle + Copy. outputContent[name] always holds raw text.
+  function renderOutputPanel(name, content, forceGeneric) {
+    const panel = panels[name];
+    if (!panel) return;
+    if (name === 'emails' && !forceGeneric) {
+      renderEmailCards(panel, content);
+      return;
+    }
+    const wrap = document.createElement('div');
+    wrap.className = 'output-panel';
+    const bar = document.createElement('div');
+    bar.className = 'output-toolbar';
+    const copyBtn = document.createElement('button');
+    copyBtn.type = 'button'; copyBtn.className = 'output-tool-btn'; copyBtn.textContent = 'Copy';
+    const editBtn = document.createElement('button');
+    editBtn.type = 'button'; editBtn.className = 'output-tool-btn'; editBtn.textContent = 'Edit';
+    bar.appendChild(copyBtn); bar.appendChild(editBtn);
+    const view = document.createElement('div');
+    view.className = 'md-view';
+    view.innerHTML = renderMarkdown(content);
+    const ta = document.createElement('textarea');
+    ta.className = 'output-textarea';
+    ta.value = content;
+    ta.style.display = 'none';
+    ta.addEventListener('input', () => { outputContent[name] = ta.value; });
+    let editing = false;
+    editBtn.addEventListener('click', () => {
+      editing = !editing;
+      if (editing) { ta.value = outputContent[name] || ''; }
+      else { view.innerHTML = renderMarkdown(outputContent[name] || ''); }
+      ta.style.display = editing ? '' : 'none';
+      view.style.display = editing ? 'none' : '';
+      editBtn.textContent = editing ? 'Done' : 'Edit';
+    });
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(outputContent[name] || '').then(() => showToast('Copied to clipboard'));
+    });
+    wrap.appendChild(bar); wrap.appendChild(view); wrap.appendChild(ta);
+    panel.innerHTML = '';
+    panel.appendChild(wrap);
+  }
+
+  const _EMAIL_SLOTS = [
+    { type: 'Application',   typeClass: '' },
+    { type: 'Cold Outreach', typeClass: 'outreach' },
+    { type: 'Follow-up',     typeClass: 'followup' },
+  ];
+  const _ICON_GMAIL = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3.5" width="12" height="9" rx="1.5"/><path d="M2 5l6 4 6-4"/></svg>';
+  const _ICON_COPY = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="8" height="8" rx="1.5"/><path d="M3 11V4a1.5 1.5 0 011.5-1.5H11"/></svg>';
+  const _ICON_SHARE = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4" r="2"/><circle cx="4" cy="8" r="2"/><circle cx="12" cy="12" r="2"/><path d="M5.8 9l4.4 2.2M5.8 7l4.4-2.2"/></svg>';
+
+  function _emailActionBtn(cls, title, icon, onClick) {
+    const b = document.createElement('button');
+    b.className = 'email-action-btn ' + cls;
+    b.title = title;
+    b.innerHTML = icon;
+    b.addEventListener('click', (e) => {
+      e.stopPropagation();
+      onClick(b);
+      b.classList.add('pressed');
+      setTimeout(() => b.classList.remove('pressed'), 300);
+    });
+    return b;
+  }
+
+  // Always renders three fixed cards (Application / Cold Outreach / Follow-up).
+  // Cards not yet streamed show a skeleton; the last streamed card has no actions
+  // until generation completes (final === true).
+  function fillEmailCards(container, raw, streaming) {
+    const emails = parseEmails(raw);
+    container.innerHTML = '';
+    _EMAIL_SLOTS.forEach((slot, i) => {
+      const email = emails.find(e => e.index === i + 1);
+      const card = document.createElement('div');
+      if (!email) {
+        if (!streaming) return;
+        card.className = 'email-card skeleton';
+        card.innerHTML =
+          '<div class="email-card-head"><span class="email-type-badge ' + slot.typeClass + '">' + slot.type + '</span></div>' +
+          '<div class="sk-line mid"></div><div class="sk-line"></div><div class="sk-line"></div><div class="sk-line short"></div>';
+        container.appendChild(card);
+        return;
+      }
+      card.className = 'email-card';
+      card.innerHTML =
+        '<div class="email-card-head"><span class="email-type-badge ' + slot.typeClass + '">' + slot.type + '</span></div>' +
+        '<div class="email-subject"><span class="email-subject-label">Subject</span>' + _escapeHtml(email.subject || '…') + '</div>' +
+        '<div class="email-body-preview">' + _escapeHtml(email.body).replace(/\[([^\]\n]{2,40})\]/g, '<mark class="md-ph">[$1]</mark>') + '</div>';
+      const isLive = streaming && email === emails[emails.length - 1];
+      if (!streaming) {
+        const actions = document.createElement('div');
+        actions.className = 'email-actions-row';
+        const gmailBtn = _emailActionBtn('action-gmail', 'Send via Gmail', _ICON_GMAIL, async (btn) => {
+          if (!_gmailConnected) { showToast('Connect Gmail in Settings first', 'error'); return; }
+          const to = prompt('Recipient email address:');
+          if (!to || !to.trim()) return;
+          try {
+            const res = await apiFetch('/api/gmail/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ to: to.trim(), subject: email.subject, body: email.body }) });
+            if (!res || !res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.detail || 'Send failed'); }
+            showToast('Email sent!');
+          } catch (err) { showToast('Send failed: ' + err.message, 'error'); }
+        });
+        if (!_gmailConnected) { gmailBtn.disabled = true; gmailBtn.title = 'Connect Gmail in Settings'; }
+        const copyBtn = _emailActionBtn('action-copy', 'Copy subject + body', _ICON_COPY, () => {
+          navigator.clipboard.writeText('Subject: ' + email.subject + '\n\n' + email.body).then(() => showToast('Copied to clipboard'));
+        });
+        const shareBtn = _emailActionBtn('action-share', 'Share', _ICON_SHARE, () => {
+          const data = { title: slot.type + ' Email', text: 'Subject: ' + email.subject + '\n\n' + email.body };
+          if (navigator.share) navigator.share(data).catch(() => {});
+          else navigator.clipboard.writeText(data.text).then(() => showToast('Copied to clipboard'));
+        });
+        actions.appendChild(gmailBtn); actions.appendChild(copyBtn); actions.appendChild(shareBtn);
+        card.appendChild(actions);
+      } else if (isLive) {
+        card.querySelector('.email-body-preview').insertAdjacentHTML('beforeend', '<span class="streaming-caret" aria-hidden="true"></span>');
+      }
+      container.appendChild(card);
+    });
   }
 
   function renderEmailCards(panel, rawContent) {
     const emails = parseEmails(rawContent);
     if (!emails.length) {
-      const ta = document.createElement('textarea');
-      ta.className = 'output-textarea';
-      ta.value = rawContent;
-      ta.addEventListener('input', () => { outputContent.emails = ta.value; });
-      panel.innerHTML = '';
-      panel.appendChild(ta);
+      // Model ignored the delimiter format — fall back to the generic panel.
+      renderOutputPanel('emails', rawContent, true);
       return;
     }
     const container = document.createElement('div');
     container.className = 'email-cards';
-    let selectedCard = null;
-
-    emails.forEach(email => {
-      const card = document.createElement('div');
-      card.className = 'email-card';
-      card.innerHTML =
-        '<div class="email-card-head"><span class="email-type-badge ' + (email.typeClass || '') + '">' + _escapeHtml(email.type) + '</span></div>' +
-        '<div class="email-subject">' + _escapeHtml(email.subject || '(No subject)') + '</div>' +
-        '<div class="email-body-preview">' + _escapeHtml(email.body) + '</div>';
-
-      // Build inline action row (hidden until card is selected)
-      const actions = document.createElement('div');
-      actions.className = 'email-actions-row';
-      actions.style.display = 'none';
-
-      // Gmail button
-      const gmailBtn = document.createElement('button');
-      gmailBtn.className = 'email-action-btn action-gmail';
-      gmailBtn.title = 'Send via Gmail';
-      gmailBtn.innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3.5" width="12" height="9" rx="1.5"/><path d="M2 5l6 4 6-4"/></svg>';
-      if (!_gmailConnected) { gmailBtn.disabled = true; gmailBtn.title = 'Connect Gmail in Settings'; }
-      gmailBtn.addEventListener('click', async function(e) {
-        e.stopPropagation();
-        if (!_gmailConnected) { showToast('Connect Gmail in Settings first', 'error'); return; }
-        const to = prompt('Recipient email address:');
-        if (!to || !to.trim()) return;
-        gmailBtn.classList.add('pressed');
-        try {
-          const res = await apiFetch('/api/gmail/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ to: to.trim(), subject: email.subject, body: email.body }) });
-          if (!res || !res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.detail || 'Send failed'); }
-          showToast('Email sent!');
-        } catch (err) { showToast('Send failed: ' + err.message, 'error'); }
-        finally { setTimeout(() => gmailBtn.classList.remove('pressed'), 300); }
-      });
-
-      // Copy button
-      const copyBtn = document.createElement('button');
-      copyBtn.className = 'email-action-btn action-copy';
-      copyBtn.title = 'Copy to clipboard';
-      copyBtn.innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="8" height="8" rx="1.5"/><path d="M3 11V4a1.5 1.5 0 011.5-1.5H11"/></svg>';
-      copyBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        navigator.clipboard.writeText('Subject: ' + email.subject + '\n\n' + email.body).then(() => {
-          copyBtn.classList.add('pressed');
-          showToast('Copied to clipboard');
-          setTimeout(() => copyBtn.classList.remove('pressed'), 300);
-        });
-      });
-
-      // Share button
-      const shareBtn = document.createElement('button');
-      shareBtn.className = 'email-action-btn action-share';
-      shareBtn.title = 'Share';
-      shareBtn.innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4" r="2"/><circle cx="4" cy="8" r="2"/><circle cx="12" cy="12" r="2"/><path d="M5.8 9l4.4 2.2M5.8 7l4.4-2.2"/></svg>';
-      shareBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        const shareData = { title: email.type + ' Email', text: 'Subject: ' + email.subject + '\n\n' + email.body };
-        if (navigator.share) {
-          navigator.share(shareData).catch(() => {});
-        } else {
-          navigator.clipboard.writeText(shareData.text).then(() => showToast('Copied to clipboard'));
-        }
-        shareBtn.classList.add('pressed');
-        setTimeout(() => shareBtn.classList.remove('pressed'), 300);
-      });
-
-      const label = document.createElement('span');
-      label.className = 'email-action-label';
-      label.textContent = 'Select an action';
-
-      actions.appendChild(gmailBtn);
-      actions.appendChild(copyBtn);
-      actions.appendChild(shareBtn);
-      actions.appendChild(label);
-      card.appendChild(actions);
-
-      // Card selection toggle
-      card.addEventListener('click', function() {
-        if (selectedCard && selectedCard !== card) {
-          selectedCard.classList.remove('selected');
-          selectedCard.querySelector('.email-actions-row').style.display = 'none';
-        }
-        const isSelected = card.classList.toggle('selected');
-        actions.style.display = isSelected ? 'flex' : 'none';
-        selectedCard = isSelected ? card : null;
-      });
-
-      container.appendChild(card);
-    });
+    fillEmailCards(container, rawContent, false);
     panel.innerHTML = '';
     panel.appendChild(container);
   }
@@ -1077,11 +1218,8 @@
 
   // Download helpers
   async function downloadExport(format) {
-    const btn = format === 'pdf' ? document.getElementById('dl-pdf') : document.getElementById('dl-docx');
-    const origText = btn.querySelector('span').textContent;
-    btn.style.pointerEvents = 'none'; btn.style.opacity = '0.5';
-    btn.querySelector('span').textContent = 'Exporting\u2026';
-    dlDropdown.classList.remove('open');
+    const btn = format === 'pdf' ? dlPdf : dlDocx;
+    btn.disabled = true;
     try {
       const res = await apiFetch(`/export/${format}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content: outputContent }) });
       if (!res || !res.ok) throw new Error('Export failed');
@@ -1090,28 +1228,61 @@
       const a = document.createElement('a'); a.href = url; a.download = `resumate_application.${format}`;
       document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
     } catch (err) { showToast(`Export failed: ${err.message}`, 'error'); }
-    finally { btn.style.pointerEvents = ''; btn.style.opacity = ''; btn.querySelector('span').textContent = origText; }
+    finally { btn.disabled = false; }
   }
-  document.getElementById('dl-pdf').addEventListener('click', () => downloadExport('pdf'));
-  document.getElementById('dl-docx').addEventListener('click', () => downloadExport('docx'));
+  dlPdf.addEventListener('click',  () => { openMore(false); if (!dlPdf.disabled)  downloadExport('pdf');  });
+  dlDocx.addEventListener('click', () => { openMore(false); if (!dlDocx.disabled) downloadExport('docx'); });
 
-  document.getElementById('dl-drive').addEventListener('click', async () => {
-    const btn = document.getElementById('dl-drive');
-    btn.disabled = true; btn.textContent = 'Uploading...';
+  // Reindex profile
+  mItem('reindex').addEventListener('click', async () => {
+    openMore(false);
+    showToast('Reindexing profile…', 'info', 2000);
     try {
-      const res = await apiFetch('/export/pdf', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content: outputContent }) });
-      if (!res || !res.ok) throw new Error('Export failed');
-      const blob = await res.blob();
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const base64 = reader.result.split(',')[1];
-        const driveRes = await apiFetch('/api/drive/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename: 'resumate_application.pdf', content_base64: base64, mime_type: 'application/pdf' }) });
-        if (!driveRes || !driveRes.ok) throw new Error('Drive upload failed');
-        showToast('Saved to Google Drive!');
-      };
-      reader.readAsDataURL(blob);
-    } catch (err) { showToast('Drive upload failed: ' + err.message, 'error'); }
-    finally { btn.disabled = false; btn.textContent = 'Save to Drive'; }
+      const res = await apiFetch('/profile/reindex', { method: 'POST' });
+      if (!res || !res.ok) throw new Error('request failed');
+      const data = await res.json();
+      showToast(
+        `Reindexed ${data.chunks} chunks from ${data.files.length} files · ${data.duration_ms}ms`,
+        'success', 4000
+      );
+    } catch (err) {
+      showToast(`Reindex failed: ${err.message || err}`, 'error', 4000);
+    }
+  });
+
+  // Stop generating — cancels the in-flight stream. Only visible while running.
+  let _activeReqId = null;
+  let _activeReader = null;
+
+  function resetGeneratingUi(label) {
+    document.body.classList.remove('is-generating');
+    if (label && _runStart) logLine(label);
+    endRun();
+    jdInput.disabled = false;
+    generateBtn.disabled = false;
+    generateBtn.textContent = 'Generate Application';
+    setStatus('ready', label || 'Idle');
+    _activeReqId = null;
+  }
+
+  mItem('stop').addEventListener('click', async () => {
+    openMore(false);
+    if (!_activeReqId) { showToast('No active generation', 'info', 2000); return; }
+    const reqId = _activeReqId;
+    // Immediately unblock the UI — do not wait for backend to confirm.
+    try { if (_activeReader) _activeReader.cancel(); } catch (_) {}
+    resetGeneratingUi('Stopped');
+    showToast('Stopping generation…', 'info', 2000);
+    try {
+      const res = await apiFetch('/generate/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ req_id: reqId }),
+      });
+      if (!res || !res.ok) throw new Error(`HTTP ${res ? res.status : 'failed'}`);
+    } catch (err) {
+      showToast(`Stop failed: ${err.message || err}`, 'error', 3000);
+    }
   });
 
   // SSE stream consumer
@@ -1119,6 +1290,7 @@
     const response = await apiFetch('/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ job_description: jdText }) });
     if (!response || !response.ok) throw new Error(`HTTP ${response ? response.status : 'failed'}`);
     const reader = response.body.getReader();
+    _activeReader = reader;
     const decoder = new TextDecoder();
     let buffer = '';
     while (true) {
@@ -1134,12 +1306,21 @@
           if (line.startsWith('event: ')) eventName = line.slice(7).trim();
           if (line.startsWith('data: ')) dataLine = line.slice(6).trim();
         }
-        if (eventName === 'progress') {
-          setStatus('running', dataLine);
-          showThinkingLine(dataLine);
+        if (eventName === 'stream') {
+          try { _activeReqId = JSON.parse(dataLine).req_id || null; } catch (_) { _activeReqId = null; }
+        } else if (eventName === 'cancelled') {
+          endRun();
+          setStatus('ready', 'Stopped');
+          showToast('Generation stopped', 'info', 2000);
+          return;
+        } else if (eventName === 'progress') {
+          setStatus('running', dataLine.replace(/\.{3}$/, '…'));
+          logLine(dataLine.replace(/\.{3}$/, ''));
         } else if (eventName === 'status') {
           if (dataLine === 'done') {
-            setStatus('done', 'Done');
+            logLine('Done');
+            endRun();
+            setStatus('done', 'Ready');
             // Auto-save to backend + localStorage
             try {
               apiFetch('/api/applications', {
@@ -1182,24 +1363,29 @@
       delete _streamingTas[key];
     });
     _activeStreamTask = null;
-    _thinkingStart = null;
-    _thinkingLines = [];
-    _thinkingBar.classList.remove('active');
-    _thinkingBar.querySelector('.thinking-spinner').style.display = '';
-    _thinkingLogPanel.classList.remove('open');
-    _thinkingLogPanel.innerHTML = '';
-    _thinkingCurrent.textContent = '';
+    startRun();
     tabBtns.forEach(btn => { const dot = btn.querySelector('.tab-dot'); if (dot) dot.remove(); });
-    dlTrigger.disabled = true;
-    dlTrigger.title = 'Download (available after cover letter)';
-    activateTab('skills');
+    dlPdf.disabled = true;
+    dlDocx.disabled = true;
+    activateTab('cover');
     jdInput.disabled = true;
     generateBtn.disabled = true;
     generateBtn.innerHTML = '<span class="spinner"></span> Generating...';
-    setStatus('running', 'Generating');
+    setStatus('running', 'Starting…');
+    document.body.classList.add('is-generating');
+    _activeReqId = null;
     try { await runGeneration(jdText); }
-    catch (err) { console.error('Generation error:', err); setStatus('error', 'Error'); showToast(`Generation failed: ${err.message}`, 'error'); }
-    finally { jdInput.disabled = false; generateBtn.disabled = false; generateBtn.textContent = 'Generate Application'; if (statusPill.className === 'running') setStatus('ready', 'Ready'); }
+    catch (err) { console.error('Generation error:', err); logLine('Error: ' + err.message); endRun(); setStatus('error', 'Error'); showToast(`Generation failed: ${err.message}`, 'error'); }
+    finally {
+      _activeReader = null;
+      document.body.classList.remove('is-generating');
+      _activeReqId = null;
+      jdInput.disabled = false;
+      generateBtn.disabled = false;
+      generateBtn.textContent = 'Generate Application';
+      if (_runTimer) endRun();
+      if (isRunning()) setStatus('ready', 'Idle');
+    }
   });
 
   // ── Load saved application if ?edit=<id> in URL ───────────────
@@ -1221,24 +1407,15 @@
         Object.entries(app.content).forEach(([name, content]) => {
           if (!content || !panels[name]) return;
           outputContent[name] = content;
-          if (name === 'emails') {
-            renderEmailCards(panels[name], content);
-          } else {
-            const ta = document.createElement('textarea');
-            ta.className = 'output-textarea';
-            ta.value = content;
-            ta.addEventListener('input', () => { outputContent[name] = ta.value; });
-            panels[name].innerHTML = '';
-            panels[name].appendChild(ta);
-          }
+          renderOutputPanel(name, content);
         });
         // Enable download if cover exists
         if (app.content.cover) {
-          const dlBtn = document.getElementById('dl-trigger');
-          if (dlBtn) { dlBtn.disabled = false; dlBtn.title = 'Download'; }
+          dlPdf.disabled = false;
+          dlDocx.disabled = false;
         }
         setStatus('done', 'Loaded');
-        activateTab('skills');
+        activateTab('cover');
       }
     } catch (_) {}
   })();

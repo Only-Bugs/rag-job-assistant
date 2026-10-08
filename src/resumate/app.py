@@ -98,6 +98,16 @@ async def lifespan(app: FastAPI):
 
     threading.Thread(target=_warmup, daemon=True).start()
 
+    # Load the LLM now so the first Generate never pays a cold model load.
+    def _llm_warmup():
+        try:
+            from resumate.models.llm import warm_up
+            warm_up()
+        except Exception as exc:
+            logger.warning("LLM warm-up failed (is Ollama running?): %s", exc)
+
+    threading.Thread(target=_llm_warmup, daemon=True).start()
+
     logger.info("ResuMate API ready  |  model=%s", MODEL_NAME)
     yield
     logger.info("ResuMate API shutting down")
@@ -120,6 +130,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Always revalidate frontend assets and pages. StaticFiles sends ETag /
+# Last-Modified, so this costs a 304 locally but means edited JS/CSS is never
+# served stale from the browser cache.
+@app.middleware("http")
+async def _no_cache_frontend(request: Request, call_next):
+    response = await call_next(request)
+    ctype = response.headers.get("content-type", "")
+    if request.url.path.startswith("/static/") or ctype.startswith("text/html"):
+        response.headers["Cache-Control"] = "no-cache"
+    return response
+
 
 # API routes (before pages to ensure API paths take priority)
 app.include_router(auth_router)
