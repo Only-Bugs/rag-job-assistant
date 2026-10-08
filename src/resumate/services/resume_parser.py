@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import io
-import json
 import logging
+import re
 
-from resumate.models.llm import run_prompt
+from resumate.config.settings import task_options
+from resumate.models.llm import chat_json
 from resumate.prompts.templates import SYSTEM_RESUME_PARSE
 
 logger = logging.getLogger("resumate")
@@ -45,34 +46,62 @@ def _extract_docx(data: bytes) -> str:
     return "\n".join(p.text for p in doc.paragraphs if p.text.strip())
 
 
+# JSON schema for Ollama structured outputs: every field optional, so the model
+# can omit what the resume doesn't contain instead of inventing it.
+RESUME_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "name": {"type": "string"},
+        "title": {"type": "string"},
+        "location": {"type": "string"},
+        "email": {"type": "string"},
+        "phone": {"type": "string"},
+        "links": {"type": "array", "items": {"type": "string"}},
+        "skills": {"type": "array", "items": {"type": "string"}},
+        "achievements": {"type": "array", "items": {"type": "string"}},
+        "pitch": {"type": "string"},
+    },
+}
+_MAX_RESUME_CHARS = 8000  # ~2.2k tokens; fits num_ctx 4096 with the schema output
+
+
+def _verify_against_source(parsed: dict, source: str) -> dict:
+    """Drop extracted values that don't appear in the resume (small models embellish)."""
+    from rapidfuzz import fuzz
+
+    low = source.lower()
+    squashed = re.sub(r"\s+", "", low)
+    out: dict = {}
+    for key, val in parsed.items():
+        if key not in RESUME_SCHEMA["properties"] or val in (None, "", []):
+            continue
+        if key in ("name", "email", "phone", "location", "title"):
+            v = str(val).strip()
+            if re.sub(r"\s+", "", v.lower()) in squashed:
+                out[key] = v
+        elif key in ("skills", "links"):
+            out[key] = [v.strip() for v in val if isinstance(v, str) and v.strip().lower() in low]
+        elif key == "achievements":
+            out[key] = [v.strip() for v in val if isinstance(v, str)
+                        and fuzz.partial_ratio(v.lower(), low) >= 80]
+        else:  # pitch is a summary: keep as written
+            out[key] = val
+    return out
+
+
 def parse_resume_text(raw_text: str) -> dict:
-    """Send resume text to Ollama for structured JSON extraction.
+    """Extract structured profile fields from resume text.
 
-    Returns a dict with fields: name, title, location, email, phone,
-    links, skills, achievements, pitch.
+    Uses Ollama structured outputs (JSON schema, temperature 0), then keeps only
+    values that can be found in the source text. Returns a dict with any of:
+    name, title, location, email, phone, links, skills, achievements, pitch.
     """
-    # Truncate very long resumes to keep prompt manageable
-    truncated = raw_text[:8000] if len(raw_text) > 8000 else raw_text
-
-    result = run_prompt(
-        SYSTEM_RESUME_PARSE,
-        truncated,
-        max_tokens=1024,
-        task_name="parse_resume",
-        stage="tools",
-    )
-
-    # Try to extract JSON from the LLM response
+    truncated = raw_text[:_MAX_RESUME_CHARS]
+    messages = [{"role": "user", "content": SYSTEM_RESUME_PARSE + "\n\nRESUME:\n" + truncated}]
     try:
-        return json.loads(result)
-    except json.JSONDecodeError:
-        # Try to find JSON object in the response
-        start = result.find("{")
-        end = result.rfind("}") + 1
-        if start >= 0 and end > start:
-            try:
-                return json.loads(result[start:end])
-            except json.JSONDecodeError:
-                pass
-        logger.warning("parse_resume: LLM returned non-JSON: %s", result[:200])
-        return {"raw_text": raw_text[:2000], "parse_error": "Could not parse LLM output as JSON"}
+        parsed = chat_json(messages, RESUME_SCHEMA, options=task_options("resume_parse"),
+                           task_name="parse_resume")
+    except Exception as exc:
+        logger.warning("parse_resume: structured call failed: %s", exc)
+        return {"raw_text": raw_text[:2000], "parse_error": "Could not parse the resume with the local model"}
+    return _verify_against_source(parsed if isinstance(parsed, dict) else {}, raw_text)

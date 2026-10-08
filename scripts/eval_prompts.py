@@ -71,25 +71,34 @@ def _stage_profile(src: Path) -> Path:
 # Prompt recorder — wraps whichever LLM entry point generation.py uses.
 # ---------------------------------------------------------------------------
 class PromptRecorder:
-    ENTRY_POINTS = ("stream_prompt", "chat_stream")
+    # (module, attribute) pairs that may hold the LLM entry point, old and new pipelines.
+    ENTRY_POINTS = (
+        ("resumate.services.generation", "stream_prompt"),
+        ("resumate.services.generation", "chat_stream"),
+        ("resumate.services.tasks", "chat_stream"),
+    )
 
     def __init__(self):
         self.calls: list[dict] = []
-        self._orig: dict[str, object] = {}
+        self._orig: list[tuple[object, str, object]] = []
 
     def install(self):
-        import resumate.services.generation as gen
-        for name in self.ENTRY_POINTS:
-            fn = getattr(gen, name, None)
+        import importlib
+        for mod_name, attr in self.ENTRY_POINTS:
+            try:
+                mod = importlib.import_module(mod_name)
+            except ImportError:
+                continue
+            fn = getattr(mod, attr, None)
             if fn is None:
                 continue
-            self._orig[name] = fn
-            setattr(gen, name, self._wrap(fn))
+            self._orig.append((mod, attr, fn))
+            setattr(mod, attr, self._wrap(fn))
 
     def uninstall(self):
-        import resumate.services.generation as gen
-        for name, fn in self._orig.items():
-            setattr(gen, name, fn)
+        for mod, attr, fn in self._orig:
+            setattr(mod, attr, fn)
+        self._orig.clear()
 
     def _wrap(self, fn):
         recorder = self
@@ -101,9 +110,13 @@ class PromptRecorder:
                     text_parts += [m.get("content", "") for m in a if isinstance(m, dict)]
             prompt = "\n\n----- next part -----\n\n".join(text_parts)
             call = {"task": kwargs.get("task_name", "?"), "prompt": prompt,
-                    "prompt_chars": len(prompt), "prompt_tokens_est": len(prompt) // 4}
+                    "prompt_chars": len(prompt), "prompt_tokens_est": len(prompt) // 4, "ttft_s": None}
             recorder.calls.append(call)
-            yield from fn(*args, **kwargs)
+            t0 = time.perf_counter()
+            for piece in fn(*args, **kwargs):
+                if call["ttft_s"] is None:
+                    call["ttft_s"] = round(time.perf_counter() - t0, 2)
+                yield piece
 
         return wrapped
 
@@ -126,8 +139,10 @@ def run_one(jd_text: str, user_dir: Path) -> dict:
         elif name in TASKS:
             outputs[name] = val
             done_at[name] = t
+        elif name == "blocked":
+            meta["blocked"] = val
         elif name == "_meta":
-            meta = {k: v for k, v in val.items() if k != "context"}
+            meta.update({k: v for k, v in val.items() if k != "context"})
     total = time.perf_counter() - t0
     # TTFT per task = first token minus the end of the previous task (or pipeline start).
     ttft, prev = {}, 0.0
@@ -182,24 +197,33 @@ def run_matrix(profiles: list[str], jds: list[str], label: str) -> Path:
 
             for i, call in enumerate(rec.calls):
                 (out_dir / "prompts" / f"{i:02d}_{call['task']}.txt").write_text(call["prompt"], encoding="utf-8")
-            prompt_est = {}
+            prompt_est, model_ttft = {}, {}
             for call in rec.calls:
                 task = call["task"].removeprefix("gen_").split(":")[0]
                 prompt_est[task] = max(prompt_est.get(task, 0), call["prompt_tokens_est"])
+                if call["ttft_s"] is not None:
+                    model_ttft.setdefault(task, []).append(call["ttft_s"])
 
+            expected_ok = manifest["jds"][jd]["expect_domain_ok"].get(prof)
+            blocked = _guard_blocked(result)
             checks = {}
             for task in TASKS:
                 text = result["outputs"].get(task, "")
                 (out_dir / f"{task}.txt").write_text(text, encoding="utf-8")
+                if blocked and not text:
+                    # Correctly skipped by the guard: nothing to check.
+                    checks[task] = {"skipped": "blocked by domain guard", "failures": 0}
+                    continue
                 checks[task] = run_checks(task, text, profile_evidence=evidence, jd_text=jd_text,
                                           prompt_tokens_est=prompt_est.get(task), num_ctx=LLM_NUM_CTX)
-            expected_ok = manifest["jds"][jd]["expect_domain_ok"].get(prof)
-            blocked = _guard_blocked(result)
             row = {
                 "profile": prof, "jd": jd,
                 "guard_expected_ok": expected_ok, "guard_blocked": blocked,
                 "guard_correct": (expected_ok is None) or (expected_ok != blocked),
                 "total_s": result["total_s"], "ttft_s": result["ttft_s"], "done_s": result["done_s"],
+                # Model TTFT of each task's first call, and the mean over all its calls.
+                "model_ttft_first_s": {t: v[0] for t, v in model_ttft.items()},
+                "model_ttft_mean_s": {t: round(sum(v) / len(v), 2) for t, v in model_ttft.items()},
                 "llm_calls": len(rec.calls),
                 "failures": {t: checks[t]["failures"] for t in TASKS},
                 "error": result.get("error"),
@@ -218,13 +242,15 @@ def run_matrix(profiles: list[str], jds: list[str], label: str) -> Path:
 def _summary_md(summary: dict, run_dir: Path) -> str:
     lines = [f"# Eval run `{run_dir.name}`", "",
              f"Model `{summary['model']}`, num_ctx {summary['num_ctx']}", "",
-             "| Profile | JD | Guard | Total s | TTFT cover / emails / skills / ats | Calls | Failures cover / emails / skills / ats |",
-             "|---|---|---|---|---|---|---|"]
+             "| Profile | JD | Guard | Total s | Visible TTFT c/e/s/a | Model TTFT first (mean) c/e/s/a | Calls | Failures c/e/s/a |",
+             "|---|---|---|---|---|---|---|---|"]
     for r in summary["rows"]:
         guard = ("✓" if r["guard_correct"] else "✗") + (" blocked" if r["guard_blocked"] else " ok")
         tt = " / ".join(str(r["ttft_s"].get(t, "–")) for t in TASKS)
+        mf, mm = r.get("model_ttft_first_s", {}), r.get("model_ttft_mean_s", {})
+        mt = " / ".join(f"{mf[t]} ({mm[t]})" if t in mf else "–" for t in TASKS)
         fl = " / ".join(str(r["failures"].get(t, "–")) for t in TASKS)
-        lines.append(f"| {r['profile']} | {r['jd']} | {guard} | {r['total_s']} | {tt} | {r['llm_calls']} | {fl} |")
+        lines.append(f"| {r['profile']} | {r['jd']} | {guard} | {r['total_s']} | {tt} | {mt} | {r['llm_calls']} | {fl} |")
     rows = summary["rows"]
     if rows:
         lines += ["", f"**Guard correct:** {sum(r['guard_correct'] for r in rows)}/{len(rows)}  ",

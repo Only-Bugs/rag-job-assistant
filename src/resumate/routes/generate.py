@@ -33,6 +33,8 @@ _active_lock = threading.Lock()
 class GenerateRequest(BaseModel):
     job_description: str
     profile_id: str | None = None
+    # Skip the out-of-domain guard ("Generate anyway").
+    force: bool = False
 
 
 class CancelRequest(BaseModel):
@@ -43,6 +45,7 @@ async def _iter_pipeline(
     jd_text: str,
     user_data_dir: Path,
     cancel_event: threading.Event,
+    force: bool = False,
 ) -> AsyncGenerator[tuple[str, Any], None]:
     """Bridge the synchronous RAG generator to an async generator."""
     loop = asyncio.get_event_loop()
@@ -52,7 +55,7 @@ async def _iter_pipeline(
         gen = None
         try:
             gen = generate_application_package(
-                jd_text, save_to_disk=False, progress=None, user_data_dir=user_data_dir
+                jd_text, save_to_disk=False, progress=None, user_data_dir=user_data_dir, force=force
             )
             for item in gen:
                 if cancel_event.is_set():
@@ -103,17 +106,23 @@ async def generate(
             yield format_sse("stream", json.dumps({"req_id": req_id}))
             yield format_sse("status", "starting")
             try:
-                async for event_name, payload in _iter_pipeline(jd_text, user_data_dir, cancel_event):
+                blocked = False
+                async for event_name, payload in _iter_pipeline(jd_text, user_data_dir, cancel_event, request.force):
                     if event_name == "progress":
                         yield format_sse("progress", payload)
                     elif event_name == "token":
                         yield format_sse("token", json.dumps(payload))
+                    elif event_name == "blocked":
+                        blocked = True
+                        yield format_sse("blocked", json.dumps(payload))
                     elif event_name in _TEXT_TASKS:
                         logger.info("task complete: %s (%d chars)", event_name, len(payload))
                         yield format_sse("task", json.dumps({"task": event_name, "content": payload}))
                 if cancel_event.is_set():
                     logger.info("stream cancelled: %s", req_id)
                     yield format_sse("cancelled", json.dumps({"req_id": req_id}))
+                elif blocked:
+                    yield format_sse("status", "blocked")
                 else:
                     yield format_sse("status", "done")
             except Exception as exc:

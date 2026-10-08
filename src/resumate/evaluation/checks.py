@@ -11,7 +11,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from resumate.utils.metrics import METRIC_RE, metric_key, metric_keys
+from resumate.utils.metrics import METRIC_RE, is_grounded, metric_keys
 
 TASKS = ("cover", "emails", "skills", "ats")
 # Tasks whose output is plain text (no markdown allowed).
@@ -34,7 +34,7 @@ def ungrounded_numbers(text: str, evidence: str, *, bullets_only: bool = False) 
     out: list[str] = []
     for line in lines:
         for m in METRIC_RE.finditer(line):
-            if metric_key(m.group(0)) not in grounded:
+            if not is_grounded(m.group(0), grounded):
                 out.append(m.group(0).strip())
     return out
 

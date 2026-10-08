@@ -6,7 +6,7 @@ import json
 from unittest.mock import patch
 
 
-def _fake_generator(jd_text, save_to_disk=False, progress=None, user_data_dir=None):
+def _fake_generator(jd_text, save_to_disk=False, progress=None, user_data_dir=None, **kwargs):
     """Yield fake task results mimicking the real pipeline."""
     for task in ("skills", "cover", "emails", "ats"):
         yield task, f"Fake {task} content"
@@ -77,3 +77,25 @@ def test_generate_error(client):
     error_events = [e for e in events if e["event"] == "error"]
     assert len(error_events) == 1
     assert "Ollama exploded" in json.loads(error_events[0]["data"])["message"]
+
+
+def test_generate_blocked_and_force_flag(client):
+    """An out-of-domain JD yields a 'blocked' event and ends with status 'blocked';
+    the request's force flag is passed through to the pipeline."""
+    seen = {}
+
+    def _blocking_gen(jd_text, save_to_disk=False, progress=None, user_data_dir=None, force=False):
+        seen["force"] = force
+        if not force:
+            yield "blocked", {"message": "outside profile", "missing": []}
+            return
+        yield "cover", "Forced content"
+
+    with patch("resumate.routes.generate.generate_application_package", side_effect=_blocking_gen):
+        blocked = _parse_sse(client.post("/generate", json={"job_description": "Nurse"}).text)
+        forced = _parse_sse(client.post("/generate", json={"job_description": "Nurse", "force": True}).text)
+
+    assert [e["event"] for e in blocked][-2:] == ["blocked", "status"]
+    assert blocked[-1]["data"] == "blocked"
+    assert seen["force"] is True
+    assert any(e["event"] == "task" for e in forced) and forced[-1]["data"] == "done"

@@ -455,6 +455,21 @@
       min-height: 200px;
     }
 
+    /* ── Out-of-domain notice ───────────────────────────────────────── */
+    .blocked-card {
+      margin: 24px; padding: 20px 22px; max-width: 640px;
+      border: 1px solid #f5d0a9; background: #fff8f0; border-radius: 12px; color: var(--text);
+      font-size: 14px; line-height: 1.6;
+    }
+    .blocked-card h3 { font-family: var(--font-display); font-size: 16px; margin: 0 0 6px; color: #9a3412; }
+    .blocked-card p { margin: 0 0 10px; }
+    .blocked-card ul { margin: 0 0 12px; padding-left: 20px; color: var(--muted); }
+    .blocked-sub { color: var(--muted); font-size: 13px; margin-bottom: 4px !important; }
+    .blocked-actions { display: flex; gap: 8px; margin-top: 6px; }
+    .blocked-actions a { text-decoration: none; display: inline-flex; align-items: center; }
+    .output-tool-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .output-tool-btn.primary:hover { background: var(--accent); filter: brightness(1.08); }
+
     /* ── Empty state ──────────────────────────────────────────────── */
     .empty-state {
       flex: 1;
@@ -1411,8 +1426,32 @@
   });
 
   // SSE stream consumer
-  async function runGeneration(jdText) {
-    const response = await apiFetch('/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ job_description: jdText }) });
+  // Out-of-domain guard: the backend skips generation and explains why; the
+  // user can override with "Generate anyway" (re-runs with force: true).
+  let _forceNext = false;
+  function renderBlocked(info) {
+    const missing = (info.missing || []).length
+      ? '<p class="blocked-missing"><strong>Tools it asks for that aren\'t on your profile:</strong> ' +
+        info.missing.map(_escapeHtml).join(', ') + '</p>' : '';
+    const reqs = (info.requirements || []).length
+      ? '<ul>' + info.requirements.map(r => '<li>' + _escapeHtml(r) + '</li>').join('') + '</ul>' : '';
+    panels.cover.innerHTML =
+      '<div class="blocked-card" role="status">' +
+        '<h3>This role looks outside your profile</h3>' +
+        '<p>' + _escapeHtml(info.message || '') + '</p>' + missing +
+        (reqs ? '<p class="blocked-sub">What the role is mainly about:</p>' + reqs : '') +
+        '<div class="blocked-actions"><button type="button" class="output-tool-btn primary" id="force-generate">Generate anyway</button>' +
+        '<a class="output-tool-btn" href="/settings">Update my profile</a></div>' +
+      '</div>';
+    activateTab('cover');
+    document.getElementById('force-generate').addEventListener('click', () => {
+      _forceNext = true;
+      generateBtn.click();
+    });
+  }
+
+  async function runGeneration(jdText, force) {
+    const response = await apiFetch('/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ job_description: jdText, force: !!force }) });
     if (!response || !response.ok) throw new Error(`HTTP ${response ? response.status : 'failed'}`);
     const reader = response.body.getReader();
     _activeReader = reader;
@@ -1441,6 +1480,13 @@
         } else if (eventName === 'progress') {
           setStatus('running', dataLine.replace(/\.{3}$/, '…'));
           logLine(dataLine.replace(/\.{3}$/, ''));
+        } else if (eventName === 'blocked') {
+          let info = {};
+          try { info = JSON.parse(dataLine); } catch (_) {}
+          logLine('Stopped: role looks outside your profile');
+          endRun();
+          setStatus('ready', 'Not a match');
+          renderBlocked(info);
         } else if (eventName === 'status') {
           if (dataLine === 'done') {
             logLine('Done');
@@ -1500,7 +1546,9 @@
     setStatus('running', 'Starting…');
     document.body.classList.add('is-generating');
     _activeReqId = null;
-    try { await runGeneration(jdText); }
+    const force = _forceNext;
+    _forceNext = false;
+    try { await runGeneration(jdText, force); }
     catch (err) { console.error('Generation error:', err); logLine('Error: ' + err.message); endRun(); setStatus('error', 'Error'); showToast(`Generation failed: ${err.message}`, 'error'); }
     finally {
       _activeReader = null;

@@ -1,187 +1,149 @@
 """
 templates.py
-System prompts and builders for the ResuMate Job Application Assistant.
+Prompts for the ResuMate Job Application Assistant.
+
+Design:
+- Every generation call is one user turn: SHARED_SYSTEM + shared context
+  (byte-identical across calls, so Ollama reuses its KV cache) followed by one
+  small task block built here.
+- Each task block asks for ONE thing with ONE output shape. Decisions (which
+  evidence, which requirement, match band, keywords, gap, sign-offs) are made
+  in code (services/analysis.py) and passed in as facts.
+- Length is stated in sentences/lines, not words. Format is enforced with
+  prefill + stop sequences + post-processing rather than lists of rules.
 """
 
 from __future__ import annotations
 
-from typing import Optional, Dict, List
-
-
-def build_basic_system_prompt(profile: Optional[Dict] = None) -> str:
-    """Create a generic assistant prompt, enriched with the profile if present."""
-    focus_role = "AI/ML job application assistant"
-    if profile:
-        focus_role = (
-            profile.get("role_preferences", {}).get("role_description")
-            or profile.get("target_role")
-            or profile.get("domain_focus")
-            or focus_role
-        )
-
-    base = (
-        f"You are a helpful {focus_role}. "
-        "You generate CV bullet points, cover letters, and email drafts "
-        "tailored for the candidate's preferred roles.\n\n"
-    )
-
-    if not profile:
-        return base
-
-    skills = ", ".join(profile.get("skills", []))
-    pitch = profile.get("pitch", "")
-
-    return (
-        base
-        + f"My name is {profile.get('name', '')}. "
-          f"My title is {profile.get('title', '')}. "
-          f"I am based in {profile.get('location', '')}.\n"
-        f"My skills include: {skills}.\n"
-        f"My personal pitch: {pitch}\n\n"
-        "Use this information to personalise the output."
-    )
-
-
-def build_skills_prompt(profile: Dict) -> str:
-    """
-    Resolve the skills task instructions (sent as the user turn).
-
-    Only the candidate's declared domain/role fields are substituted here; the
-    profile evidence and JD live in the shared system prefix (see SHARED_SYSTEM
-    and context_builder.build_shared_context) so Ollama can reuse its KV cache
-    across all four tasks.
-    """
-    role_keywords: List[str] = (
-        profile.get("role_keywords")
-        or profile.get("role_preferences", {}).get("role_keywords")
-        or []
-    )
-
-    return (
-        _SYSTEM_SKILLS_TEMPLATE
-        .replace("[PROFILE_DOMAIN_FOCUS]", profile.get("domain_focus", "") or "not set")
-        .replace("[PROFILE_TARGET_ROLE]",  profile.get("target_role", "") or "not set")
-        .replace("[PROFILE_ROLE_KEYWORDS]", ", ".join(role_keywords) or "not set")
-    )
-
-
 # ---------------------------------------------------------------------------
-# Shared system prefix — byte-identical for every task in a run.
-# Keep task-specific wording OUT of this string: any difference here breaks
-# Ollama's prompt-prefix cache and every task re-prefills the full context.
+# Shared prefix — byte-identical for every call in a run.
+# Keep task-specific wording OUT of this string: any difference breaks
+# Ollama's prompt-prefix cache and every call re-prefills the full context.
 # ---------------------------------------------------------------------------
 SHARED_SYSTEM = """You are ResuMate, an expert career writer who produces concise, business-ready job application material.
-Ground every claim in the CANDIDATE PROFILE, PROFILE EVIDENCE and JOB DESCRIPTION below.
-Never invent employers, projects, tools, dates or numbers. Address the candidate's experience truthfully.
-Follow the task instructions in the next message exactly, including the output format. No preamble."""
+Ground every claim in the CANDIDATE PROFILE, PROFILE EVIDENCE and JOB DESCRIPTION below. Evidence items are labelled [E#].
+Never invent employers, projects, tools, dates or numbers.
+Follow the TASK at the end exactly. No preamble."""
+
+# Phrases the model uses to sign off; used as stop sequences so code can
+# append a consistent sign-off instead.
+SIGN_OFF_STOPS = ["Sincerely", "Best regards", "Kind regards", "Warm regards", "Regards,", "Thank you,\n", "Best,\n"]
+
+
+def _evidence_ref(item) -> str:
+    return f"[{item.id}] ({item.label})"
 
 
 # ---------------------------------------------------------------------------
-# Task instructions (user turn). Access skills via build_skills_prompt().
+# Cover letter — 1 call, prefilled with the greeting, stopped at the sign-off.
 # ---------------------------------------------------------------------------
-_SYSTEM_SKILLS_TEMPLATE = """TASK: Resume bullet kit.
-
-Candidate's declared focus — Domain: [PROFILE_DOMAIN_FOCUS] | Target role: [PROFILE_TARGET_ROLE] | Role keywords: [PROFILE_ROLE_KEYWORDS]
-
-Rules:
-- Address the candidate as "you". Simple markdown only (## headings, - bullets, **bold** labels). No emojis.
-- Use only PROFILE EVIDENCE and CANDIDATE PROFILE for claims about the candidate, and only the JOB DESCRIPTION for claims about the role.
-
-Guard: if the job's core domain clearly does not overlap the candidate's declared focus or evidence, output only:
-## Outside Your Profile Domain
-This role sits outside your current profile domain. Update your domain and skills in Settings > Profile, then generate again.
-
-Otherwise output exactly these four sections and nothing else:
-
-## Match Snapshot
-One sentence: how strong the match is and the single most important thing to emphasise.
-
-## ATS Keywords
-Exactly two bullets, each a comma-separated list:
-- **Already on your profile:** up to 6 JD keywords the candidate genuinely has
-- **Add to your resume:** up to 6 JD keywords or tools worth adding (only if truthful)
-
-## Tailored Resume Bullets
-Exactly 4 bullets the candidate can paste into a resume, each tied to a different JD requirement.
-Formula: past-tense action verb + what you built or did + tool/stack + measurable outcome.
-Each bullet is one line, 18-28 words. Every project, tool and number must appear in the profile, attached to the same project.
-If the profile gives no number for that project, end the bullet with "by [add metric]" — never estimate one.
-
-## Gap to Close
-One real gap between the JD and the profile, and one sentence on how to bridge it using actual profile evidence.
-"""
-
-# Public alias kept for callers that import it by name.
-SYSTEM_SKILLS = _SYSTEM_SKILLS_TEMPLATE
+def cover_task(role: str, company: str, jd_term: str, items: list) -> str:
+    at = f" at {company}" if company else ""
+    proof = " and ".join(_evidence_ref(it) for it in items) or "the strongest PROFILE EVIDENCE"
+    return f"""TASK: Write the body of a cover letter from the candidate for the {role} role{at}.
+Write exactly 3 short paragraphs of 2-3 sentences each, in the first person:
+1. Why this role{at} appeals, using the exact phrase "{jd_term}".
+2. What the candidate achieved in {proof}, including their real results.
+3. A confident closing that asks for a conversation.
+Plain sentences only. Stop after the third paragraph."""
 
 
-SYSTEM_COVER = """TASK: Cover letter.
-- Plain text only: no markdown, no asterisks, no headings, no bullet lists.
-- 220-300 words, exactly 3 short paragraphs after the greeting:
-  1) Hook: why this role and company, using an exact term from the JOB DESCRIPTION.
-  2) Proof: two specific projects or outcomes from the PROFILE EVIDENCE that match the role's core needs.
-  3) Close: a confident call-to-action.
-- Start with "Dear Hiring Manager," and end with "Sincerely," followed by the candidate's name.
-- Never write square-bracket placeholders and do not mention where the job was advertised.
-"""
+# ---------------------------------------------------------------------------
+# Emails — 3 calls, each prefilled with "Subject: ".
+# ---------------------------------------------------------------------------
+EMAIL_KINDS = {
+    1: ("Application", "an application email to the hiring manager",
+        "3-4 sentences: say you are applying, give one result from {ref}, say why you fit, and mention your resume is attached."),
+    2: ("Cold Outreach", "a short cold email to a recruiter",
+        "2-3 sentences: who you are, one result from {ref}, and ask for a 15-minute call."),
+    3: ("Follow-up", "a polite follow-up email sent 7-10 days after applying",
+        "2-3 sentences: check in on your application, restate one fit point from {ref}, and thank them."),
+}
 
-SYSTEM_EMAILS = """TASK: Three short emails for this role.
-- No exaggeration, no markdown, no asterisks.
-- Never write square-bracket placeholders. Greet with "Dear Hiring Manager," (emails 1 and 3) or "Hi there," (email 2). Do not mention where the job was advertised or the application date.
-- Each email must name one specific project or result from the PROFILE EVIDENCE.
-- Sign off with the candidate's name.
-- Lengths: Email 1 80-140 words; Email 2 40-80 words; Email 3 50-90 words.
-Use EXACTLY this format, with these three delimiter lines:
 
-=== Email 1: Application ===
-Subject: <one line>
-Body:
-<greeting, short paragraphs, sign-off>
+def email_task(kind: int, role: str, company: str, item) -> str:
+    _, what, shape = EMAIL_KINDS[kind]
+    at = f" at {company}" if company else ""
+    ref = _evidence_ref(item) if item is not None else "the PROFILE EVIDENCE"
+    return f"""TASK: Write {what} about the {role} role{at}.
+First line: a specific subject line. Then a blank line. Then the email body: {shape.format(ref=ref)}
+Write as the candidate, in plain sentences. Do not add a sign-off."""
 
-=== Email 2: Cold Outreach ===
-Subject: <one line>
-Body:
-<a brief note to a recruiter, one proof point, one ask>
 
-=== Email 3: Follow-up ===
-Subject: <one line>
-Body:
-<a polite follow-up sent 7-10 days after applying>
-"""
+# ---------------------------------------------------------------------------
+# Skills — code writes headings + keyword lists; the model writes 1 snapshot
+# sentence, 1 line per bullet, and 1-2 gap sentences.
+# ---------------------------------------------------------------------------
+def snapshot_task(band: str, role: str, strengths: list[str]) -> str:
+    return (f'TASK: Write one sentence to the candidate (use "you") saying they are a {band.lower()} match '
+            f'for the {role} role, naming these strengths: {", ".join(strengths) or "their most relevant experience"}.')
 
-SYSTEM_ATS = """TASK: ATS-friendly resume summary, 80-120 words, plain text (no headings, no asterisks).
-Write these three parts in this order:
-1. Two sentences in resume voice (no "I", no "he/she", no name), e.g. starting "Full-stack engineer with ...".
-2. One line starting with "Core Stack: " followed by comma-separated JD tools the candidate has.
-3. Three lines starting with "- ", each an outcome from a real profile project.
-"""
 
-SYSTEM_RESUME_PARSE = """
-You are a resume parser. Extract structured data from the provided resume text.
-Return ONLY valid JSON (no markdown fences, no explanation) with these fields:
-{{
-  "name": "Full name",
-  "title": "Current or most recent job title",
-  "location": "City, Country",
-  "email": "email@example.com",
-  "phone": "+1234567890",
-  "links": ["url1", "url2"],
-  "skills": ["skill1", "skill2"],
-  "achievements": ["achievement1", "achievement2"],
-  "pitch": "2-3 sentence professional summary"
-}}
-Only include fields you can find in the text. Do not fabricate any information.
-If a field is not present, omit it from the JSON.
-"""
+def bullet_task(item, requirement: str | None) -> str:
+    aim = (f'aimed at this job requirement: "{requirement}"' if requirement
+           else "that best shows transferable impact for this role")
+    return f"""TASK: Rewrite evidence {_evidence_ref(item)} as one resume bullet {aim}.
+Shape: past-tense action verb + what was built or done + tools used + the result.
+Use only facts and tools that [{item.id}] itself mentions. One line, no pronouns, no quotation marks.
+Shape example from a different field: Reduced warehouse picking errors by redesigning bin labels with Excel, cutting returns by a third."""
+
+
+def retry_suffix(previous: str, problems: list[str]) -> str:
+    return f"""
+Your previous answer was: {previous}
+Problems: {"; ".join(problems)}.
+Write it again, fixing these problems."""
+
+
+def gap_task(gap: str, gap_terms: list[str], related: list[str]) -> str:
+    near = f" They already have: {', '.join(related)}." if related else ""
+    if gap_terms:
+        what = f'no evidence of {", ".join(gap_terms)}, which the job asks for in: "{gap}"'
+    else:
+        what = f'the weakest-covered requirement: "{gap}"'
+    return f"""TASK: The candidate's biggest gap for this role is {what}.{near}
+In 1-2 sentences to the candidate (use "you"), suggest one concrete, realistic way to close that specific gap before applying."""
+
+
+# ---------------------------------------------------------------------------
+# ATS summary — code writes the Core Stack line; the model continues a
+# prefilled "<title> with" summary and writes one outcome line per item.
+# ---------------------------------------------------------------------------
+def ats_summary_task(role: str, strengths: list[str]) -> str:
+    return (f'TASK: Continue this 2-sentence resume summary for the {role} role in resume voice '
+            f'(no "I", no name), mentioning {", ".join(strengths) or "the candidate core skills"}. '
+            f'Plain text, stop after two sentences.')
+
+
+def ats_outcome_task(item) -> str:
+    return f"""TASK: Write one resume outcome line from evidence {_evidence_ref(item)}.
+A past-tense verb, then what was done and the result. One line, only facts from [{item.id}], no pronouns."""
+
+
+# ---------------------------------------------------------------------------
+# Resume parse (tools route) — sent through Ollama structured outputs with a
+# JSON schema (services/resume_parser.RESUME_SCHEMA), so no inline JSON example.
+# ---------------------------------------------------------------------------
+SYSTEM_RESUME_PARSE = """TASK: Extract the candidate's details from the resume below.
+- name, title (current or most recent job title), location, email, phone: copy exactly as written.
+- links: URLs or profile handles as written.
+- skills: individual tools and technologies listed in the resume.
+- achievements: up to 6 of the strongest accomplishment bullets, copied word for word.
+- pitch: a 2-sentence professional summary based only on the resume.
+Leave out any field the resume does not contain."""
 
 
 __all__ = [
-    "build_basic_system_prompt",
-    "build_skills_prompt",
     "SHARED_SYSTEM",
-    "SYSTEM_SKILLS",
-    "SYSTEM_COVER",
-    "SYSTEM_EMAILS",
-    "SYSTEM_ATS",
+    "SIGN_OFF_STOPS",
+    "EMAIL_KINDS",
+    "cover_task",
+    "email_task",
+    "snapshot_task",
+    "bullet_task",
+    "retry_suffix",
+    "gap_task",
+    "ats_summary_task",
+    "ats_outcome_task",
     "SYSTEM_RESUME_PARSE",
 ]
