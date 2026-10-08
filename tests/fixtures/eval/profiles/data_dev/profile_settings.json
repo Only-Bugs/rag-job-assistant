@@ -1,0 +1,13 @@
+{
+  "name": "Priya Nair",
+  "title": "Junior Python Developer",
+  "email": "priya.nair@example.com",
+  "phone": "0400 000 000",
+  "location": "Brisbane, QLD",
+  "links": ["github.com/priyanair-example"],
+  "skills": ["Python", "SQL", "PostgreSQL", "FastAPI", "Pandas", "Docker", "Git"],
+  "achievements": ["Built an internal reporting API used by the finance team every month."],
+  "pitch": "Junior Python developer with a background in data analysis, building small backend services and reporting tools.",
+  "domain_focus": "Backend and data engineering",
+  "target_role": "Backend Developer"
+}

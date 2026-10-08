@@ -23,6 +23,11 @@ if str(_SRC_DIR) not in sys.path:
 os.environ.setdefault("USE_TF", "0")
 os.environ.setdefault("USE_JAX", "0")
 os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+# Force dev mode: auth.AUTH_ENABLED is computed at import from these vars, and a
+# developer .env with real Google creds would otherwise turn auth on (401s).
+# load_dotenv() never overrides variables that are already set.
+os.environ["GOOGLE_CLIENT_ID"] = ""
+os.environ["GOOGLE_CLIENT_SECRET"] = ""
 
 
 @pytest.fixture()

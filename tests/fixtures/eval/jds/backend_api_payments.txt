@@ -1,0 +1,19 @@
+Backend Developer - Payments Platform
+Tyro Payments, Melbourne (Hybrid)
+
+What you'll do
+- Design, build and operate REST and event-driven APIs for merchant payments
+- Integrate with third-party acquirers and legacy SOAP/XML services
+- Improve latency and reliability of checkout flows; add caching where it matters
+- Review code for security issues (OWASP Top 10, PCI-DSS awareness)
+- Work in a small squad with a tech lead, QA and a product owner
+
+What you'll bring
+- 2+ years building production backends in Python, Node.js or PHP
+- Solid SQL (PostgreSQL or MySQL) and API design experience
+- Experience with AWS (Lambda, API Gateway, CloudWatch)
+- Clear written communication; comfortable mentoring junior developers
+
+Nice to have
+- E-commerce or payments domain experience
+- FastAPI or Express.js

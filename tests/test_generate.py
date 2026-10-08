@@ -44,9 +44,11 @@ def test_generate_sse_stream(client):
     events = _parse_sse(resp.text)
 
     event_types = [e["event"] for e in events]
-    assert event_types[0] == "status"  # starting
+    assert event_types[0] == "stream"  # carries req_id for cancel
+    assert "req_id" in json.loads(events[0]["data"])
+    assert event_types[1] == "status"  # starting
+    assert events[1]["data"] == "starting"
     assert event_types[-1] == "status"  # done
-    assert events[0]["data"] == "starting"
     assert events[-1]["data"] == "done"
 
     task_events = [e for e in events if e["event"] == "task"]

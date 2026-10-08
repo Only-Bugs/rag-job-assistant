@@ -1,0 +1,18 @@
+Machine Learning Engineer (Applied LLMs)
+Canva, Sydney
+
+The role
+You will help ship LLM-powered features to millions of users, working between research and product engineering.
+
+Responsibilities
+- Build retrieval-augmented generation (RAG) pipelines and evaluation harnesses
+- Fine-tune and serve open-weight models; optimise inference latency and cost
+- Write production Python services and data pipelines
+- Partner with product engineers to integrate models into user-facing features
+
+Requirements
+- Strong Python; experience with PyTorch and embeddings
+- Hands-on experience with LLM integration, prompt design and evaluation
+- Familiarity with vector databases (Chroma, Weaviate, pgvector)
+- Experience deploying services on AWS or GCP
+- Degree in Computer Science or related field

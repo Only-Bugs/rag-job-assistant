@@ -1,0 +1,13 @@
+{
+  "profiles": {
+    "real": { "path": "data/users/116045954995846033762", "note": "live user profile — referenced by path, copied to a temp dir at run time, never committed" },
+    "data_dev": { "path": "tests/fixtures/eval/profiles/data_dev" }
+  },
+  "jds": {
+    "fullstack_atlassian":        { "expect_domain_ok": { "real": true,  "data_dev": true  } },
+    "backend_api_payments":       { "expect_domain_ok": { "real": true,  "data_dev": true  } },
+    "ml_engineer_adjacent":       { "expect_domain_ok": { "real": true,  "data_dev": true  } },
+    "long_boilerplate_fullstack": { "expect_domain_ok": { "real": true,  "data_dev": true  } },
+    "out_of_domain_nurse":        { "expect_domain_ok": { "real": false, "data_dev": false } }
+  }
+}

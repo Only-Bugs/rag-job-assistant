@@ -49,10 +49,11 @@ async def _iter_pipeline(
     queue: asyncio.Queue[tuple[str, Any] | Exception | None] = asyncio.Queue()
 
     def _worker() -> None:
-        gen = generate_application_package(
-            jd_text, save_to_disk=False, progress=None, user_data_dir=user_data_dir
-        )
+        gen = None
         try:
+            gen = generate_application_package(
+                jd_text, save_to_disk=False, progress=None, user_data_dir=user_data_dir
+            )
             for item in gen:
                 if cancel_event.is_set():
                     break
@@ -62,7 +63,8 @@ async def _iter_pipeline(
         finally:
             # Closing the generator closes the in-flight Ollama HTTP stream, which
             # stops generation server-side while keeping the model loaded.
-            gen.close()
+            if gen is not None:
+                gen.close()
             loop.call_soon_threadsafe(queue.put_nowait, None)
 
     thread = threading.Thread(target=_worker, daemon=True)

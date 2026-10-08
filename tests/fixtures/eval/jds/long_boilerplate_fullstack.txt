@@ -1,0 +1,47 @@
+Senior Full Stack Developer
+Seek Limited - Melbourne, VIC - Full time
+
+About Us
+SEEK is a diverse group of companies that have a unified purpose to help people live more fulfilling and productive working lives and help organisations succeed. We are a market leader in online employment marketplaces across Australia, New Zealand and Asia. Since our founding in 1997 we have grown into a global business with operations in 18 countries, more than 4,000 employees, and a mission that touches the lives of over 700 million people. We believe our people are our greatest asset, and our culture reflects that. We celebrate wins together, learn from our mistakes, and constantly challenge ourselves to be better. Our award-winning workplace has been recognised by numerous industry bodies over the years, and we are proud to be an employer of choice.
+
+Our Values
+- We put customers at the centre of everything we do
+- We take ownership and deliver
+- We are better together
+- We act with integrity
+- We embrace change and innovation
+
+The Role
+We are looking for a Full Stack Developer to join our Hirer Experience team. You will build features used by thousands of employers every day to post jobs and manage candidates.
+
+Key Responsibilities
+- Build and ship features across a React + TypeScript frontend and Node.js services
+- Design and evolve GraphQL and REST APIs backed by PostgreSQL
+- Own the quality of your work: automated tests, code reviews and monitoring
+- Improve performance of search and listing pages
+- Work closely with designers, product managers and other engineers in an agile squad
+
+About You
+- 3+ years of commercial full stack development experience
+- Strong JavaScript/TypeScript, React and Node.js
+- Experience with relational databases and API design
+- Experience with AWS and CI/CD
+- Excellent communication and stakeholder management
+
+Benefits and Perks
+- Hybrid working with flexible hours
+- 18 weeks paid parental leave for primary carers
+- Annual learning and development budget of $2,000
+- Discounted health insurance and an employee share plan
+- Wellbeing days, volunteer leave and a birthday day off
+- Free breakfast on Wednesdays and regular team social events
+- Modern office in Cremorne with end-of-trip facilities, bike storage and showers
+- Employee Assistance Program for you and your family
+- Purchased leave scheme of up to 4 extra weeks per year
+- Novated leasing and salary packaging options
+
+Diversity, Equity and Inclusion
+SEEK is an equal opportunity employer. We are committed to creating a diverse and inclusive workplace and welcome applications from people of all backgrounds, including Aboriginal and Torres Strait Islander peoples, people with disability, people from culturally and linguistically diverse backgrounds, and LGBTQIA+ people. If you require any adjustments during the recruitment process, please let us know. We do not discriminate on the basis of race, religion, colour, national origin, gender, sexual orientation, age, marital status, or disability status.
+
+How to Apply
+Click Apply and submit your resume and a cover letter. Applications close 30 November. Only shortlisted candidates will be contacted. You must have full working rights in Australia to apply. Recruitment agencies: please do not send unsolicited resumes.

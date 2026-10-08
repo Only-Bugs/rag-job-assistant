@@ -40,3 +40,8 @@ data/auth/
 # --- Logs / temp ---
 *.log
 tmp/
+
+# --- Prompt eval harness ---
+eval_runs/
+!tests/fixtures/**/*.txt
+!tests/fixtures/**/*.md
