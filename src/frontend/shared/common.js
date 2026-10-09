@@ -600,36 +600,6 @@ async function getProfileCompletion() {
   } catch (_) { return null; }
 }
 
-// Legacy wrapper — used by dashboard index.html
-async function initProfileWidget() {
-  const completion = await getProfileCompletion();
-  if (!completion) return;
-
-  const widget = document.getElementById('profile-widget');
-  if (!widget) return;
-  widget.style.display = '';
-
-  const circumference = 2 * Math.PI * 15;
-  const offset = circumference * (1 - completion.pct / 100);
-  const ringFill = document.getElementById('ring-fill');
-  const ringPct = document.getElementById('ring-pct');
-  if (ringFill) ringFill.setAttribute('stroke-dashoffset', offset);
-  if (ringPct) ringPct.textContent = completion.pct + '%';
-
-  if (completion.pct >= 100) {
-    const pwLabel = document.getElementById('pw-label');
-    const pwSub = document.getElementById('pw-sub');
-    const pwLink = document.getElementById('pw-link');
-    if (pwLabel) pwLabel.textContent = 'Profile complete';
-    if (pwSub) pwSub.textContent = 'ready to generate';
-    if (ringFill) ringFill.setAttribute('stroke', '#16a34a');
-    if (pwLink) pwLink.textContent = 'View Settings';
-  } else {
-    const pwSub = document.getElementById('pw-sub');
-    if (pwSub) pwSub.textContent = `${completion.done} of ${completion.total} fields`;
-  }
-}
-
 // ── Topbar greeting (dashboard only) ────────────────────────────
 // The sidebar profile card is the only account menu; the topbar just greets.
 async function initTopbar() {

@@ -66,11 +66,6 @@
       color: var(--success);
     }
 
-    .stat-icon.amber {
-      background: rgba(217, 119, 6, 0.08);
-      color: var(--warning);
-    }
-
     .stat-value {
       font-family: var(--font-display);
       font-size: 28px;
@@ -159,16 +154,6 @@
       background: linear-gradient(180deg, var(--accent), #8b7cf7);
       flex-shrink: 0;
     }
-
-    .dash-section-link {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--accent);
-      text-decoration: none;
-      transition: opacity var(--duration);
-    }
-
-    .dash-section-link:hover { opacity: 0.7; }
 
     /* ── History list ─────────────────────────────────────────────── */
     .dash-panel {
@@ -340,48 +325,7 @@
     }
 
     /* ── Quick actions ─────────────────────────────────────────────── */
-    .quick-actions {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .quick-action {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 14px;
-      border-radius: var(--radius);
-      text-decoration: none;
-      color: var(--text-2);
-      font-size: 14px;
-      font-weight: 500;
-      transition: background var(--duration), color var(--duration);
-    }
-
-    .quick-action:hover {
-      background: var(--accent-light);
-      color: var(--accent);
-    }
-
-    .quick-action-icon {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      background: var(--surface-2);
-      border: 1px solid var(--border-light);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      color: var(--muted);
-      transition: color var(--duration), border-color var(--duration);
-    }
-
-    .quick-action:hover .quick-action-icon {
-      color: var(--accent);
-      border-color: var(--accent-mid);
-    }
+    
 
     /* ── FAB speed dial ─────────────────────────────────────────── */
     .fab-wrap {

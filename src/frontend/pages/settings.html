@@ -264,10 +264,6 @@
     }
     .profile-grid input::placeholder { color: var(--muted); opacity: 0.45; }
 
-    /* Full-width row spans all 4 columns */
-    .pg-full-label { grid-column: 1 / 3; }
-    .pg-full-value { grid-column: 3 / 5; }
-
     /* ── Social Links ────────────────────────────────────────────── */
     .social-section { animation-delay: 0.16s; padding: 20px 28px; }
 
@@ -495,7 +491,7 @@
     /* ── Responsive ──────────────────────────────────────────────── */
     @media (max-width: 780px) {
       .profile-grid { grid-template-columns: 100px 1fr; }
-      .pg-full-label, .pg-full-value { grid-column: auto; }
+
       .section-head { flex-direction: column; }
       .settings-layout { grid-template-columns: 1fr; gap: 16px; }
       .settings-nav {
