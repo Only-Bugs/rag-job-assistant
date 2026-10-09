@@ -549,9 +549,8 @@ function injectSidebar(opts = {}) {
     });
   }
   if (logoutBtn) {
-    logoutBtn.addEventListener('click', async () => {
-      try { await fetch('/auth/logout', { method: 'POST' }); } catch (_) {}
-      window.location = '/login';
+    logoutBtn.addEventListener('click', () => {
+      window.location = '/auth/logout';
     });
   }
 
@@ -570,7 +569,7 @@ function injectSidebar(opts = {}) {
     }
   });
 
-  // Load topbar avatar + dropdown (still used on pages that have a topbar avatar)
+  // Dashboard greeting (no-op on pages without #greeting-text)
   initTopbar();
 }
 
@@ -652,68 +651,16 @@ function injectSettingsNav(active) {
   `;
 }
 
-// ── Topbar user init (greeting + avatar + dropdown) ─────────────
-const _TOPBAR_DROPDOWN_ICONS = {
-  settings: `<svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="9" cy="9" r="2.5"/><path d="M14.7 11.1a1.2 1.2 0 00.24 1.32l.04.04a1.45 1.45 0 11-2.06 2.06l-.04-.04a1.2 1.2 0 00-1.32-.24 1.2 1.2 0 00-.73 1.1v.11a1.45 1.45 0 11-2.9 0v-.06a1.2 1.2 0 00-.79-1.1 1.2 1.2 0 00-1.32.24l-.04.04a1.45 1.45 0 11-2.06-2.06l.04-.04a1.2 1.2 0 00.24-1.32 1.2 1.2 0 00-1.1-.73h-.11a1.45 1.45 0 110-2.9h.06a1.2 1.2 0 001.1-.79 1.2 1.2 0 00-.24-1.32l-.04-.04A1.45 1.45 0 115.42 3.3l.04.04a1.2 1.2 0 001.32.24h.06a1.2 1.2 0 00.73-1.1v-.11a1.45 1.45 0 012.9 0v.06a1.2 1.2 0 00.73 1.1 1.2 1.2 0 001.32-.24l.04-.04a1.45 1.45 0 112.06 2.06l-.04.04a1.2 1.2 0 00-.24 1.32v.06a1.2 1.2 0 001.1.73h.11a1.45 1.45 0 010 2.9h-.06a1.2 1.2 0 00-1.1.73z"/></svg>`,
-  account: `<svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="6.5" r="3"/><path d="M3 16.5c0-3 2.7-5.5 6-5.5s6 2.5 6 5.5"/></svg>`,
-  logout: `<svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 15H4.5a1.5 1.5 0 01-1.5-1.5v-9A1.5 1.5 0 014.5 3h2"/><path d="M12 12.5l3-3.5-3-3.5"/><line x1="7" y1="9" x2="15" y2="9"/></svg>`,
-};
-
+// ── Topbar greeting (dashboard only) ────────────────────────────
+// The sidebar profile card is the only account menu; the topbar just greets.
 async function initTopbar() {
-  const user = await loadUser();
-  if (!user) return;
-
-  const name = user.name || user.email || '';
-  const firstName = name.split(' ')[0] || '';
-
-  // Greeting
   const greetingEl = document.getElementById('greeting-text');
-  if (greetingEl && firstName) {
-    const h = new Date().getHours();
-    const timeGreeting = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
-    greetingEl.textContent = `${timeGreeting}, ${firstName}`;
-  }
-
-  // Avatar + dropdown
-  const avatar = document.getElementById('topbar-avatar');
-  if (!avatar) return;
-
-  const initials = name ? name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : '';
-  _setAvatar(avatar, user.picture, initials);
-  avatar.style.display = '';
-
-  // Prevent default link behavior — avatar becomes a dropdown trigger
-  avatar.removeAttribute('href');
-  avatar.style.cursor = 'pointer';
-
-  // Inject dropdown
-  const wrapper = document.createElement('div');
-  wrapper.className = 'topbar-avatar-wrap';
-  avatar.parentNode.insertBefore(wrapper, avatar);
-  wrapper.appendChild(avatar);
-
-  const dd = document.createElement('div');
-  dd.className = 'topbar-dropdown';
-  dd.innerHTML = `
-    <div class="topbar-dd-header">
-      <div class="topbar-dd-name">${name}</div>
-      <div class="topbar-dd-email">${user.email || ''}</div>
-    </div>
-    <div class="topbar-dd-divider"></div>
-    <a href="/settings" class="topbar-dd-item">${_TOPBAR_DROPDOWN_ICONS.settings}<span>Settings</span></a>
-    <div class="topbar-dd-divider"></div>
-    <a href="/auth/logout" class="topbar-dd-item topbar-dd-danger">${_TOPBAR_DROPDOWN_ICONS.logout}<span>Sign Out</span></a>
-  `;
-  wrapper.appendChild(dd);
-
-  // Toggle
-  avatar.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dd.classList.toggle('open');
-  });
-  document.addEventListener('click', () => dd.classList.remove('open'));
-  dd.addEventListener('click', (e) => e.stopPropagation());
+  if (!greetingEl) return;
+  const user = await loadUser();
+  const firstName = ((user && (user.name || user.email)) || '').split(' ')[0];
+  const h = new Date().getHours();
+  const timeGreeting = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  greetingEl.textContent = firstName ? `${timeGreeting}, ${firstName}` : timeGreeting;
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -799,12 +746,10 @@ function renderMarkdown(raw) {
 
 // ── Auto-init ───────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  if (document.getElementById('rm-header-slot')) {
-    injectHeader({ nav: [] });
-  }
-  if (document.getElementById('rm-footer-slot')) {
-    injectFooter();
-  }
+  const headerSlot = document.getElementById('rm-header-slot');
+  if (headerSlot && !headerSlot.childElementCount) injectHeader({ nav: [] });
+  const footerSlot = document.getElementById('rm-footer-slot');
+  if (footerSlot && !footerSlot.childElementCount) injectFooter();
   // Fallback fade-in for non-View-Transition browsers
   const main = document.querySelector('.main');
   if (main) main.classList.add('fade-in');

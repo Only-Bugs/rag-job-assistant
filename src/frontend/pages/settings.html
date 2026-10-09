@@ -23,7 +23,7 @@
       margin-bottom: 18px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.03);
       transition: box-shadow 0.25s, border-color 0.25s;
-      animation: sIn 0.4s var(--ease-out) both;
+      animation: sIn 0.4s var(--ease-out) backwards;
     }
     .s-card:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.05); }
     .s-card:focus-within { border-color: var(--accent-mid); }
@@ -54,7 +54,7 @@
       justify-content: space-between;
       gap: 24px;
       margin-bottom: 24px;
-      animation: sIn 0.4s var(--ease-out) both;
+      animation: sIn 0.4s var(--ease-out) backwards;
     }
     .settings-top h1 {
       font-family: var(--font-display);
@@ -75,7 +75,7 @@
       border: 1px solid var(--border);
       border-radius: 12px;
       flex-shrink: 0;
-      animation: sIn 0.4s var(--ease-out) 0.1s both;
+      animation: sIn 0.4s var(--ease-out) 0.1s backwards;
     }
     .completion-ring {
       position: relative;
@@ -101,7 +101,7 @@
       padding: 4px;
       border-radius: 10px;
       border: 1px solid var(--border);
-      animation: sIn 0.4s var(--ease-out) 0.06s both;
+      animation: sIn 0.4s var(--ease-out) 0.06s backwards;
     }
 
     .settings-tab {
@@ -364,7 +364,7 @@
     /* ── Save row ────────────────────────────────────────────────── */
     .save-row {
       display: flex; align-items: center; gap: 14px; padding: 4px 0 12px;
-      animation: sIn 0.4s var(--ease-out) 0.28s both;
+      animation: sIn 0.4s var(--ease-out) 0.28s backwards;
     }
     #save-btn {
       padding: 11px 36px;
@@ -583,11 +583,8 @@
   <main class="main">
     <div class="topbar">
       <div class="greeting">
-        <h1 id="greeting-text">Settings</h1>
+        <h1>Settings</h1>
         <p class="greeting-sub">Manage your profile and documents</p>
-      </div>
-      <div class="topbar-right">
-        <a href="/settings" class="topbar-avatar" id="topbar-avatar"></a>
       </div>
     </div>
 

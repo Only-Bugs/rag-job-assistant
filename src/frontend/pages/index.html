@@ -29,7 +29,7 @@
       gap: 18px;
       box-shadow: var(--shadow-xs);
       transition: box-shadow var(--duration-slow), transform var(--duration-slow) var(--ease-out);
-      animation: cardReveal 0.5s var(--ease-out) both;
+      animation: cardReveal 0.5s var(--ease-out) backwards;
     }
 
     .stat-card:nth-child(1) { animation-delay: 0.06s; }
@@ -128,7 +128,7 @@
       display: grid;
       grid-template-columns: 1.5fr 1fr;
       gap: 18px;
-      animation: cardReveal 0.5s var(--ease-out) 0.24s both;
+      animation: cardReveal 0.5s var(--ease-out) 0.24s backwards;
     }
 
     /* ── Section headers ─────────────────────────────────────────── */
@@ -412,7 +412,7 @@
       justify-content: center;
       box-shadow: 0 6px 20px rgba(108, 92, 231, 0.35), 0 2px 6px rgba(108, 92, 231, 0.15);
       transition: transform 0.25s var(--ease-spring), box-shadow 0.25s;
-      animation: fabPop 0.5s var(--ease-spring) 0.5s both;
+      animation: fabPop 0.5s var(--ease-spring) 0.5s backwards;
     }
 
     @keyframes fabPop {
@@ -543,9 +543,6 @@
         <h1 id="greeting-text">Welcome back</h1>
         <p class="greeting-sub">Here's your overview</p>
       </div>
-      <div class="topbar-right">
-        <a href="/account" class="topbar-avatar" id="topbar-avatar" title="Account"></a>
-      </div>
     </div>
 
     <div class="workspace">
@@ -638,49 +635,51 @@
       </div>
     </div>
 
-    <!-- FAB speed dial -->
-    <div class="fab-wrap" id="fab-wrap">
-      <div class="fab-actions">
-        <a href="/workspace" class="fab-action" data-fab-action="new">
-          <div class="fab-action-btn">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2l6 3.5v7L10 16l-6-3.5v-7z"/><path d="M10 8.5v7.5"/><path d="M4 5.5L10 9l6-3.5"/></svg>
-          </div>
-          <span class="fab-action-label">New Application</span>
-        </a>
-        <a href="/workspace#paste" class="fab-action" data-fab-action="paste">
-          <div class="fab-action-btn">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="10" height="14" rx="1.5"/><path d="M8 3V2.5A1 1 0 0 1 9 1.5h2a1 1 0 0 1 1 1V3"/><path d="M8 9h4M8 12h4"/></svg>
-          </div>
-          <span class="fab-action-label">Paste JD</span>
-        </a>
-        <a href="/onboarding" class="fab-action" data-fab-action="import">
-          <div class="fab-action-btn">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13V3"/><path d="M6 7l4-4 4 4"/><path d="M4 15v2a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-2"/></svg>
-          </div>
-          <span class="fab-action-label">Import Resume</span>
-        </a>
-        <a href="#reindex" class="fab-action" data-fab-action="reindex">
-          <div class="fab-action-btn">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10a7 7 0 0 1 12-4.9"/><path d="M17 10a7 7 0 0 1-12 4.9"/><path d="M15 3v3h-3"/><path d="M5 17v-3h3"/></svg>
-          </div>
-          <span class="fab-action-label">Reindex Profile</span>
-        </a>
-        <a href="#health" class="fab-action" data-fab-action="health">
-          <div class="fab-action-btn">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0z"/><path d="M10 6v4l2.5 2.5"/></svg>
-          </div>
-          <span class="fab-action-label">Health Check</span>
-        </a>
-      </div>
-      <button class="fab-btn" id="fab-toggle" title="Actions" aria-expanded="false">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-          <path d="M12 5v14M5 12h14" />
-        </svg>
-      </button>
-    </div>
-    <div class="fab-backdrop" id="fab-backdrop" aria-hidden="true"></div>
   </main>
 </div>
+
+<!-- FAB lives outside .main so position:fixed is relative to the viewport -->
+  <!-- FAB speed dial -->
+  <div class="fab-wrap" id="fab-wrap">
+    <div class="fab-actions">
+      <a href="/workspace" class="fab-action" data-fab-action="new">
+        <div class="fab-action-btn">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2l6 3.5v7L10 16l-6-3.5v-7z"/><path d="M10 8.5v7.5"/><path d="M4 5.5L10 9l6-3.5"/></svg>
+        </div>
+        <span class="fab-action-label">New Application</span>
+      </a>
+      <a href="/workspace#paste" class="fab-action" data-fab-action="paste">
+        <div class="fab-action-btn">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="10" height="14" rx="1.5"/><path d="M8 3V2.5A1 1 0 0 1 9 1.5h2a1 1 0 0 1 1 1V3"/><path d="M8 9h4M8 12h4"/></svg>
+        </div>
+        <span class="fab-action-label">Paste JD</span>
+      </a>
+      <a href="/onboarding" class="fab-action" data-fab-action="import">
+        <div class="fab-action-btn">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13V3"/><path d="M6 7l4-4 4 4"/><path d="M4 15v2a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-2"/></svg>
+        </div>
+        <span class="fab-action-label">Import Resume</span>
+      </a>
+      <a href="#reindex" class="fab-action" data-fab-action="reindex">
+        <div class="fab-action-btn">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10a7 7 0 0 1 12-4.9"/><path d="M17 10a7 7 0 0 1-12 4.9"/><path d="M15 3v3h-3"/><path d="M5 17v-3h3"/></svg>
+        </div>
+        <span class="fab-action-label">Reindex Profile</span>
+      </a>
+      <a href="#health" class="fab-action" data-fab-action="health">
+        <div class="fab-action-btn">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0z"/><path d="M10 6v4l2.5 2.5"/></svg>
+        </div>
+        <span class="fab-action-label">Health Check</span>
+      </a>
+    </div>
+    <button class="fab-btn" id="fab-toggle" title="Actions" aria-expanded="false">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <path d="M12 5v14M5 12h14" />
+      </svg>
+    </button>
+  </div>
+  <div class="fab-backdrop" id="fab-backdrop" aria-hidden="true"></div>
 
 <script src="/static/shared/common.js?v=1791504000"></script>
 <script>
@@ -750,16 +749,6 @@
       }
     });
   });
-
-  // ── Greeting ──────────────────────────────────────────────────────
-  const greetEl = document.getElementById('greeting-text');
-  const hour = new Date().getHours();
-  const timeGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-  try {
-    const user = JSON.parse(atob(document.cookie.match(/rja_session=([^;]+)/)?.[1]?.split('.')[1] || '{}'));
-    const firstName = (user.name || '').split(' ')[0];
-    greetEl.textContent = firstName ? `${timeGreeting}, ${firstName}` : timeGreeting;
-  } catch (_) { greetEl.textContent = timeGreeting; }
 
   // ── Stats ─────────────────────────────────────────────────────────
   const statApps = document.getElementById('stat-apps');

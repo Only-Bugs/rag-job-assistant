@@ -658,7 +658,9 @@ h2 {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.fade-in { animation: fadeIn 0.3s var(--ease-out) both; }
+/* backwards, not both: a retained transform would make .main the containing
+   block for position:fixed descendants (FAB, toasts) instead of the viewport. */
+.fade-in { animation: fadeIn 0.3s var(--ease-out) backwards; }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -683,7 +685,7 @@ h2 {
   flex-direction: column;
   position: relative;
   z-index: 10;
-  animation: sidebarReveal 0.5s var(--ease-out) both;
+  animation: sidebarReveal 0.5s var(--ease-out) backwards;
 }
 
 @keyframes sidebarReveal {
@@ -911,7 +913,7 @@ h2 {
   background: rgba(255,255,255,0.035);
   border: 1px solid rgba(255,255,255,0.055);
   border-radius: 11px;
-  animation: fadeIn 0.5s var(--ease-out) 0.3s both;
+  animation: fadeIn 0.5s var(--ease-out) 0.3s backwards;
 }
 
 .sb-pw-top {
@@ -994,9 +996,8 @@ h2 {
   justify-content: space-between;
   padding: 22px 36px 14px;
   flex-shrink: 0;
-  animation: fadeIn 0.45s var(--ease-out) 0.06s both;
-  /* fadeIn applies a transform, creating a stacking context that traps the
-     avatar dropdown. Raise the whole topbar above page-content contexts. */
+  animation: fadeIn 0.45s var(--ease-out) 0.06s backwards;
+  /* Keep topbar popovers above page-content stacking contexts. */
   position: relative;
   z-index: 1000;
 }
@@ -1018,107 +1019,6 @@ h2 {
   align-items: center;
   gap: 16px;
 }
-
-.topbar-avatar {
-  width: 36px; height: 36px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, var(--accent), #8b7cf7);
-  color: #fff;
-  font-family: var(--font-display);
-  font-size: 13px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  border: none;
-  transition: transform 0.2s var(--ease-spring), box-shadow 0.2s;
-  text-decoration: none;
-}
-
-.topbar-avatar:hover {
-  transform: scale(1.08);
-  box-shadow: 0 4px 14px rgba(108,92,231,0.25);
-}
-
-/* ── Avatar dropdown ─────────────────────────────────────────────── */
-.topbar-avatar-wrap {
-  position: relative;
-}
-
-.topbar-dropdown {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  width: 220px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.04);
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(-6px) scale(0.97);
-  transition: all 0.18s var(--ease-out);
-  z-index: 200;
-  overflow: hidden;
-}
-
-.topbar-dropdown.open {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0) scale(1);
-}
-
-.topbar-dd-header {
-  padding: 14px 16px 10px;
-}
-
-.topbar-dd-name {
-  font-family: var(--font-display);
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text);
-  line-height: 1.3;
-}
-
-.topbar-dd-email {
-  font-size: 12px;
-  color: var(--muted);
-  margin-top: 1px;
-}
-
-.topbar-dd-divider {
-  height: 1px;
-  background: var(--border);
-  margin: 2px 12px;
-}
-
-.topbar-dd-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 16px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-2);
-  text-decoration: none;
-  transition: background 0.12s, color 0.12s;
-}
-
-.topbar-dd-item:hover {
-  background: var(--surface-2);
-  color: var(--text);
-}
-
-.topbar-dd-item svg {
-  flex-shrink: 0;
-  opacity: 0.5;
-}
-.topbar-dd-item:hover svg { opacity: 0.8; }
-
-.topbar-dd-danger { color: var(--muted); }
-.topbar-dd-danger:hover { color: #dc2626; background: rgba(220,38,38,0.04); }
-.topbar-dd-danger:hover svg { opacity: 0.8; color: #dc2626; }
 
 /* ── Workspace ─────────────────────────────────────────────────────── */
 .workspace {
