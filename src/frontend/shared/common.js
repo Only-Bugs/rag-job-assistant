@@ -630,27 +630,6 @@ async function initProfileWidget() {
   }
 }
 
-// ── Settings sub-nav injector ────────────────────────────────────
-// Injects a horizontal tab bar into #settings-nav-slot, highlighting `active`.
-// Call from each /settings/* page: injectSettingsNav('profile'|'account'|'model'|'about').
-function injectSettingsNav(active) {
-  const slot = document.getElementById('settings-nav-slot');
-  if (!slot) return;
-  const tabs = [
-    { key: 'profile', label: 'Profile', href: '/settings/profile' },
-    { key: 'account', label: 'Account', href: '/settings/account' },
-    { key: 'model',   label: 'Model',   href: '/settings/model'   },
-    { key: 'about',   label: 'About',   href: '/settings/about'   },
-  ];
-  slot.innerHTML = `
-    <nav class="settings-subnav" aria-label="Settings sections">
-      ${tabs.map(t =>
-        `<a class="settings-subnav-item${t.key === active ? ' active' : ''}" href="${t.href}">${t.label}</a>`
-      ).join('')}
-    </nav>
-  `;
-}
-
 // ── Topbar greeting (dashboard only) ────────────────────────────
 // The sidebar profile card is the only account menu; the topbar just greets.
 async function initTopbar() {

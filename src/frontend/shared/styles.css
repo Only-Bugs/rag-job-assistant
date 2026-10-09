@@ -246,6 +246,7 @@ h2 {
   transition: all var(--duration) var(--ease-out);
   border: none;
   letter-spacing: 0.01em;
+  text-decoration: none;
   position: relative;
   overflow: hidden;
 }
@@ -1300,33 +1301,6 @@ h2 {
 
 .email-modal-footer-left { display: flex; gap: 8px; }
 .email-modal-footer-right { display: flex; gap: 8px; }
-
-/* ── Settings sub-nav ─────────────────────────────────────────────── */
-.settings-subnav {
-  display: flex;
-  gap: 2px;
-  padding: 0 36px;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg);
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-.settings-subnav-item {
-  padding: 12px 18px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--muted);
-  text-decoration: none;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  transition: color 0.15s, border-color 0.15s;
-}
-.settings-subnav-item:hover { color: var(--text-2); }
-.settings-subnav-item.active {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
-}
 
 /* ── View Transitions ─────────────────────────────────────────────── */
 @view-transition { navigation: auto; }

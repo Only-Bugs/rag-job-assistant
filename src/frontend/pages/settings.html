@@ -47,23 +47,59 @@
       background: var(--border);
     }
 
-    /* ── Settings header with profile completion ─────────────────── */
-    .settings-top {
+    /* ── Layout: section nav + content ───────────────────────────── */
+    .settings-layout {
+      display: grid;
+      grid-template-columns: 184px minmax(0, 1fr);
+      gap: 32px;
+      max-width: 1040px;
+      align-items: start;
+    }
+    .settings-nav {
+      position: sticky;
+      top: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      animation: sIn 0.4s var(--ease-out) backwards;
+    }
+    .settings-nav a {
+      display: block;
+      padding: 9px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--muted);
+      text-decoration: none;
+      transition: background var(--duration), color var(--duration);
+    }
+    .settings-nav a:hover { color: var(--text); background: var(--bg-subtle); }
+    .settings-nav a[aria-current="page"] {
+      color: var(--accent);
+      background: var(--accent-light);
+      font-weight: 600;
+    }
+    .settings-nav a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .settings-section { display: none; }
+    .settings-section.active { display: block; }
+
+    .section-head {
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
       gap: 24px;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
       animation: sIn 0.4s var(--ease-out) backwards;
     }
-    .settings-top h1 {
+    .section-head h2 {
       font-family: var(--font-display);
-      font-size: 22px;
-      font-weight: 800;
-      letter-spacing: -0.03em;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
       margin-bottom: 3px;
     }
-    .settings-top p { color: var(--muted); font-size: 13px; }
+    .section-head p { color: var(--muted); font-size: 13px; }
 
     /* Profile completion badge */
     .completion-badge {
@@ -91,47 +127,6 @@
     .completion-info { font-size: 12px; }
     .completion-label { font-weight: 600; color: var(--text); }
     .completion-sub { color: var(--muted); margin-top: 1px; }
-
-    /* ── Accordion tabs ──────────────────────────────────────────── */
-    .settings-tabs {
-      display: flex;
-      gap: 4px;
-      margin-bottom: 24px;
-      background: var(--surface-2);
-      padding: 4px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      animation: sIn 0.4s var(--ease-out) 0.06s backwards;
-    }
-
-    .settings-tab {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 10px 20px;
-      font-family: var(--font-body);
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--muted);
-      border: none;
-      background: transparent;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .settings-tab:hover { color: var(--text); }
-    .settings-tab.active {
-      background: var(--surface);
-      color: var(--text);
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-    }
-    .settings-tab svg { width: 16px; height: 16px; opacity: 0.5; }
-    .settings-tab.active svg { opacity: 0.8; }
-
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
 
     /* ── Hero: Resume Documents ──────────────────────────────────── */
     .docs-section { animation-delay: 0.08s; position: relative; overflow: hidden; }
@@ -379,37 +374,26 @@
     #save-btn:active:not(:disabled) { transform: translateY(0); }
     #save-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
-    /* ── Account tab ─────────────────────────────────────────────── */
+    /* ── Account ─────────────────────────────────────────────────── */
     .info-row {
       display: flex; justify-content: space-between; align-items: center;
-      padding: 14px 0;
-      border-bottom: 1px solid rgba(0,0,0,0.04);
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border-light);
       font-size: 14px;
     }
-    .info-row:last-of-type { border-bottom: none; }
+    .info-row:last-child { border-bottom: none; }
     .info-label { color: var(--muted); font-weight: 500; font-size: 13px; }
-    .info-value { font-weight: 600; color: var(--text); }
+    .info-value { font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
     .info-uid {
-      font-size: 11px; font-family: monospace;
-      color: var(--muted); background: var(--bg);
-      padding: 3px 8px; border-radius: 5px;
+      font-size: 11px; font-family: var(--font-mono);
+      color: var(--muted); background: var(--bg-subtle);
+      padding: 3px 8px; border-radius: var(--radius-sm);
     }
+    .card-text { font-size: 13px; color: var(--muted); line-height: 1.6; }
+    .s-card .btn-row { margin-top: 14px; }
 
-    .danger-zone { border-color: rgba(220,38,38,0.15); }
-    .danger-zone .s-card-title { color: #dc2626; }
-    .danger-text { font-size: 13px; color: var(--muted); margin-bottom: 14px; line-height: 1.6; }
-
-    .btn-sm {
-      padding: 9px 20px; font-size: 13px; font-weight: 600;
-      font-family: var(--font-body); border-radius: 9px;
-      cursor: pointer; transition: all 0.15s; border: none;
-    }
-    .btn-primary-sm { background: var(--accent); color: #fff; }
-    .btn-primary-sm:hover { opacity: 0.88; }
-    .btn-outline-sm { background: transparent; color: var(--text); border: 1px solid var(--border); }
-    .btn-outline-sm:hover { background: var(--bg); }
-    .btn-danger-sm { background: #dc2626; color: #fff; }
-    .btn-danger-sm:hover { background: #b91c1c; }
+    .danger-zone { border-color: rgba(220,38,38,0.18); }
+    .danger-zone .s-card-title { color: var(--error); }
 
     /* Confirm overlay */
     .confirm-overlay {
@@ -419,159 +403,109 @@
     }
     .confirm-overlay.visible { display: flex; align-items: center; justify-content: center; }
     .confirm-dialog {
-      background: var(--surface); border-radius: 16px;
-      padding: 28px; max-width: 400px; width: 90%;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+      background: var(--surface); border-radius: var(--radius-xl);
+      padding: 28px; max-width: 420px; width: 90%;
+      box-shadow: var(--shadow-lg);
       animation: popIn 0.2s var(--ease-out);
     }
     .confirm-dialog h3 { font-family: var(--font-display); font-size: 17px; font-weight: 700; margin-bottom: 8px; }
     .confirm-dialog p { font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.6; }
-    .confirm-actions { display: flex; gap: 8px; justify-content: flex-end; }
+    .confirm-dialog .btn-row { justify-content: flex-end; margin-top: 0; }
 
-    /* ── Model & Performance card ────────────────────────────────── */
-    .model-grid {
-      display: grid;
-      grid-template-columns: 120px 1fr;
-      gap: 12px 16px;
-      align-items: center;
-    }
-    .model-grid label {
-      font-size: 13px;
-      color: var(--muted);
-      font-weight: 500;
-    }
-    .model-select {
+    /* ── Model ───────────────────────────────────────────────────── */
+    .model-row {
+      display: flex; align-items: center; gap: 12px;
       width: 100%;
-      padding: 8px 12px;
-      border: 1.5px solid var(--border);
+      padding: 12px 14px; margin-bottom: 8px;
+      border: 1px solid var(--border-light);
       border-radius: var(--radius);
       background: var(--surface);
-      font-family: var(--font-body);
-      font-size: 13px;
-      color: var(--text);
+      font: inherit; text-align: left; color: inherit;
       cursor: pointer;
-      outline: none;
-      transition: border-color var(--duration);
+      transition: border-color var(--duration), background var(--duration);
     }
-    .model-select:focus { border-color: var(--accent); }
+    .model-row:hover { border-color: var(--border); background: var(--surface-2); }
+    .model-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .model-row.current { border-color: var(--accent); background: var(--accent-light); cursor: default; }
+    .model-row.current .model-name { color: var(--accent); }
+    .model-row:disabled { opacity: 0.6; }
+    .model-main { flex: 1; min-width: 0; }
+    .model-name, .model-meta { display: block; }
+    .model-name { font-weight: 600; font-size: 14px; }
+    .model-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .model-badges { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+    .model-badge { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
+    .badge-current { background: var(--accent); color: #fff; }
+    .badge-loaded { background: var(--success-bg); color: var(--success); }
+    .badge-compute { background: var(--surface-2); color: var(--text-2); border: 1px solid var(--border-light); }
+    .badge-size { background: var(--bg-subtle); color: var(--muted); }
 
-    .range-wrap {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+    .tune-grid {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 18px 16px;
+      align-items: start;
     }
-    .range-wrap input[type="range"] {
-      flex: 1;
-      accent-color: var(--accent);
-      height: 4px;
+    .tune-grid > .tune-label {
+      font-size: 13px; color: var(--muted); font-weight: 500;
+      padding-top: 6px;
     }
+    .range-wrap { display: flex; align-items: center; gap: 10px; max-width: 360px; }
+    .range-wrap input[type="range"] { flex: 1; accent-color: var(--accent); }
     .range-val {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text);
-      min-width: 32px;
-      text-align: right;
-      font-variant-numeric: tabular-nums;
+      font-size: 13px; font-weight: 600; color: var(--text);
+      min-width: 36px; text-align: right; font-variant-numeric: tabular-nums;
     }
-
     .token-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-      gap: 8px;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 10px;
     }
-    .token-item {
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-    }
-    .token-item label {
-      font-size: 11px;
-      color: var(--muted);
-      font-weight: 500;
-      text-transform: capitalize;
-    }
+    .token-item { display: flex; flex-direction: column; gap: 4px; }
+    .token-item label { font-size: 12px; color: var(--muted); font-weight: 500; }
     .token-item input {
-      width: 100%;
-      padding: 6px 8px;
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius-sm);
-      font-size: 12px;
-      font-variant-numeric: tabular-nums;
-      background: var(--surface);
-      color: var(--text);
-      outline: none;
+      width: 100%; padding: 7px 9px;
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      font: inherit; font-size: 13px; font-variant-numeric: tabular-nums;
+      background: var(--surface); color: var(--text); outline: none;
     }
-    .token-item input:focus { border-color: var(--accent); }
+    .token-item input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
 
-    .model-save-row {
-      display: flex;
-      justify-content: flex-end;
-      margin-top: 16px;
-    }
+    .status-line { font-size: 13px; margin-top: 10px; min-height: 18px; color: var(--muted); }
+    .status-line.ok { color: var(--success); }
+    .status-line.err { color: var(--error); }
 
-    /* Compute badge */
-    .compute-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 3px 10px;
-      border-radius: 99px;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-    }
-    .compute-badge.gpu { background: var(--success-bg); color: var(--success); }
-    .compute-badge.cpu { background: #fef3c7; color: #92400e; }
-    .compute-badge.not_loaded { background: var(--surface-2); color: var(--muted); }
-
-    /* Perf table */
-    .perf-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12px;
-      font-variant-numeric: tabular-nums;
-    }
-    .perf-table th {
-      text-align: left;
-      font-weight: 600;
-      color: var(--muted);
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      padding: 6px 8px;
-      border-bottom: 1px solid var(--border);
-    }
-    .perf-table td {
-      padding: 8px;
-      border-bottom: 1px solid var(--border-light);
-      color: var(--text);
-    }
-    .perf-empty {
-      text-align: center;
-      padding: 24px;
-      color: var(--muted);
-      font-size: 13px;
-    }
     .perf-summary {
-      display: flex;
-      gap: 20px;
-      margin-top: 12px;
-      flex-wrap: wrap;
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+      margin-bottom: 16px;
     }
     .perf-stat {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
+      padding: 10px 12px;
+      border: 1px solid var(--border-light); border-radius: var(--radius);
+      background: var(--surface-2);
     }
-    .perf-stat-label { font-size: 11px; color: var(--muted); font-weight: 500; }
-    .perf-stat-value { font-size: 16px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+    .perf-stat-label { font-size: 12px; color: var(--muted); font-weight: 500; }
+    .perf-stat-value { font-size: 18px; font-weight: 700; margin-top: 2px; font-variant-numeric: tabular-nums; }
+    .perf-table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+    .perf-table th, .perf-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border-light); }
+    .perf-table th { color: var(--muted); font-weight: 600; font-size: 12px; }
+    .perf-table tr:last-child td { border-bottom: none; }
+    .perf-empty { color: var(--muted); font-size: 13px; }
 
     /* ── Responsive ──────────────────────────────────────────────── */
     @media (max-width: 780px) {
       .profile-grid { grid-template-columns: 100px 1fr; }
       .pg-full-label, .pg-full-value { grid-column: auto; }
-      .settings-top { flex-direction: column; }
+      .section-head { flex-direction: column; }
+      .settings-layout { grid-template-columns: 1fr; gap: 16px; }
+      .settings-nav {
+        position: static; flex-direction: row; overflow-x: auto;
+        border-bottom: 1px solid var(--border); padding-bottom: 8px;
+      }
+      .settings-nav a { white-space: nowrap; }
+      .tune-grid { grid-template-columns: 1fr; gap: 6px; }
+      .tune-grid > .tune-label { padding-top: 10px; }
+      .perf-summary { grid-template-columns: repeat(2, 1fr); }
     }
   </style>
 </head>
@@ -584,58 +518,47 @@
     <div class="topbar">
       <div class="greeting">
         <h1>Settings</h1>
-        <p class="greeting-sub">Manage your profile and documents</p>
+        <p class="greeting-sub">Profile, model, and account preferences</p>
       </div>
     </div>
 
-    <div id="settings-nav-slot"></div>
-
     <div class="workspace">
+      <div class="settings-layout">
 
-      <!-- Header + completion badge -->
-      <div class="settings-top">
-        <div>
-          <h1>Settings</h1>
-          <p>Manage your profile, documents, and account.</p>
-        </div>
-        <div class="completion-badge" id="completion-badge" style="display:none">
-          <div class="completion-ring">
-            <svg width="38" height="38" viewBox="0 0 38 38">
-              <circle cx="19" cy="19" r="15" fill="none" stroke="var(--border)" stroke-width="3"/>
-              <circle id="cr-fill" cx="19" cy="19" r="15" fill="none" stroke="var(--accent)" stroke-width="3"
-                stroke-dasharray="94.25" stroke-dashoffset="94.25"
-                stroke-linecap="round" transform="rotate(-90 19 19)"
-                style="transition: stroke-dashoffset 0.8s cubic-bezier(0.16,1,0.3,1) 0.3s"/>
-            </svg>
-            <span class="cr-pct" id="cr-pct">0%</span>
+        <nav class="settings-nav" aria-label="Settings sections">
+          <a href="#profile" data-section="profile">Profile</a>
+          <a href="#model" data-section="model">Model</a>
+          <a href="#account" data-section="account">Account</a>
+          <a href="#about" data-section="about">About</a>
+        </nav>
+
+        <div class="settings-content">
+
+      <!-- ═══ Profile ═══════════════════════════════════════════════ -->
+      <section class="settings-section" id="section-profile" aria-labelledby="h-profile">
+        <div class="section-head">
+          <div>
+            <h2 id="h-profile">Profile</h2>
+            <p>Your resume documents and details. Every application is tailored from these.</p>
           </div>
-          <div class="completion-info">
-            <div class="completion-label" id="cr-label">Profile</div>
-            <div class="completion-sub" id="cr-sub">loading...</div>
+          <div class="completion-badge" id="completion-badge" style="display:none">
+            <div class="completion-ring">
+              <svg width="38" height="38" viewBox="0 0 38 38">
+                <circle cx="19" cy="19" r="15" fill="none" stroke="var(--border)" stroke-width="3"/>
+                <circle id="cr-fill" cx="19" cy="19" r="15" fill="none" stroke="var(--accent)" stroke-width="3"
+                  stroke-dasharray="94.25" stroke-dashoffset="94.25"
+                  stroke-linecap="round" transform="rotate(-90 19 19)"
+                  style="transition: stroke-dashoffset 0.8s cubic-bezier(0.16,1,0.3,1) 0.3s"/>
+              </svg>
+              <span class="cr-pct" id="cr-pct">0%</span>
+            </div>
+            <div class="completion-info">
+              <div class="completion-label" id="cr-label">Profile</div>
+              <div class="completion-sub" id="cr-sub">loading...</div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Settings nav — 3 options (legacy, superseded by top sub-nav) -->
-      <div class="settings-tabs" style="display:none">
-        <button class="settings-tab active" data-tab="profile">
-          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h12v12H4z" rx="2"/><path d="M7 8h6M7 11h4"/><circle cx="14" cy="14" r="3" fill="var(--accent-light)" stroke="var(--accent)"/><path d="M13 14h2M14 13v2" stroke="var(--accent)" stroke-width="1.3"/></svg>
-          <span>Profile</span>
-        </button>
-        <button class="settings-tab" data-tab="model">
-          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="14" height="10" rx="2"/><path d="M7 9h2M11 9h2"/><path d="M6 12h8"/><path d="M10 2v3M7 3l3 2 3-2"/></svg>
-          <span>Model</span>
-        </button>
-        <button class="settings-tab" data-tab="account">
-          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7" r="3.5"/><path d="M3 18c0-3.5 3-6 7-6s7 2.5 7 6"/></svg>
-          <span>Account</span>
-        </button>
-      </div>
-
-      <!-- ═══════════════════════════════════════════════════════════ -->
-      <!-- TAB: Profile                                               -->
-      <!-- ═══════════════════════════════════════════════════════════ -->
-      <div class="tab-panel active" id="tab-profile">
         <form id="profile-form" autocomplete="off">
 
           <!-- Resume Documents hero -->
@@ -721,96 +644,127 @@
             <button type="submit" id="save-btn">Save Profile</button>
           </div>
         </form>
-      </div>
+      </section>
 
-      <!-- ═══════════════════════════════════════════════════════════ -->
-      <!-- TAB: Model & Performance                                    -->
-      <!-- ═══════════════════════════════════════════════════════════ -->
-      <div class="tab-panel" id="tab-model">
+      <!-- ═══ Model ═════════════════════════════════════════════════ -->
+      <section class="settings-section" id="section-model" aria-labelledby="h-model">
+        <div class="section-head">
+          <div>
+            <h2 id="h-model">Model</h2>
+            <p>Pick the local Ollama model and tune how it writes.</p>
+          </div>
+        </div>
 
-        <div class="s-card" id="model-card">
-          <div class="s-card-title">Model Settings</div>
-          <div class="model-grid">
-            <label>Model</label>
-            <div>
-              <select class="model-select" id="model-select"><option>Loading...</option></select>
-              <span class="compute-badge not_loaded" id="compute-badge" style="margin-top:6px">--</span>
-            </div>
+        <div class="s-card">
+          <div class="s-card-title">Installed models</div>
+          <div id="model-list"><div class="perf-empty">Loading models…</div></div>
+          <div id="model-status" class="status-line" role="status"></div>
+        </div>
 
-            <label>Temperature</label>
+        <div class="s-card">
+          <div class="s-card-title">Generation</div>
+          <div class="tune-grid">
+            <label class="tune-label" for="model-temp">Temperature</label>
             <div class="range-wrap">
               <input type="range" id="model-temp" min="0" max="1" step="0.05" value="0.15" />
               <span class="range-val" id="temp-val">0.15</span>
             </div>
 
-            <label>Max tokens</label>
+            <div class="tune-label">Max tokens</div>
             <div class="token-grid">
-              <div class="token-item"><label>Skills</label><input type="number" id="mt-skills" value="400" min="100" max="2000" /></div>
-              <div class="token-item"><label>Cover</label><input type="number" id="mt-cover" value="600" min="100" max="2000" /></div>
-              <div class="token-item"><label>Emails</label><input type="number" id="mt-emails" value="650" min="100" max="2000" /></div>
-              <div class="token-item"><label>ATS</label><input type="number" id="mt-ats" value="250" min="100" max="2000" /></div>
+              <div class="token-item"><label for="mt-skills">Skills</label><input type="number" id="mt-skills" min="64" max="4000" step="32" /></div>
+              <div class="token-item"><label for="mt-cover">Cover letter</label><input type="number" id="mt-cover" min="64" max="4000" step="32" /></div>
+              <div class="token-item"><label for="mt-emails">Emails</label><input type="number" id="mt-emails" min="64" max="4000" step="32" /></div>
+              <div class="token-item"><label for="mt-ats">ATS summary</label><input type="number" id="mt-ats" min="64" max="4000" step="32" /></div>
             </div>
 
-            <label>Context limits</label>
+            <div class="tune-label">Context limits</div>
             <div class="token-grid">
-              <div class="token-item"><label>JD chars</label><input type="number" id="cl-jd" value="2500" min="500" max="8000" /></div>
-              <div class="token-item"><label>JD retrieval</label><input type="number" id="cl-jd-ret" value="1500" min="500" max="5000" /></div>
-              <div class="token-item"><label>Profile retrieval</label><input type="number" id="cl-prof-ret" value="1500" min="500" max="5000" /></div>
+              <div class="token-item"><label for="cl-jd">Job description</label><input type="number" id="cl-jd" min="500" max="10000" step="100" /></div>
+              <div class="token-item"><label for="cl-jd-ret">Retrieved JD</label><input type="number" id="cl-jd-ret" min="500" max="10000" step="100" /></div>
+              <div class="token-item"><label for="cl-prof-ret">Retrieved profile</label><input type="number" id="cl-prof-ret" min="500" max="10000" step="100" /></div>
             </div>
           </div>
-          <div class="model-save-row">
-            <button class="btn btn-primary" id="model-save-btn" style="padding:8px 20px; font-size:13px;">Apply Model Settings</button>
+          <div class="btn-row">
+            <button type="button" class="btn btn-primary" id="model-save-btn">Save model settings</button>
           </div>
+          <div id="tunables-status" class="status-line" role="status"></div>
         </div>
-
-        <div class="s-card" id="perf-card">
-          <div class="s-card-title">Performance Stats</div>
-          <div id="perf-content">
-            <div class="perf-empty">No generation data yet. Run a generation to see stats.</div>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- ═══════════════════════════════════════════════════════════ -->
-      <!-- TAB: Account                                               -->
-      <!-- ═══════════════════════════════════════════════════════════ -->
-      <div class="tab-panel" id="tab-account">
 
         <div class="s-card">
-          <div class="s-card-title">Account Info</div>
-          <div class="info-row">
-            <span class="info-label">Name</span>
-            <span class="info-value" id="info-name">-</span>
+          <div class="s-card-title">Recent performance</div>
+          <div class="perf-summary" id="perf-summary" hidden>
+            <div class="perf-stat"><div class="perf-stat-label">Runs</div><div class="perf-stat-value" id="s-runs">—</div></div>
+            <div class="perf-stat"><div class="perf-stat-label">Average total</div><div class="perf-stat-value" id="s-avg">—</div></div>
+            <div class="perf-stat"><div class="perf-stat-label">Best total</div><div class="perf-stat-value" id="s-best">—</div></div>
+            <div class="perf-stat"><div class="perf-stat-label">Average first token</div><div class="perf-stat-value" id="s-ttft">—</div></div>
           </div>
-          <div class="info-row">
-            <span class="info-label">Email</span>
-            <span class="info-value" id="info-email">-</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">User ID</span>
-            <span class="info-uid" id="info-uid">-</span>
-          </div>
-          <div class="info-row" style="padding-top:8px">
-            <span></span>
-            <a href="/auth/logout" class="btn-sm btn-outline-sm" style="text-decoration:none">Sign Out</a>
+          <div id="perf-content"><div class="perf-empty">Loading…</div></div>
+        </div>
+      </section>
+
+      <!-- ═══ Account ═══════════════════════════════════════════════ -->
+      <section class="settings-section" id="section-account" aria-labelledby="h-account">
+        <div class="section-head">
+          <div>
+            <h2 id="h-account">Account</h2>
+            <p>Your sign-in details and the data ResuMate keeps for you.</p>
           </div>
         </div>
 
         <div class="s-card">
-          <div class="s-card-title">Your Data</div>
-          <p class="danger-text">Download a copy of your uploaded documents, profile settings, and vector store.</p>
-          <button class="btn-sm btn-primary-sm" id="export-btn">Export My Data</button>
+          <div class="s-card-title">Account details</div>
+          <div class="info-row"><span class="info-label">Name</span><span class="info-value" id="info-name">—</span></div>
+          <div class="info-row"><span class="info-label">Email</span><span class="info-value" id="info-email">—</span></div>
+          <div class="info-row"><span class="info-label">User ID</span><span class="info-uid" id="info-uid">—</span></div>
+        </div>
+
+        <div class="s-card">
+          <div class="s-card-title">Your data</div>
+          <p class="card-text">Download your uploaded documents, profile, and vector store as a zip file.</p>
+          <div class="btn-row">
+            <button type="button" class="btn btn-outline" id="export-btn">Export my data</button>
+          </div>
         </div>
 
         <div class="s-card danger-zone">
-          <div class="s-card-title">Danger Zone</div>
-          <p class="danger-text">Permanently delete your account and all associated data. This cannot be undone.</p>
-          <button class="btn-sm btn-danger-sm" id="delete-btn">Delete My Account</button>
+          <div class="s-card-title">Delete account</div>
+          <p class="card-text">Permanently deletes your account, documents, profile, and generated applications. This can't be undone.</p>
+          <div class="btn-row">
+            <button type="button" class="btn btn-danger" id="delete-btn">Delete my account</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ About ═════════════════════════════════════════════════ -->
+      <section class="settings-section" id="section-about" aria-labelledby="h-about">
+        <div class="section-head">
+          <div>
+            <h2 id="h-about">About</h2>
+            <p>What's running on this machine.</p>
+          </div>
         </div>
 
-      </div>
+        <div class="s-card">
+          <div class="s-card-title">Build</div>
+          <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="about-version">dev</span></div>
+          <div class="info-row"><span class="info-label">Backend</span><span class="info-value">FastAPI</span></div>
+          <div class="info-row"><span class="info-label">LLM runtime</span><span class="info-value">Ollama (local)</span></div>
+          <div class="info-row"><span class="info-label">Active model</span><span class="info-value" id="about-model">—</span></div>
+          <div class="info-row"><span class="info-label">Compute</span><span class="info-value" id="about-compute">—</span></div>
+        </div>
 
+        <div class="s-card">
+          <div class="s-card-title">Feedback</div>
+          <p class="card-text">Found a bug or want something changed?</p>
+          <div class="btn-row">
+            <a class="btn btn-outline" href="mailto:snehagopalappa1607@gmail.com?subject=ResuMate%20feedback">Send feedback</a>
+          </div>
+        </div>
+      </section>
+
+        </div><!-- /.settings-content -->
+      </div><!-- /.settings-layout -->
     </div>
   </main>
 </div>
@@ -832,13 +786,13 @@
 </div>
 
 <!-- Confirm delete dialog -->
-<div class="confirm-overlay" id="confirm-overlay">
+<div class="confirm-overlay" id="confirm-overlay" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
   <div class="confirm-dialog">
-    <h3>Delete your account?</h3>
-    <p>All your data — uploaded documents, profile settings, and generated content — will be permanently removed. This cannot be undone.</p>
-    <div class="confirm-actions">
-      <button class="btn-sm btn-outline-sm" id="cancel-delete">Cancel</button>
-      <button class="btn-sm btn-danger-sm" id="confirm-delete">Yes, delete everything</button>
+    <h3 id="confirm-title">Delete your account?</h3>
+    <p>Your documents, profile, and generated applications will be removed for good. This can't be undone.</p>
+    <div class="btn-row">
+      <button type="button" class="btn btn-outline" id="cancel-delete">Cancel</button>
+      <button type="button" class="btn btn-danger" id="confirm-delete">Delete everything</button>
     </div>
   </div>
 </div>
@@ -846,17 +800,27 @@
 <script src="/static/shared/common.js?v=1791504000"></script>
 <script>
   injectSidebar({ activePage: 'settings' });
-  injectSettingsNav('profile');
 
-  // ── Accordion tabs ──────────────────────────────────────────────
-  document.querySelectorAll('.settings-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-      tab.classList.add('active');
-      document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+  // ── Section switcher (hash-driven so /settings#model deep-links) ──
+  const _SECTIONS = ['profile', 'model', 'account', 'about'];
+  const _sectionLoaders = {};   // section → fn run once on first show
+  const _sectionsLoaded = new Set();
+
+  function showSection(name) {
+    if (!_SECTIONS.includes(name)) name = 'profile';
+    document.querySelectorAll('.settings-section').forEach(sec => {
+      sec.classList.toggle('active', sec.id === 'section-' + name);
     });
-  });
+    document.querySelectorAll('.settings-nav a').forEach(a => {
+      if (a.dataset.section === name) a.setAttribute('aria-current', 'page');
+      else a.removeAttribute('aria-current');
+    });
+    if (!_sectionsLoaded.has(name) && _sectionLoaders[name]) {
+      _sectionsLoaded.add(name);
+      _sectionLoaders[name]();
+    }
+  }
+  window.addEventListener('hashchange', () => showSection(location.hash.slice(1)));
 
   // ── Profile completion badge ────────────────────────────────────
   (async function initCompletion() {
@@ -1089,50 +1053,68 @@
   loadDocuments();
 
   // ═══════════════════════════════════════════════════════════════════
-  // Account tab — info, export, delete
+  // Account — details, export, delete
   // ═══════════════════════════════════════════════════════════════════
-  (async () => {
-    try {
-      const res = await apiFetch('/auth/me');
-      if (!res || !res.ok) return;
-      const u = await res.json();
-      document.getElementById('info-name').textContent = u.name || '-';
-      document.getElementById('info-email').textContent = u.email || '-';
-      document.getElementById('info-uid').textContent = u.user_id || '-';
-    } catch (_) {}
-  })();
+  _sectionLoaders.account = async () => {
+    const u = await loadUser();
+    if (!u) return;
+    document.getElementById('info-name').textContent  = u.name || '—';
+    document.getElementById('info-email').textContent = u.email || '—';
+    document.getElementById('info-uid').textContent   = u.user_id || '—';
+  };
 
   document.getElementById('export-btn').addEventListener('click', async () => {
     const btn = document.getElementById('export-btn');
-    btn.disabled = true; btn.textContent = 'Exporting...';
+    btn.disabled = true; btn.textContent = 'Exporting…';
     try {
       const res = await apiFetch('/auth/export-data');
-      if (!res || !res.ok) throw new Error('Export failed');
+      if (!res || !res.ok) throw new Error(`HTTP ${res ? res.status : 'failed'}`);
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a'); a.href = url; a.download = 'resumate_data_export.zip';
       document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-      showToast('Data exported successfully');
+      showToast('Data exported');
     } catch (err) { showToast('Export failed: ' + err.message, 'error'); }
-    finally { btn.disabled = false; btn.textContent = 'Export My Data'; }
+    finally { btn.disabled = false; btn.textContent = 'Export my data'; }
   });
 
   const confirmOverlay = document.getElementById('confirm-overlay');
-  document.getElementById('delete-btn').addEventListener('click', () => confirmOverlay.classList.add('visible'));
-  document.getElementById('cancel-delete').addEventListener('click', () => confirmOverlay.classList.remove('visible'));
-  confirmOverlay.addEventListener('click', (e) => { if (e.target === confirmOverlay) confirmOverlay.classList.remove('visible'); });
+  const closeConfirm = () => confirmOverlay.classList.remove('visible');
+  document.getElementById('delete-btn').addEventListener('click', () => {
+    confirmOverlay.classList.add('visible');
+    document.getElementById('cancel-delete').focus();
+  });
+  document.getElementById('cancel-delete').addEventListener('click', closeConfirm);
+  confirmOverlay.addEventListener('click', (e) => { if (e.target === confirmOverlay) closeConfirm(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeConfirm(); });
   document.getElementById('confirm-delete').addEventListener('click', async () => {
     const btn = document.getElementById('confirm-delete');
-    btn.disabled = true; btn.textContent = 'Deleting...';
+    btn.disabled = true; btn.textContent = 'Deleting…';
     try {
       const res = await apiFetch('/auth/account', { method: 'DELETE' });
-      if (!res || !res.ok) throw new Error('Failed');
+      if (!res || !res.ok) throw new Error(`HTTP ${res ? res.status : 'failed'}`);
       window.location.href = '/login';
     } catch (err) {
       showToast('Delete failed: ' + err.message, 'error');
-      btn.disabled = false; btn.textContent = 'Yes, delete everything';
+      btn.disabled = false; btn.textContent = 'Delete everything';
     }
   });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // About — build + runtime
+  // ═══════════════════════════════════════════════════════════════════
+  _sectionLoaders.about = async () => {
+    try {
+      const res = await apiFetch('/health');
+      if (!res || !res.ok) return;
+      const d = await res.json();
+      document.getElementById('about-model').textContent = d.model || '—';
+      document.getElementById('about-compute').textContent =
+        d.compute === 'metal' ? 'Metal (GPU)' :
+        d.compute === 'cpu' ? 'CPU' :
+        d.compute === 'not_loaded' ? 'Not loaded' : (d.compute || '—');
+    } catch (_) {}
+  };
 </script>
 
 <!-- Bridge: sync GitHub/LinkedIn icon buttons with the hidden chipLinks -->
@@ -1232,141 +1214,165 @@
 })();
 </script>
 
-<!-- Model settings + performance stats -->
+<!-- Model — installed models, tunables, performance -->
 <script>
 (function() {
-  const modelSelect = document.getElementById('model-select');
-  const tempSlider = document.getElementById('model-temp');
-  const tempVal = document.getElementById('temp-val');
-  const computeBadge = document.getElementById('compute-badge');
-  const perfContent = document.getElementById('perf-content');
-  const modelSaveBtn = document.getElementById('model-save-btn');
+  const $ = (id) => document.getElementById(id);
+  const esc = (t) => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const fmtMs = (ms) => (ms == null ? '—' : (ms >= 1000 ? (ms / 1000).toFixed(1) + 's' : Math.round(ms) + 'ms'));
+  const setStatus = (el, text, kind) => { el.textContent = text; el.className = 'status-line' + (kind ? ' ' + kind : ''); };
 
-  // Temperature slider live update
-  tempSlider.addEventListener('input', () => { tempVal.textContent = tempSlider.value; });
+  const tempSlider = $('model-temp');
+  const tempVal = $('temp-val');
+  tempSlider.addEventListener('input', () => { tempVal.textContent = Number(tempSlider.value).toFixed(2); });
 
-  // Load installed models
+  let currentModel = null;
+
+  // ── Installed models ──────────────────────────────────────────────
   async function loadModels() {
+    const list = $('model-list');
     try {
       const res = await apiFetch('/api/models');
-      if (!res || !res.ok) return;
+      if (!res || !res.ok) throw new Error(`HTTP ${res ? res.status : 'failed'}`);
       const data = await res.json();
-      modelSelect.innerHTML = '';
-      data.models.forEach(m => {
-        const opt = document.createElement('option');
-        opt.value = m.name;
-        opt.textContent = m.name + ' (' + m.size_gb + 'GB' + (m.quantization ? ', ' + m.quantization : '') + ')';
-        if (m.is_current) opt.selected = true;
-        modelSelect.appendChild(opt);
+      if (!data.models || !data.models.length) {
+        list.innerHTML = '<div class="perf-empty">No models installed. Run <code>ollama pull &lt;model&gt;</code> and reload.</div>';
+        return;
+      }
+      currentModel = (data.models.find(m => m.is_current) || {}).name || null;
+      list.innerHTML = data.models.map(m => {
+        const badges = [];
+        if (m.is_current) badges.push('<span class="model-badge badge-current">Active</span>');
+        if (m.is_loaded) badges.push('<span class="model-badge badge-loaded">Loaded</span>');
+        if (m.compute === 'gpu') badges.push('<span class="model-badge badge-compute">GPU</span>');
+        else if (m.compute === 'cpu') badges.push('<span class="model-badge badge-compute">CPU</span>');
+        badges.push(`<span class="model-badge badge-size">${esc(m.size_gb)} GB</span>`);
+        const meta = [m.parameter_size, m.quantization, m.vram_gb ? `${m.vram_gb} GB VRAM` : ''].filter(Boolean).map(esc).join(' · ');
+        return `
+          <button type="button" class="model-row${m.is_current ? ' current' : ''}" data-name="${esc(m.name)}"${m.is_current ? ' aria-current="true"' : ''}>
+            <span class="model-main">
+              <span class="model-name">${esc(m.name)}</span>
+              <span class="model-meta">${meta || '—'}</span>
+            </span>
+            <span class="model-badges">${badges.join('')}</span>
+          </button>`;
+      }).join('');
+      list.querySelectorAll('.model-row:not(.current)').forEach(row => {
+        row.addEventListener('click', () => selectModel(row.dataset.name));
       });
-      // Show compute badge for current model
-      const current = data.models.find(m => m.is_current);
-      if (current) {
-        computeBadge.textContent = current.compute === 'gpu' ? 'GPU' : current.compute === 'cpu' ? 'CPU' : 'Not loaded';
-        computeBadge.className = 'compute-badge ' + current.compute;
-      }
-    } catch (_) {}
+    } catch (err) {
+      list.innerHTML = `<div class="status-line err">Couldn't load models: ${esc(err.message || err)}. Is Ollama running?</div>`;
+    }
   }
 
-  // Load current config values
-  async function loadConfig() {
-    try {
-      const res = await apiFetch('/api/models/config');
-      if (!res || !res.ok) return;
-      const cfg = await res.json();
-      tempSlider.value = cfg.temperature || 0.15;
-      tempVal.textContent = tempSlider.value;
-      if (cfg.max_tokens) {
-        if (cfg.max_tokens.skills) document.getElementById('mt-skills').value = cfg.max_tokens.skills;
-        if (cfg.max_tokens.cover) document.getElementById('mt-cover').value = cfg.max_tokens.cover;
-        if (cfg.max_tokens.emails) document.getElementById('mt-emails').value = cfg.max_tokens.emails;
-        if (cfg.max_tokens.ats) document.getElementById('mt-ats').value = cfg.max_tokens.ats;
-      }
-      if (cfg.context_limits) {
-        if (cfg.context_limits.jd_chars) document.getElementById('cl-jd').value = cfg.context_limits.jd_chars;
-        if (cfg.context_limits.retrieved_jd_chars) document.getElementById('cl-jd-ret').value = cfg.context_limits.retrieved_jd_chars;
-        if (cfg.context_limits.retrieved_profile_chars) document.getElementById('cl-prof-ret').value = cfg.context_limits.retrieved_profile_chars;
-      }
-    } catch (_) {}
-  }
-
-  // Load performance stats
-  async function loadStats() {
-    try {
-      const res = await apiFetch('/api/stats');
-      if (!res || !res.ok) return;
-      const data = await res.json();
-      if (!data.runs || data.runs.length === 0) return;
-
-      let html = '<table class="perf-table"><thead><tr><th>Run</th><th>Skills</th><th>Cover</th><th>Emails</th><th>ATS</th><th>Total</th></tr></thead><tbody>';
-      data.runs.forEach((run, i) => {
-        html += '<tr>';
-        html += '<td>#' + (i + 1) + '</td>';
-        run.tasks.forEach(t => {
-          html += '<td>' + (t.total_ms / 1000).toFixed(1) + 's</td>';
-        });
-        html += '<td><strong>' + (run.total_ms / 1000).toFixed(1) + 's</strong></td>';
-        html += '</tr>';
-      });
-      html += '</tbody></table>';
-
-      if (data.summary) {
-        html += '<div class="perf-summary">';
-        html += '<div class="perf-stat"><span class="perf-stat-label">Avg total</span><span class="perf-stat-value">' + (data.summary.avg_total_ms / 1000).toFixed(1) + 's</span></div>';
-        html += '<div class="perf-stat"><span class="perf-stat-label">Best</span><span class="perf-stat-value">' + (data.summary.best_total_ms / 1000).toFixed(1) + 's</span></div>';
-        html += '<div class="perf-stat"><span class="perf-stat-label">Worst</span><span class="perf-stat-value">' + (data.summary.worst_total_ms / 1000).toFixed(1) + 's</span></div>';
-        html += '<div class="perf-stat"><span class="perf-stat-label">Avg TTFT</span><span class="perf-stat-value">' + (data.summary.avg_ttft_ms / 1000).toFixed(1) + 's</span></div>';
-        html += '</div>';
-      }
-
-      perfContent.innerHTML = html;
-    } catch (_) {}
-  }
-
-  // Save model settings
-  modelSaveBtn.addEventListener('click', async () => {
-    modelSaveBtn.disabled = true;
-    modelSaveBtn.textContent = 'Applying...';
+  async function selectModel(name) {
+    const status = $('model-status');
+    setStatus(status, `Switching to ${name}…`);
+    document.querySelectorAll('.model-row').forEach(r => r.disabled = true);
     try {
       const res = await apiFetch('/api/models/select', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model_name: modelSelect.value,
-          temperature: parseFloat(tempSlider.value),
-          max_tokens: {
-            skills: parseInt(document.getElementById('mt-skills').value),
-            cover: parseInt(document.getElementById('mt-cover').value),
-            emails: parseInt(document.getElementById('mt-emails').value),
-            ats: parseInt(document.getElementById('mt-ats').value),
-            default: 512,
-          },
-          context_limits: {
-            jd_chars: parseInt(document.getElementById('cl-jd').value),
-            retrieved_jd_chars: parseInt(document.getElementById('cl-jd-ret').value),
-            retrieved_profile_chars: parseInt(document.getElementById('cl-prof-ret').value),
-          },
-        }),
+        body: JSON.stringify({ model_name: name }),
       });
-      if (!res || !res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || 'Failed');
-      }
-      showToast('Model settings applied');
-      loadModels();
+      if (!res || !res.ok) throw new Error(await res.text());
+      setStatus(status, `Switched to ${name}.`, 'ok');
+      await loadModels();
     } catch (err) {
-      showToast('Failed: ' + err.message, 'error');
+      setStatus(status, `Couldn't switch model: ${err.message || err}`, 'err');
+      document.querySelectorAll('.model-row').forEach(r => r.disabled = false);
+    }
+  }
+
+  // ── Tunables ──────────────────────────────────────────────────────
+  const _fields = {
+    'mt-skills': ['max_tokens', 'skills'],
+    'mt-cover': ['max_tokens', 'cover'],
+    'mt-emails': ['max_tokens', 'emails'],
+    'mt-ats': ['max_tokens', 'ats'],
+    'cl-jd': ['context_limits', 'jd_chars'],
+    'cl-jd-ret': ['context_limits', 'retrieved_jd_chars'],
+    'cl-prof-ret': ['context_limits', 'retrieved_profile_chars'],
+  };
+
+  async function loadConfig() {
+    try {
+      const res = await apiFetch('/api/models/config');
+      if (!res || !res.ok) throw new Error(`HTTP ${res ? res.status : 'failed'}`);
+      const cfg = await res.json();
+      if (cfg.temperature != null) tempSlider.value = cfg.temperature;
+      tempVal.textContent = Number(tempSlider.value).toFixed(2);
+      for (const [id, [group, key]] of Object.entries(_fields)) {
+        const v = (cfg[group] || {})[key];
+        $(id).value = v ?? '';
+      }
+    } catch (err) {
+      setStatus($('tunables-status'), `Couldn't load settings: ${err.message || err}`, 'err');
+    }
+  }
+
+  $('model-save-btn').addEventListener('click', async () => {
+    const status = $('tunables-status');
+    if (!currentModel) { setStatus(status, 'No active model. Pick one above first.', 'err'); return; }
+    const body = { model_name: currentModel, temperature: Number(tempSlider.value), max_tokens: {}, context_limits: {} };
+    for (const [id, [group, key]] of Object.entries(_fields)) {
+      const v = $(id).value;
+      if (v !== '') body[group][key] = Number(v);
+    }
+    for (const g of ['max_tokens', 'context_limits']) if (!Object.keys(body[g]).length) body[g] = null;
+
+    const btn = $('model-save-btn');
+    btn.disabled = true;
+    setStatus(status, 'Saving…');
+    try {
+      const res = await apiFetch('/api/models/select', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res || !res.ok) throw new Error(await res.text());
+      setStatus(status, 'Model settings saved.', 'ok');
+    } catch (err) {
+      setStatus(status, `Couldn't save: ${err.message || err}`, 'err');
     } finally {
-      modelSaveBtn.disabled = false;
-      modelSaveBtn.textContent = 'Apply Model Settings';
+      btn.disabled = false;
     }
   });
 
-  // Init
-  loadModels();
-  loadConfig();
-  loadStats();
+  // ── Performance ───────────────────────────────────────────────────
+  async function loadStats() {
+    const out = $('perf-content');
+    try {
+      const res = await apiFetch('/api/stats');
+      if (!res || !res.ok) throw new Error(`HTTP ${res ? res.status : 'failed'}`);
+      const data = await res.json();
+      if (!data.runs || !data.runs.length) {
+        out.innerHTML = '<div class="perf-empty">No runs yet. Generate an application to see timings here.</div>';
+        return;
+      }
+      out.innerHTML = '<table class="perf-table"><thead><tr><th>#</th><th>Skills</th><th>Cover</th><th>Emails</th><th>ATS</th><th>Total</th><th>First token</th></tr></thead><tbody>' +
+        data.runs.map((r, i) => {
+          const t = Object.fromEntries((r.tasks || []).map(x => [x.name, x]));
+          const cell = (k) => t[k] ? fmtMs(t[k].total_ms) : '—';
+          return `<tr><td>${i + 1}</td><td>${cell('skills')}</td><td>${cell('cover')}</td><td>${cell('emails')}</td><td>${cell('ats')}</td><td><b>${fmtMs(r.total_ms)}</b></td><td>${fmtMs(r.avg_ttft_ms)}</td></tr>`;
+        }).join('') + '</tbody></table>';
+      if (data.summary && data.summary.run_count) {
+        $('perf-summary').hidden = false;
+        $('s-runs').textContent = data.summary.run_count;
+        $('s-avg').textContent  = fmtMs(data.summary.avg_total_ms);
+        $('s-best').textContent = fmtMs(data.summary.best_total_ms);
+        $('s-ttft').textContent = fmtMs(data.summary.avg_ttft_ms);
+      }
+    } catch (err) {
+      out.innerHTML = `<div class="status-line err">Couldn't load stats: ${esc(err.message || err)}</div>`;
+    }
+  }
+
+  _sectionLoaders.model = () => { loadModels(); loadConfig(); loadStats(); };
 })();
+
+// All loaders are registered — show the section named in the URL.
+showSection(location.hash.slice(1));
 </script>
 
 </body>

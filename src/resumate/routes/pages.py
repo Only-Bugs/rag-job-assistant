@@ -56,37 +56,17 @@ async def serve_workspace(request: Request):
 async def serve_settings(request: Request):
     if not check_session(request):
         return RedirectResponse("/login", status_code=302)
-    return RedirectResponse("/settings/profile", status_code=302)
-
-
-@router.get("/settings/profile")
-async def serve_settings_profile(request: Request):
-    if not check_session(request):
-        return RedirectResponse("/login", status_code=302)
     return _page("settings.html")
 
 
-@router.get("/settings/account")
-async def serve_settings_account(request: Request):
-    if not check_session(request):
-        return RedirectResponse("/login", status_code=302)
-    return _page("account.html")
-
-
-@router.get("/settings/model")
-async def serve_settings_model(request: Request):
-    if not check_session(request):
-        return RedirectResponse("/login", status_code=302)
-    return _page("settings_model.html")
-
-
-@router.get("/settings/about")
-async def serve_settings_about(request: Request):
-    if not check_session(request):
-        return RedirectResponse("/login", status_code=302)
-    return _page("settings_about.html")
+# Legacy per-section URLs → single settings page, section picked by hash.
+@router.get("/settings/{section}")
+async def redirect_settings_section(section: str):
+    if section not in ("profile", "model", "account", "about"):
+        section = "profile"
+    return RedirectResponse(f"/settings#{section}", status_code=302)
 
 
 @router.get("/account")
 async def serve_account(request: Request):
-    return RedirectResponse("/settings/account", status_code=302)
+    return RedirectResponse("/settings#account", status_code=302)
