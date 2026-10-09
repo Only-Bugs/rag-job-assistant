@@ -776,6 +776,134 @@ h2 {
 
 .sb-spacer { flex: 1; }
 
+/* ── Sidebar profile block (dark theme) ─────────────────────────── */
+.sb-profile {
+  padding: 10px 12px 14px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  position: relative;
+}
+.sb-profile-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: rgba(255,255,255,0.9);
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  position: relative;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.sb-profile-card:hover {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.08);
+}
+.sb-profile-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.02em;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.sb-profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.sb-profile-text {
+  display: flex; flex-direction: column;
+  min-width: 0; flex: 1;
+  line-height: 1.25;
+}
+.sb-profile-name {
+  font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.92);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sb-profile-email {
+  font-size: 11px; color: rgba(255,255,255,0.45);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sb-profile-caret {
+  color: rgba(255,255,255,0.4);
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+.sb-profile-card[aria-expanded="true"] .sb-profile-caret { transform: rotate(180deg); }
+
+.sidebar.collapsed .sb-profile-text,
+.sidebar.collapsed .sb-profile-caret { display: none; }
+.sidebar.collapsed .sb-profile { padding: 10px 8px 14px; }
+.sidebar.collapsed .sb-profile-card { justify-content: center; padding: 6px; }
+
+.sb-profile-menu {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 12px; right: 12px;
+  background: #232131;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.45);
+  padding: 6px;
+  z-index: 50;
+}
+/* Collapsed sidebar → menu floats to the right of the icon */
+.sidebar.collapsed .sb-profile-menu {
+  left: calc(100% + 8px);
+  right: auto;
+  bottom: 6px;
+  min-width: 180px;
+}
+.sb-profile-menu.open { display: block; }
+.sb-profile-item {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 8px 10px;
+  border: none; background: none;
+  border-radius: 7px;
+  font-family: inherit; font-size: 13px;
+  color: rgba(255,255,255,0.88); text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.sb-profile-item:hover { background: rgba(255,255,255,0.06); }
+.sb-profile-item svg { color: rgba(255,255,255,0.5); flex-shrink: 0; }
+.sb-profile-item.danger { color: #f87171; }
+.sb-profile-item.danger svg { color: #f87171; }
+
+/* ── Collapsed sidebar tooltips ────────────────────────────────── */
+.sidebar.collapsed .sb-nav-item,
+.sidebar.collapsed .sb-profile-card { position: relative; }
+
+.sidebar.collapsed .sb-nav-item[data-tooltip]::after,
+.sidebar.collapsed .sb-profile-card[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: #0e0c17;
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 7px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  z-index: 100;
+}
+.sidebar.collapsed .sb-nav-item[data-tooltip]:hover::after,
+.sidebar.collapsed .sb-profile-card[data-tooltip]:hover::after {
+  opacity: 1;
+}
+/* Don't show nav/profile tooltip when its own menu is open */
+.sidebar.collapsed .sb-profile-card[aria-expanded="true"]::after { opacity: 0; }
+
 /* Profile completion widget */
 .sb-profile-widget {
   margin: 0 14px 14px;
