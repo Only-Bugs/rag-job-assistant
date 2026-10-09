@@ -460,7 +460,6 @@ function injectSidebar(opts = {}) {
         <a href="/" class="sb-logo">Resu<b>Mate</b></a>
         <button class="sb-collapse-btn" id="sb-pin-btn" title="Pin sidebar open">${_SIDEBAR_UNPIN_ICON}</button>
       </div>
-      <div class="sb-section-label">Menu</div>
       <nav class="sb-nav">${navHtml}</nav>
       <div class="sb-spacer"></div>
       <div class="sb-profile" id="sb-profile">

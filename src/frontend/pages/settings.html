@@ -30,21 +30,11 @@
 
     .s-card-title {
       font-family: var(--font-display);
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: var(--muted);
-      margin-bottom: 18px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .s-card-title::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--border);
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--text);
+      margin: 0 0 16px;
     }
 
     /* ── Layout: section nav + content ───────────────────────────── */
@@ -75,7 +65,7 @@
     }
     .settings-nav a:hover { color: var(--text); background: var(--bg-subtle); }
     .settings-nav a[aria-current="page"] {
-      color: var(--accent);
+      color: var(--accent-strong);
       background: var(--accent-light);
       font-weight: 600;
     }
@@ -122,22 +112,14 @@
       position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
       font-family: var(--font-display);
-      font-size: 10px; font-weight: 700; color: var(--text);
+      font-size: 11px; font-weight: 700; color: var(--text);
     }
     .completion-info { font-size: 12px; }
     .completion-label { font-weight: 600; color: var(--text); }
     .completion-sub { color: var(--muted); margin-top: 1px; }
 
     /* ── Hero: Resume Documents ──────────────────────────────────── */
-    .docs-section { animation-delay: 0.08s; position: relative; overflow: hidden; }
-    .docs-section::before {
-      content: '';
-      position: absolute; top: 0; left: 0; right: 0; height: 3px;
-      background: linear-gradient(90deg, var(--accent), #a78bfa, #c4b5fd, #a78bfa, var(--accent));
-      background-size: 200% 100%;
-      animation: gradShift 6s ease infinite;
-    }
-    @keyframes gradShift { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+    .docs-section { animation-delay: 0.08s; }
 
     /* ── Drop zone ───────────────────────────────────────────────── */
     .docs-drop-zone {
@@ -165,15 +147,15 @@
       width: 48px; height: 48px;
       margin: 0 auto 12px;
       border-radius: 50%;
-      background: linear-gradient(135deg, var(--accent-light), rgba(167,139,250,0.15));
-      color: var(--accent);
+      background: var(--accent-light);
+      color: var(--accent-strong);
       display: flex; align-items: center; justify-content: center;
       transition: transform 0.3s var(--ease-spring);
     }
     .docs-drop-zone:hover .docs-drop-icon { transform: translateY(-3px) scale(1.05); }
     .docs-drop-zone-text { font-size: 13px; color: var(--muted); }
     .docs-drop-zone-text strong { color: var(--text); font-weight: 600; }
-    .docs-drop-zone-hint { font-size: 11px; color: var(--muted); margin-top: 5px; opacity: 0.6; }
+    .docs-drop-zone-hint { font-size: 12px; color: var(--muted); margin-top: 5px; }
 
     /* ── Document list ────────────────────────────────────────────── */
     .docs-list { display: flex; flex-direction: column; gap: 5px; }
@@ -189,12 +171,12 @@
     .doc-item:hover { border-color: var(--border); background: var(--surface); }
     .doc-icon {
       width: 28px; height: 28px; border-radius: 8px;
-      background: var(--accent-light); color: var(--accent);
+      background: var(--accent-light); color: var(--accent-strong);
       display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
     .doc-name { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:500; }
     .doc-type {
-      font-size: 9px; font-weight: 700; text-transform: uppercase;
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
       letter-spacing: 0.06em; color: var(--muted);
       padding: 2px 8px; background: var(--surface-2); border-radius: 4px;
     }
@@ -206,10 +188,10 @@
       opacity: 0; transition: all 0.15s;
     }
     .doc-item:hover .doc-delete { opacity: 1; }
-    .doc-delete:hover { background: rgba(220,38,38,0.08); color: #dc2626; }
+    .doc-delete:hover { background: rgba(220,38,38,0.08); color: var(--error); }
     .docs-empty { font-size: 13px; color: var(--muted); text-align: center; padding: 16px; }
     .docs-uploading {
-      font-size: 13px; color: var(--accent); font-weight: 600;
+      font-size: 13px; color: var(--accent-strong); font-weight: 600;
       text-align: center; padding: 10px;
       display: flex; align-items: center; justify-content: center; gap: 8px;
     }
@@ -221,14 +203,7 @@
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* ── 4-Column Profile Grid ───────────────────────────────────── */
-    .profile-card { animation-delay: 0.12s; position: relative; }
-    .profile-card::before {
-      content: '';
-      position: absolute; left: 0; top: 16px; bottom: 16px; width: 3px;
-      border-radius: 0 3px 3px 0;
-      background: linear-gradient(180deg, var(--accent), #a78bfa);
-      opacity: 0.45;
-    }
+    .profile-card { animation-delay: 0.12s; }
 
     .profile-grid {
       display: grid;
@@ -262,7 +237,7 @@
       border-color: var(--accent-mid); background: var(--surface);
       box-shadow: 0 0 0 3px rgba(108,92,231,0.06);
     }
-    .profile-grid input::placeholder { color: var(--muted); opacity: 0.45; }
+    .profile-grid input::placeholder { color: var(--muted); }
 
     /* ── Social Links ────────────────────────────────────────────── */
     .social-section { animation-delay: 0.16s; padding: 20px 28px; }
@@ -273,25 +248,25 @@
       width: 44px; height: 44px;
       border-radius: 11px;
       border: 1.5px solid var(--border);
-      background: var(--bg); color: #b8b0a8;
+      background: var(--bg); color: var(--muted);
       display: flex; align-items: center; justify-content: center;
       cursor: pointer; transition: all 0.25s var(--ease-out);
       position: relative;
     }
     .link-icon-btn svg { width: 21px; height: 21px; transition: transform 0.2s; }
     .link-icon-btn:hover {
-      border-color: var(--accent-mid); color: var(--accent);
+      border-color: var(--accent-mid); color: var(--accent-strong);
       background: var(--accent-light); transform: translateY(-2px);
     }
     .link-icon-btn.active {
-      border-color: var(--accent); color: var(--accent); background: var(--accent-light);
+      border-color: var(--accent); color: var(--accent-strong); background: var(--accent-light);
     }
     .link-icon-btn.active::after {
       content: ''; position: absolute; bottom: -4px; right: -4px;
       width: 12px; height: 12px; border-radius: 50%;
       background: #22c55e; border: 2.5px solid var(--surface);
     }
-    .link-icons-hint { font-size: 11px; color: var(--muted); opacity: 0.5; font-style: italic; }
+    .link-icons-hint { font-size: 12px; color: var(--muted); }
 
     /* ── Skills & Background ─────────────────────────────────────── */
     .background-card { animation-delay: 0.2s; }
@@ -331,7 +306,7 @@
     }
     @keyframes popIn { from { opacity:0; transform: translateY(8px) scale(0.97); } to { opacity:1; transform: none; } }
     .link-popup-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
-    .link-popup-header svg { width: 22px; height: 22px; color: var(--accent); }
+    .link-popup-header svg { width: 22px; height: 22px; color: var(--accent-strong); }
     .link-popup-title { font-family: var(--font-display); font-size: 15px; font-weight: 700; }
     .link-popup input[type="url"] {
       width: 100%; padding: 10px 14px; font-size: 14px; font-family: var(--font-body);
@@ -357,18 +332,6 @@
       display: flex; align-items: center; gap: 14px; padding: 4px 0 12px;
       animation: sIn 0.4s var(--ease-out) 0.28s backwards;
     }
-    #save-btn {
-      padding: 11px 36px;
-      background: linear-gradient(135deg, var(--accent), #7c6ef0);
-      color: #fff; font-family: var(--font-display);
-      font-size: 13px; font-weight: 700; letter-spacing: 0.03em;
-      text-transform: uppercase; border: none; border-radius: 10px;
-      cursor: pointer; transition: all 0.2s var(--ease-out);
-      box-shadow: 0 2px 10px rgba(108,92,231,0.2);
-    }
-    #save-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(108,92,231,0.28); }
-    #save-btn:active:not(:disabled) { transform: translateY(0); }
-    #save-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
     /* ── Account ─────────────────────────────────────────────────── */
     .info-row {
@@ -423,7 +386,7 @@
     .model-row:hover { border-color: var(--border); background: var(--surface-2); }
     .model-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     .model-row.current { border-color: var(--accent); background: var(--accent-light); cursor: default; }
-    .model-row.current .model-name { color: var(--accent); }
+    .model-row.current .model-name { color: var(--accent-strong); }
     .model-row:disabled { opacity: 0.6; }
     .model-main { flex: 1; min-width: 0; }
     .model-name, .model-meta { display: block; }
@@ -475,11 +438,7 @@
       display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
       margin-bottom: 16px;
     }
-    .perf-stat {
-      padding: 10px 12px;
-      border: 1px solid var(--border-light); border-radius: var(--radius);
-      background: var(--surface-2);
-    }
+    .perf-stat { padding: 2px 0; }
     .perf-stat-label { font-size: 12px; color: var(--muted); font-weight: 500; }
     .perf-stat-value { font-size: 18px; font-weight: 700; margin-top: 2px; font-variant-numeric: tabular-nums; }
     .perf-table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
@@ -559,7 +518,7 @@
 
           <!-- Resume Documents hero -->
           <div class="s-card docs-section">
-            <div class="s-card-title">Resume Documents</div>
+            <h3 class="s-card-title">Resume documents</h3>
             <div class="docs-drop-zone" id="docs-drop-zone">
               <div class="docs-drop-icon">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -576,7 +535,7 @@
 
           <!-- Bio & Details — 4-column grid -->
           <div class="s-card profile-card">
-            <div class="s-card-title">Bio &amp; Details</div>
+            <h3 class="s-card-title">Bio and details</h3>
             <div class="profile-grid">
               <div class="pg-label">Full name</div>
               <div class="pg-value"><input type="text" id="f-name" name="name" placeholder="Your name" /></div>
@@ -602,7 +561,7 @@
 
           <!-- Social Links -->
           <div class="s-card social-section">
-            <div class="s-card-title">Social Links</div>
+            <h3 class="s-card-title">Social links</h3>
             <div id="chip-links" style="display:none"></div>
             <div class="link-icons-row">
               <button type="button" class="link-icon-btn" id="link-github" title="GitHub profile">
@@ -611,13 +570,13 @@
               <button type="button" class="link-icon-btn" id="link-linkedin" title="LinkedIn profile">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
               </button>
-              <span class="link-icons-hint">click to add</span>
+              <span class="link-icons-hint">Click to add</span>
             </div>
           </div>
 
           <!-- Skills & Background -->
           <div class="s-card background-card">
-            <div class="s-card-title">Skills &amp; Background</div>
+            <h3 class="s-card-title">Skills and background</h3>
             <div class="bg-field">
               <div class="bg-field-label">Role keywords</div>
               <div id="chip-keywords"></div>
@@ -637,7 +596,7 @@
           </div>
 
           <div class="save-row">
-            <button type="submit" id="save-btn">Save Profile</button>
+            <button type="submit" class="btn btn-primary" id="save-btn">Save profile</button>
           </div>
         </form>
       </section>
@@ -652,13 +611,13 @@
         </div>
 
         <div class="s-card">
-          <div class="s-card-title">Installed models</div>
+          <h3 class="s-card-title">Installed models</h3>
           <div id="model-list"><div class="perf-empty">Loading models…</div></div>
           <div id="model-status" class="status-line" role="status"></div>
         </div>
 
         <div class="s-card">
-          <div class="s-card-title">Generation</div>
+          <h3 class="s-card-title">Generation</h3>
           <div class="tune-grid">
             <label class="tune-label" for="model-temp">Temperature</label>
             <div class="range-wrap">
@@ -688,7 +647,7 @@
         </div>
 
         <div class="s-card">
-          <div class="s-card-title">Recent performance</div>
+          <h3 class="s-card-title">Recent performance</h3>
           <div class="perf-summary" id="perf-summary" hidden>
             <div class="perf-stat"><div class="perf-stat-label">Runs</div><div class="perf-stat-value" id="s-runs">—</div></div>
             <div class="perf-stat"><div class="perf-stat-label">Average total</div><div class="perf-stat-value" id="s-avg">—</div></div>
@@ -709,14 +668,14 @@
         </div>
 
         <div class="s-card">
-          <div class="s-card-title">Account details</div>
+          <h3 class="s-card-title">Account details</h3>
           <div class="info-row"><span class="info-label">Name</span><span class="info-value" id="info-name">—</span></div>
           <div class="info-row"><span class="info-label">Email</span><span class="info-value" id="info-email">—</span></div>
           <div class="info-row"><span class="info-label">User ID</span><span class="info-uid" id="info-uid">—</span></div>
         </div>
 
         <div class="s-card">
-          <div class="s-card-title">Your data</div>
+          <h3 class="s-card-title">Your data</h3>
           <p class="card-text">Download your uploaded documents, profile, and vector store as a zip file.</p>
           <div class="btn-row">
             <button type="button" class="btn btn-outline" id="export-btn">Export my data</button>
@@ -724,7 +683,7 @@
         </div>
 
         <div class="s-card danger-zone">
-          <div class="s-card-title">Delete account</div>
+          <h3 class="s-card-title">Delete account</h3>
           <p class="card-text">Permanently deletes your account, documents, profile, and generated applications. This can't be undone.</p>
           <div class="btn-row">
             <button type="button" class="btn btn-danger" id="delete-btn">Delete my account</button>
@@ -742,7 +701,7 @@
         </div>
 
         <div class="s-card">
-          <div class="s-card-title">Build</div>
+          <h3 class="s-card-title">Build</h3>
           <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="about-version">dev</span></div>
           <div class="info-row"><span class="info-label">Backend</span><span class="info-value">FastAPI</span></div>
           <div class="info-row"><span class="info-label">LLM runtime</span><span class="info-value">Ollama (local)</span></div>
@@ -751,7 +710,7 @@
         </div>
 
         <div class="s-card">
-          <div class="s-card-title">Feedback</div>
+          <h3 class="s-card-title">Feedback</h3>
           <p class="card-text">Found a bug or want something changed?</p>
           <div class="btn-row">
             <a class="btn btn-outline" href="mailto:snehagopalappa1607@gmail.com?subject=ResuMate%20feedback">Send feedback</a>
@@ -933,7 +892,7 @@
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     saveBtn.disabled = true;
-    saveBtn.textContent = 'Saving...';
+    saveBtn.textContent = 'Saving…';
     try {
       const res = await apiFetch('/profile', {
         method: 'POST',
@@ -941,12 +900,12 @@
         body: JSON.stringify(collectForm()),
       });
       if (!res || !res.ok) throw new Error(`HTTP ${res ? res.status : 'failed'}`);
-      showToast('Profile saved successfully');
+      showToast('Profile saved');
     } catch (err) {
       showToast(`Save failed: ${err.message}`, 'error');
     } finally {
       saveBtn.disabled = false;
-      saveBtn.textContent = 'Save Profile';
+      saveBtn.textContent = 'Save profile';
     }
   });
 

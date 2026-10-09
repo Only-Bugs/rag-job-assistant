@@ -58,7 +58,7 @@
 
     .stat-icon.accent {
       background: var(--accent-light);
-      color: var(--accent);
+      color: var(--accent-strong);
     }
 
     .stat-icon.green {
@@ -136,23 +136,11 @@
 
     .dash-section-title {
       font-family: var(--font-display);
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--muted);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .dash-section-title::before {
-      content: '';
-      width: 3px;
-      height: 14px;
-      border-radius: 2px;
-      background: linear-gradient(180deg, var(--accent), #8b7cf7);
-      flex-shrink: 0;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--text);
+      margin: 0;
     }
 
     /* ── History list ─────────────────────────────────────────────── */
@@ -193,7 +181,7 @@
       height: 28px;
       border-radius: 8px;
       background: var(--accent-light);
-      color: var(--accent);
+      color: var(--accent-strong);
       font-family: var(--font-display);
       font-size: 11px;
       font-weight: 700;
@@ -228,7 +216,7 @@
     }
 
     .history-edit-link {
-      color: var(--accent);
+      color: var(--accent-strong);
       text-decoration: none;
       font-weight: 600;
       font-size: 11px;
@@ -260,7 +248,7 @@
     }
 
     .dash-empty a {
-      color: var(--accent);
+      color: var(--accent-strong);
       text-decoration: none;
       font-weight: 600;
     }
@@ -296,7 +284,7 @@
       height: 28px;
       border-radius: 7px;
       background: var(--accent-light);
-      color: var(--accent);
+      color: var(--accent-strong);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -314,7 +302,7 @@
     }
 
     .dash-doc-type {
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.05em;
@@ -349,7 +337,7 @@
       width: 58px;
       height: 58px;
       border-radius: 50%;
-      background: linear-gradient(135deg, var(--accent), #8b7cf7);
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
       color: #fff;
       border: none;
       cursor: pointer;
@@ -404,7 +392,7 @@
       height: 44px;
       border-radius: 50%;
       background: var(--surface);
-      color: var(--accent);
+      color: var(--accent-strong);
       border: 1px solid var(--border);
       display: flex;
       align-items: center;
@@ -544,7 +532,7 @@
         <div class="dash-panel">
           <div class="dash-panel-inner">
             <div class="dash-section-head">
-              <div class="dash-section-title">Recent Applications</div>
+              <h2 class="dash-section-title">Recent applications</h2>
             </div>
             <div class="history-list" id="history-list"></div>
             <div class="dash-empty" id="history-empty" style="display:none;">
@@ -564,7 +552,7 @@
           <div class="dash-panel">
             <div class="dash-panel-inner">
               <div class="dash-section-head">
-                <div class="dash-section-title">Documents</div>
+                <h2 class="dash-section-title">Documents</h2>
               </div>
               <div class="dash-doc-list" id="docs-list"></div>
               <div class="dash-empty" id="docs-empty" style="display:none;">
