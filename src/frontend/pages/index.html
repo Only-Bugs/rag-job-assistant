@@ -390,7 +390,9 @@
       right: max(36px, env(safe-area-inset-right));
       z-index: 100;
       display: flex;
-      flex-direction: column-reverse;
+      /* column (not column-reverse): the actions panel is first in the DOM and
+         must stack above the button, or its hidden height lifts the button. */
+      flex-direction: column;
       /* flex-end keeps the 58px button pinned to the right edge even when
          the wider .fab-actions panel expands the wrap's width. */
       align-items: flex-end;
