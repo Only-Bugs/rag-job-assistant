@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/opt/homebrew/bin/bash
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -109,17 +109,18 @@ start_api(){
         export USE_JAX=0
         export PYTHONPATH="$SCRIPT_DIR/src${PYTHONPATH:+:$PYTHONPATH}"
 
-        watchfiles \
-            --filter python \
-            --ignore-paths logs \
-            -- \
-            uvicorn resumate.app:app --host 0.0.0.0 --port 8000
+        uvicorn resumate.app:app \
+            --host 0.0.0.0 --port 8000 \
+            --reload --reload-dir "$SCRIPT_DIR/src"
     ) >>logs/uvicorn.log 2>&1 &
 
     UVICORN_PID=$!
 
     if wait_and_spin "Starting API" "http://localhost:8000/health" 20; then
         step "$TICK" "api" "ready (http://localhost:8000)"
+        if [[ "${DEV_OPEN_BROWSER:-1}" == "1" ]] && command -v open >/dev/null; then
+            open "http://localhost:8000" 2>/dev/null || true
+        fi
     else
         step "$CROSS" "api" "failed"
         echo -e "\n${R}--- uvicorn.log ---${RST}"
@@ -464,29 +465,14 @@ start_logs
 
 # Give logs a moment to populate before first paint.
 sleep 0.5
-redraw
 
-# ── Main loop ───────────────────────────────────────────────────────────
-while true; do
-    if IFS= read -rsn1 -t 2 key 2>/dev/null; then
-        case "$key" in
-            q) cleanup ;;
-            r)
-                printf '\e[H\e[2J'
-                banner
-                echo
-                shutdown_api
-                start_api
-                redraw
-                ;;
-            l)
-                config_logs_menu
-                start_logs
-                redraw
-                ;;
-            s) redraw ;;
-        esac
-    else
-        redraw
-    fi
-done
+# ── Textual TUI dashboard ───────────────────────────────────────────────
+# Launch the Python dashboard in the foreground. When it exits (user hits q),
+# fall through to cleanup().
+if [[ -x "$SCRIPT_DIR/sandbox/bin/python" ]] && [[ -f "$SCRIPT_DIR/scripts/dev_tui.py" ]]; then
+    "$SCRIPT_DIR/sandbox/bin/python" "$SCRIPT_DIR/scripts/dev_tui.py" || true
+    cleanup
+else
+    step "$WARN" "tui" "dev_tui.py missing — falling back to plain wait"
+    while true; do sleep 5; done
+fi

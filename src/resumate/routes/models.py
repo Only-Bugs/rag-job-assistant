@@ -130,6 +130,29 @@ async def select_model(request: Request, body: ModelSelectRequest):
     return {"status": "ok", "model": body.model_name}
 
 
+# ── POST /api/models/reload — dev-TUI hook (localhost only, no auth) ──
+
+@router.post("/api/models/reload")
+async def reload_active_model(request: Request, body: ModelSelectRequest):
+    """Hot-reload the LLM singleton and warm it up. The caller (dev TUI) has
+    already written model_config.yaml. Restricted to loopback clients."""
+    if not request.client or request.client.host not in ("127.0.0.1", "::1", "localhost"):
+        raise HTTPException(403, "localhost only")
+
+    reload_model(body.model_name, body.temperature)
+    try:
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            await client.post(
+                f"{OLLAMA_HOST}/api/generate",
+                json={"model": body.model_name, "prompt": "hi", "stream": False, "keep_alive": "24h"},
+            )
+    except Exception:
+        pass  # warm-up is best-effort
+
+    logger.info("Model reloaded (dev TUI) → %s", body.model_name)
+    return {"status": "ok", "model": body.model_name}
+
+
 # ── GET /api/stats — performance summary ────────────────────────────
 
 @router.get("/api/stats")

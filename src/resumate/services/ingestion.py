@@ -82,18 +82,25 @@ def _jd_text_fingerprint(jd_text: str) -> str:
     return hashlib.sha256(_normalize_jd_text(jd_text).encode("utf-8")).hexdigest()
 
 
-def index_profile_docs(user_data_dir: Path | None = None) -> int:
+def index_profile_docs(user_data_dir: Path | None = None, force: bool = False) -> int:
     """Index persistent profile documents (CVs, summaries).
 
     Args:
         user_data_dir: Per-user data root (e.g. ``data/users/dev_user``).
                        Defaults to the legacy global paths when None.
+        force: If True, skip the fingerprint cache and re-index unconditionally.
     """
     profile_doc_dir = (user_data_dir / "profile_docs") if user_data_dir else PROFILE_DOC_DIR
     rag_dir = user_data_dir if user_data_dir else RAG_DIR
     db_path = (user_data_dir / "chroma_db") if user_data_dir else None
 
-    if not _profile_changed(profile_doc_dir, rag_dir):
+    if force:
+        state_path = _profile_state_path(rag_dir)
+        try:
+            state_path.unlink(missing_ok=True)
+        except Exception:
+            pass
+    elif not _profile_changed(profile_doc_dir, rag_dir):
         return 0
 
     vectordb = get_vectordb(db_path)
